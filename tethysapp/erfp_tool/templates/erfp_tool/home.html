@@ -1,7 +1,5 @@
 {% extends "erfp_tool/base.html" %}
 
-{% load tethys_gizmos %}
-
 {% load staticfiles %}
 
 {% block global_scripts %}
@@ -23,9 +21,17 @@
         Click on a reach to view flow predictions.</div>
 {% endblock %}
 
-{% block app_actions %}
-  <a href="" class="btn btn-default">Next</a>
-  <a href="" class="btn btn-default">Back</a>
+{% block app_navigation_items %}
+  <li class="title">App Navigation</li>
+  <li class="active"><a href="/apps/erfp-tool">Map</a></li>
+  <li><a href="/apps/erfp-tool/settings">Settings</a></li>
+  <li><a href="/apps/erfp-tool/add-watershed">Add a Watershed</a></li>
+  <li class="title">Watersheds</li>
+  <li><a href="">Magdalena</a></li>
+  <li><a href="">Nicaragua</a></li>
+  <li><a href="">Dominican Republic</a></li>
+  <li class="separator"></li>
+  <li><a href="">Information</a></li>
 {% endblock %}
 
 {% block scripts %}

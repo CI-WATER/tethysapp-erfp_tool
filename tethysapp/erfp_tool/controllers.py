@@ -29,27 +29,128 @@ def home(request):
               }
 
     return render(request, 'erfp_tool/home.html', context)
+
+def settings(request):
+    """
+    Controller for the app settings page.
+    """
+    base_layer_input = {
+                'display_text': 'Select a Base Layer',
+                'name': 'base_layer-input',
+                'multiple': False,
+                'options': [('BingMaps', '1'), ('GoogleMaps', '2'), ('WMS', '3')],
+                'initial': 'BingMaps'
+                }
+    base_layer_api_key_input = {
+                'display_text': 'Base Layer API Key',
+                'name': 'api-key-input',
+                'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9'
+              }
+    ecmwf_rapid_input = {
+                'display_text': 'Local Location of ECMWF-RAPID files',
+                'name': 'ecmwf-rapid-location-input',
+                'placeholder': 'e.g.: /home/username/work/rapid/output',
+                'icon_append':'glyphicon glyphicon-folder-open'
+              }
+    submit_button = {'buttons': [
+                                 {'display_text': 'Submit',
+                                  'name': 'submit-changes-settings',
+                                  'attributes': 'onclick=alert(this.name);',
+                                  'type': 'submit'
+                                  }
+                                ],
+                 }
+              
+    context = {
+                'base_layer_input': base_layer_input,
+                'base_layer_api_key_input': base_layer_api_key_input,
+                'ecmwf_rapid_input': ecmwf_rapid_input,
+                'submit_button': submit_button,
+              }
+
+    return render(request, 'erfp_tool/settings.html', context)
+
+def add_watershed(request):
+    """
+    Controller for the app add_watershed page.
+    """
+
+    watershed_name_input = {
+                'display_text': 'Watershed Name (this is the name in the CKAN server or folder name on local instance)',
+                'name': 'watershed-name-input',
+                'placeholder': 'e.g.: magdalena'
+              }
+    subbasin_name_input = {
+                'display_text': 'Subbasin Name (this is the name in the CKAN server or folder name on local instance)',
+                'name': 'subbasin-name-input',
+                'placeholder': 'e.g.: el_banco'
+              }
+    geoserver_location_input = {
+                'display_text': 'Geoserver Location',
+                'name': 'geoserver-location-input',
+                'placeholder': 'e.g.: http://felek.cns.umass.edu:8080/geoserver/wms'
+              }
+    geoserver_layers_input = {
+                'display_text': 'Geoserver KML Layer',
+                'name': 'geoserver-layers-input',
+                'placeholder': 'e.g.: Streams:Developed'
+              }
+              
+    ckan_name_input = {
+                'display_text': 'CKAN Server Name',
+                'name': 'ckan-name-input',
+                'placeholder': 'e.g.: My CKAN Server'
+              }
+    ckan_endpoint_input = {
+                'display_text': 'CKAN API Endpoint',
+                'name': 'ckan-endpoint-input',
+                'placeholder': 'e.g.: http://ciwweb.chpc.utah.edu/api/3/action'
+              }
+    ckan_api_key_input = {
+                'display_text': 'CKAN API Key',
+                'name': 'ckan-api-key-input',
+                'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9'
+              }
+
+    add_button = {'buttons': [
+                                 {'display_text': 'Add Watershed',
+                                  'icon': 'glyphicon glyphicon-plus',
+                                  'style': 'success',
+                                  'name': 'submit-add-watershed',
+                                  'attributes': 'onclick=alert(this.name);',
+                                  'type': 'submit'
+                                  }
+                                ],
+                 }
+
+    context = {
+                'watershed_name_input': watershed_name_input,
+                'subbasin_name_input': subbasin_name_input,
+                'geoserver_location_input': geoserver_location_input,
+                'geoserver_layers_input': geoserver_layers_input,
+                'ckan_name_input': ckan_name_input,
+                'ckan_endpoint_input': ckan_endpoint_input,
+                'ckan_api_key_input': ckan_api_key_input,
+                'add_button': add_button,
+              }
+
+    return render(request, 'erfp_tool/add_watershed.html', context)
     
 def find_most_current_files(path_to_watershed_files, basin_name):
     """""
     Finds the current output from downscaled ECMWF forecasts
     """""
-    #check if there are any today or yesterday
-    date_today = datetime.datetime.utcnow()
-    date_yesterday = date_today - datetime.timedelta(1)
-    possible_dates = [date_today, date_yesterday]
-    possible_times = ['1200','0']
-    for date in possible_dates:
-        for time in possible_times:
-            path_to_files = os.path.join(path_to_watershed_files,
-                                         date.strftime('%Y%m%d')+'.'+time)
-            if os.path.exists(path_to_files):
-                basin_files = glob(os.path.join(path_to_files,
-                                                "*"+basin_name+"*.nc"))
-                if len(basin_files) >0:
-                    hour = int(time)/100
-                    return basin_files, date + datetime.timedelta(0,int(hour)*60*60)
-    #there are none from yesterday or today
+    directory = sorted(os.listdir(path_to_watershed_files))[-1]
+    date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
+    time = directory.split(".")[-1]
+    path_to_files = os.path.join(path_to_watershed_files, directory)
+    if os.path.exists(path_to_files):
+        basin_files = glob(os.path.join(path_to_files,
+                                        "*"+basin_name+"*.nc"))
+        if len(basin_files) >0:
+            hour = int(time)/100
+            return basin_files, date + datetime.timedelta(0,int(hour)*60*60)
+    #there are no files found
     return None, None
 
 def get_reach_index(reach_id, basin_files):

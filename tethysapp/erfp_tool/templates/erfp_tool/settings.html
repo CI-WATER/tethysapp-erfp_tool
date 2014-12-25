@@ -1,0 +1,32 @@
+{% extends "erfp_tool/base.html" %}
+
+{% load staticfiles %}
+
+{% load tethys_gizmos %}
+
+{% block styles %}
+  {{ block.super }}
+  <link href="{% static 'erfp_tool/css/main.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block app_content %}
+    <h1>Settings</h1>
+    {% gizmo select_input base_layer_input %}
+    {% gizmo text_input base_layer_api_key_input %}
+    {% gizmo text_input ecmwf_rapid_input %}
+    {% gizmo button_group submit_button %}
+{% endblock %}
+
+{% block app_navigation_items %}
+  <li class="title">App Navigation</li>
+  <li><a href="/apps/erfp-tool">Map</a></li>
+  <li class="active"><a href="/apps/erfp-tool/settings">Settings</a></li>
+  <li><a href="/apps/erfp-tool/add-watershed">Add a Watershed</a></li>
+  <li class="separator"></li>
+  <li><a href="">Information</a></li>
+{% endblock %}
+
+{% block scripts %}
+  {{ block.super }}
+  <script src="{% static 'erfp_tool/js/settings.js' %}" type="text/javascript"></script>
+{% endblock %}
