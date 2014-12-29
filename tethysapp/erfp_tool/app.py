@@ -1,5 +1,5 @@
 from tethys_apps.base import DatasetService, TethysAppBase, url_map_maker
-
+from tethys_apps.base import PersistentStore
 
 class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
     """
@@ -28,12 +28,30 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
                     UrlMap(name='add_watershed',
                            url='erfp-tool/add-watershed',
                            controller='erfp_tool.controllers.add_watershed'),
+                    UrlMap(name='add_geoserver',
+                           url='erfp-tool/add-geoserver',
+                           controller='erfp_tool.controllers.add_geoserver'),
+                    UrlMap(name='add_data_store',
+                           url='erfp-tool/add-data-store',
+                           controller='erfp_tool.controllers.add_data_store'),
                     UrlMap(name='get_reach_statistical_hydrograph',
                            url='erfp-tool/get-hydrograph',
                            controller='erfp_tool.controllers.get_hydrograph'),
         )
 
         return url_maps
+        
+    def persistent_stores(self):
+        """
+        Add one or more persistent stores
+        """
+        stores = (PersistentStore(name='settings_db',
+                                  initializer='init_stores:settings_db',
+                                  spatial=False
+                ),
+        )
+
+        return stores
 
     def dataset_services(self):
         """

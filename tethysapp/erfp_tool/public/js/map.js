@@ -19,21 +19,29 @@ var ERFP_MAP = (function() {
     *************************************************************************/
     var public_interface,                // Object returned by the module
        m_map,                    // the main map
-       m_kml_drainage_line_layers, m_kml_catchment_layers,
-       m_popup, m_popup_element,
-       m_map_extent; 
+       m_map_extent;            //the extent of all objects in map
         
     
     /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
-    var updateExtents,toTitleCase, displayHydrograph;
+    var bindInputs, updateExtents,zoomToLayer, toTitleCase, displayHydrograph;
 
 
     /************************************************************************
     *                    PRIVATE FUNCTION IMPLEMENTATIONS
     *************************************************************************/
-    
+    bindInputs = function(layerid, layer) {
+      new ol.dom.Input($(layerid + ' .visible')[0])
+          .bindTo('checked', layer, 'visible');
+      $.each(['opacity'],
+          function(i, v) {
+            new ol.dom.Input($(layerid + ' .' + v)[0])
+                .bindTo('value', layer, v)
+                .transform(parseFloat, String);
+          }
+      );
+    }    
     //FUNCTION: zooms to all kml files
     updateExtents = function() {
         var new_extent = ol.extent.createEmpty();
@@ -44,7 +52,21 @@ var ERFP_MAP = (function() {
                 ol.extent.extend(extent, vector_source.getExtent());
             }
         });
-        m_map.getView().fixExtent(new_extent, m_map.getSize());
+        m_map.getView().fitExtent(new_extent, m_map.getSize());
+    };
+
+    zoomToLayer = function(layer_id) {
+        m_map.getLayers().forEach(function(layer, i) {
+            if (layer instanceof ol.layer.Group) {
+                layer.getLayers().forEach(function(sublayer, j) {
+                    if(sublayer.get('layer_id') == layer_id) {
+                        var source = sublayer.getSource();
+                        m_map.getView().fitExtent(source.getExtent(), m_map.getSize());
+                        return;
+                    }
+                });
+            }
+        });    
     };
     
     toTitleCase = function(str)
@@ -73,6 +95,7 @@ var ERFP_MAP = (function() {
                     $("#erfp-chart").highcharts({
                         title: { text: toTitleCase(watershed)},
                         subtitle: {text: toTitleCase(subbasin) + ": " + id},
+                        chart: {zoomType: 'x',},
                         plotOptions: {
                             series: {
                                 marker: {
@@ -85,10 +108,7 @@ var ERFP_MAP = (function() {
                             title: {
                                 text: 'Date'
                             },
-                            dateTimeLabelFormats: { // don't display the dummy year
-                                month: '%e. %b',
-                                year: '%b'
-                            },
+                            minRange: 1 * 24 * 3600000 // one day
                         },
                         yAxis: {            
                             title: {
@@ -156,49 +176,70 @@ var ERFP_MAP = (function() {
 
         var apiKey = "AiW41aALyX4pDfE0jQG93WywSHLih1ihycHtwbaIPmtpZEOuw1iloQuuBmwJm5UA";
 
-        var kml_catchment_urls = JSON.parse($("#map").attr('catchment-kml-urls'));
-        var kml_drainage_line_urls = JSON.parse($("#map").attr('drainage-line-kml-urls'));
-        //load catchment kml layers
-        m_kml_catchment_layers = [];
-        kml_catchment_urls.map(function(kml_url) {
-            var new_layer = new ol.layer.Vector({
-                selectable: false,
-                source: new ol.source.KML({
-                    projection: new ol.proj.get('EPSG:3857'),
-                    url: kml_url,
-                }),
-            });
-            m_kml_catchment_layers.push(new_layer);
-        });
         //load drainage line kml layers
-        m_kml_drainage_line_layers = [];
-        kml_drainage_line_urls.map(function(kml_url) {
-            var new_layer = new ol.layer.Vector({
-                selectable: true,
-                source: new ol.source.KML({
-                    projection: new ol.proj.get('EPSG:3857'),
-                    url: kml_url,
-                }),
+        var kml_urls = JSON.parse($("#map").attr('kml-urls'));
+        var all_group_layers = [];
+        var kml_drainage_line_layers = [];
+        //get sorted list of watersheds
+        var watershed_list = [];
+        for (var watershed in kml_urls) {
+            if(kml_urls.hasOwnProperty(watershed)) {
+                watershed_list.push(watershed);
+            }
+        };
+        watershed_list.sort();
+        //add each watershed kml group
+        watershed_list.forEach(function(watershed, group_index) {
+            var kml_layers = [];                
+            //add catchment if exists
+            if('catchment' in kml_urls[watershed]) {
+                var catchment = new ol.layer.Vector({
+                    source: new ol.source.KML({
+                        projection: new ol.proj.get('EPSG:3857'),
+                        url: kml_urls[watershed]['catchment'],
+                    }),
+                });
+                catchment.set('layer_id', 'layer' + group_index + 1);
+                kml_layers.push(catchment);
+            }
+            
+            //add drainage line if exists
+            if('drainage_line' in kml_urls[watershed]) {
+                var drainage_line = new ol.layer.Vector({
+                    source: new ol.source.KML({
+                        projection: new ol.proj.get('EPSG:3857'),
+                        url: kml_urls[watershed]['drainage_line'],
+                    }),
+                });
+                drainage_line.set('layer_id', 'layer' + group_index + 0);
+                kml_drainage_line_layers.push(drainage_line);
+                kml_layers.push(drainage_line);
+            }
+            var group_layer = new ol.layer.Group({ 
+                    layers: kml_layers,
             });
-            m_kml_drainage_line_layers.push(new_layer);
+            all_group_layers.push(group_layer);
         });
 
+
         //send message to user if Drainage Line KML file not found
-        if (kml_drainage_line_urls.length <= 0) {
+        if (kml_drainage_line_layers.length <= 0) {
             $("#erfp-chart").text("No Drainage Line KML files found. Please upload to begin.");
         }
 
         //make drainage line layers selectable
         var select_interaction = new ol.interaction.Select({
-                                    layers: m_kml_drainage_line_layers,
+                                    layers: kml_drainage_line_layers,
                                 });
 
         //make chart control in map
         var chart_control = new ol.control.Control({element: $("#erfp-chart").get(0)});
 
-        //combine kml layers
-        var all_kml_layers = m_kml_catchment_layers.concat(m_kml_drainage_line_layers);
+        var basemap_layer = new ol.layer.Tile({
+                                source: new ol.source.BingMaps({key: apiKey, imagerySet: "Aerial"}),
+                            });
 
+        var all_map_layers = [basemap_layer].concat(all_group_layers);
         //create map
         m_map = new ol.Map({
             target: 'map',
@@ -212,32 +253,28 @@ var ERFP_MAP = (function() {
                 select_interaction,
 
             ]),
-            layers : [
-                new ol.layer.Tile({
-                    source: new ol.source.BingMaps({key: apiKey, imagerySet: "Aerial"}),
-                }),
-                new ol.layer.Group({ 
-                    layers: all_kml_layers,
-                })
-
-            ],
+            layers : all_map_layers,
             view: new ol.View({
                 center: [-33519607, 5616436],
                 zoom: 8
             })
         });
-
         //wait for kml layers to load and then zoom to them
         var m_map_extent = ol.extent.createEmpty();
-        m_kml_drainage_line_layers.map(function(kml_vector_layer){
-            var vector_source = kml_vector_layer.getSource();
-            var listener_key = vector_source.on('change', 
-                function() {
-                    if (vector_source.getState() == 'ready') {
-                        ol.extent.extend(m_map_extent, vector_source.getExtent());
-                        m_map.getView().fitExtent(m_map_extent, m_map.getSize());
-                    }
-            });
+        all_group_layers.forEach(function(kml_group_layer){
+            if (kml_group_layer instanceof ol.layer.Group) {
+                kml_group_layer.getLayers().forEach(function(kml_vector_layer, j) {
+                    var vector_source = kml_vector_layer.getSource();
+                    var listener_key = vector_source.on('change', 
+                        function() {
+                            if (vector_source.getState() == 'ready') {
+                                bindInputs('#'+kml_vector_layer.get('layer_id'), kml_vector_layer);
+                                ol.extent.extend(m_map_extent, vector_source.getExtent());
+                                m_map.getView().fitExtent(m_map_extent, m_map.getSize());
+                            }
+                    });
+                });
+            }
         });
 
         //when selected, call function to make hydrograph
@@ -248,6 +285,13 @@ var ERFP_MAP = (function() {
             // this means there is at least 1 feature selected
             displayHydrograph(e.target.item(0)); // 1st feature in Collection
           }
+        });
+
+        
+        //create function to zoom to feature
+        $('.zoom-to-layer').click(function() {
+            var layer_id = $(this).parent().parent().attr('id');
+            zoomToLayer(layer_id);
         });
 
 

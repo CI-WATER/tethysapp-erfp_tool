@@ -1,12 +1,26 @@
 import datetime
 from django.http import JsonResponse
 from django.shortcuts import render
-import fnmatch
 from glob import glob
 import json
 import netCDF4 as NET
 import numpy as np
 import os
+
+def create_navigation_string(layer_name, layer_id):
+    return ('                    <li class="dropdown">'
+           '                      <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">%s<span class="caret"></span></a>' % layer_name + \
+           '                      <ul id="%s" class="dropdown-menu" role="menu">' % layer_id + \
+           '                        <li><a class="zoom-to-layer" href="#">Zoom To Layer</a></li>'
+           '                        <li class="divider"></li>'
+           '                        <li><p style="margin-left:20px;"><input class="visible" type="checkbox"> Visibility </p></li>'
+           '                        <li><label style="margin-left:15px;">Opacity</label>'
+           '                            <input style="margin-left:15px; width:80%;" class="opacity" type="range" min="0" max="1" step="0.01">'
+           '                        </li>'
+           '                      </ul>'
+           '                    </li>')
+
+    
 
 def home(request):
     """
@@ -14,18 +28,36 @@ def home(request):
     """
     ##find all kml files to add to page    
     kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml')
-    
-    catchment_kml_urls = []
-    drainage_line_kml_urls = []
-    for dirpath, dirnames, files in os.walk(kml_file_location):
-        for kml_file in fnmatch.filter(files, '*catchment.kml'):
-            catchment_kml_urls.append('/static/erfp_tool/kml/%s/%s' % (os.path.basename(dirpath), kml_file))
-        for kml_file in fnmatch.filter(files, '*drainage_line.kml'):
-            drainage_line_kml_urls.append('/static/erfp_tool/kml/%s/%s' % (os.path.basename(dirpath), kml_file))
+    kml_urls = {}
+    watersheds = sorted(os.listdir(kml_file_location))
+    #add kml urls to list and add their navigation items as well
+    group_id = 0
+    navigation_string = ""
+    for watershed in watersheds:
+        navigation_string += ('            <li><div id="%s-control">' % watershed + \
+        '                <div class="collapse-control">'
+        '                    <a class="closeall" data-toggle="collapse" data-target="#%s-layers">' % watershed + \
+        '%s</a>' % watershed.title().replace("_"," ") + \
+        '                </div>'
+        '                <div id="%s-layers" class="collapse in">' % watershed + \
+        '                    <ul>')
 
+        file_path = os.path.join(kml_file_location, watershed)
+        kml_urls[watershed] = {}
+        for kml_file in glob(os.path.join(file_path, '*drainage_line.kml')):
+            kml_urls[watershed]['drainage_line'] = '/static/erfp_tool/kml/%s/%s' % (watershed, os.path.basename(kml_file))
+            navigation_string += create_navigation_string("Drainage Line", "layer" + str(group_id)+str(0))
+        for kml_file in glob(os.path.join(file_path, '*catchment.kml')):
+            kml_urls[watershed]['catchment'] = '/static/erfp_tool/kml/%s/%s' % (watershed, os.path.basename(kml_file))
+            navigation_string += create_navigation_string("Catchment", "layer" + str(group_id)+str(1))
+        navigation_string += ('                    </ul>'
+        '                </div> <!-- div: %s-layers -->' % watershed + \
+        '            </div></li>  <!-- div: %s-control -->' % watershed) 
+        group_id += 1
+            
     context = {
-                'catchment_kml_urls' : json.dumps(catchment_kml_urls),
-                'drainage_line_kml_urls' : json.dumps(drainage_line_kml_urls)
+                'kml_urls' : json.dumps(kml_urls),
+                'map_navigation' : navigation_string
               }
 
     return render(request, 'erfp_tool/home.html', context)
@@ -76,41 +108,36 @@ def add_watershed(request):
     """
 
     watershed_name_input = {
-                'display_text': 'Watershed Name (this is the name in the CKAN server or folder name on local instance)',
+                'display_text': 'Watershed Name (this is the name in the data store server or folder name on local instance)',
                 'name': 'watershed-name-input',
                 'placeholder': 'e.g.: magdalena'
               }
     subbasin_name_input = {
-                'display_text': 'Subbasin Name (this is the name in the CKAN server or folder name on local instance)',
+                'display_text': 'Subbasin Name (this is the name in the data store server or folder name on local instance)',
                 'name': 'subbasin-name-input',
                 'placeholder': 'e.g.: el_banco'
               }
-    geoserver_location_input = {
-                'display_text': 'Geoserver Location',
-                'name': 'geoserver-location-input',
-                'placeholder': 'e.g.: http://felek.cns.umass.edu:8080/geoserver/wms'
-              }
+              
+    data_store_select_input = {
+                'display_text': 'Select a Data Store',
+                'name': 'select-data-store',
+                'options': [('CKAN', '1'), ('BYU World Water', '2'), ('Test', '3')],
+                'initial': ['CKAN']
+                }          
+              
+    geoserver_select_input = {
+                'display_text': 'Select a Geoserver',
+                'name': 'select-geoserver',
+                'options': [('geoserver1', '1'), ('geoserver2', '2'), ('geoserver3', '3')],
+                'initial': ['geoserver1']
+                }
+                
     geoserver_layers_input = {
                 'display_text': 'Geoserver KML Layer',
                 'name': 'geoserver-layers-input',
                 'placeholder': 'e.g.: Streams:Developed'
               }
               
-    ckan_name_input = {
-                'display_text': 'CKAN Server Name',
-                'name': 'ckan-name-input',
-                'placeholder': 'e.g.: My CKAN Server'
-              }
-    ckan_endpoint_input = {
-                'display_text': 'CKAN API Endpoint',
-                'name': 'ckan-endpoint-input',
-                'placeholder': 'e.g.: http://ciwweb.chpc.utah.edu/api/3/action'
-              }
-    ckan_api_key_input = {
-                'display_text': 'CKAN API Key',
-                'name': 'ckan-api-key-input',
-                'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9'
-              }
 
     add_button = {'buttons': [
                                  {'display_text': 'Add Watershed',
@@ -126,30 +153,99 @@ def add_watershed(request):
     context = {
                 'watershed_name_input': watershed_name_input,
                 'subbasin_name_input': subbasin_name_input,
-                'geoserver_location_input': geoserver_location_input,
+                'geoserver_select_input': geoserver_select_input,
                 'geoserver_layers_input': geoserver_layers_input,
-                'ckan_name_input': ckan_name_input,
-                'ckan_endpoint_input': ckan_endpoint_input,
-                'ckan_api_key_input': ckan_api_key_input,
+                'data_store_select_input': data_store_select_input,
                 'add_button': add_button,
               }
 
     return render(request, 'erfp_tool/add_watershed.html', context)
     
+def add_data_store(request):        
+    data_store_name_input = {
+                'display_text': 'Data Store Server Name',
+                'name': 'ckan-name-input',
+                'placeholder': 'e.g.: My CKAN Server'
+              }
+    data_store_type_select_input = {
+                'display_text': 'Data Store Type',
+                'name': 'select-data-store',
+                'options': [('CKAN', 'ckan'), ('HydroShare', 'hydroshare')],
+                'initial': ['CKAN']
+                }          
+
+    data_store_endpoint_input = {
+                'display_text': 'Data Store API Endpoint',
+                'name': 'data-store-endpoint-input',
+                'placeholder': 'e.g.: http://ciwweb.chpc.utah.edu/api/3/action'
+              }
+
+    data_store_api_key_input = {
+                'display_text': 'Data Store API Key',
+                'name': 'data-store-api-key-input',
+                'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9'
+              }
+
+    add_button = {'buttons': [
+                                 {'display_text': 'Add Data Store',
+                                  'icon': 'glyphicon glyphicon-plus',
+                                  'style': 'success',
+                                  'name': 'submit-add-data-store',
+                                  'attributes': 'onclick=alert(this.name);',
+                                  'type': 'submit'
+                                  }
+                                ],
+                 }
+
+    context = {
+                'data_store_name_input': data_store_name_input,
+                'data_store_type_select_input': data_store_type_select_input,
+                'data_store_endpoint_input': data_store_endpoint_input,
+                'data_store_api_key_input': data_store_api_key_input,
+                'add_button': add_button,
+              }
+    return render(request, 'erfp_tool/add_data_store.html', context)
+
+def add_geoserver(request):        
+    geoserver_location_input = {
+                'display_text': 'Geoserver Location',
+                'name': 'geoserver-location-input',
+                'placeholder': 'e.g.: http://felek.cns.umass.edu:8080/geoserver/wms'
+              }
+
+    add_button = {'buttons': [
+                                 {'display_text': 'Add Geoserver',
+                                  'icon': 'glyphicon glyphicon-plus',
+                                  'style': 'success',
+                                  'name': 'submit-add-geoserver',
+                                  'attributes': 'onclick=alert(this.name);',
+                                  'type': 'submit'
+                                  }
+                                ],
+                 }
+
+    context = {
+                'geoserver_location_input': geoserver_location_input,
+                'add_button': add_button,
+              }
+
+    return render(request, 'erfp_tool/add_geoserver.html', context)
+    
 def find_most_current_files(path_to_watershed_files, basin_name):
     """""
     Finds the current output from downscaled ECMWF forecasts
     """""
-    directory = sorted(os.listdir(path_to_watershed_files))[-1]
-    date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
-    time = directory.split(".")[-1]
-    path_to_files = os.path.join(path_to_watershed_files, directory)
-    if os.path.exists(path_to_files):
-        basin_files = glob(os.path.join(path_to_files,
-                                        "*"+basin_name+"*.nc"))
-        if len(basin_files) >0:
-            hour = int(time)/100
-            return basin_files, date + datetime.timedelta(0,int(hour)*60*60)
+    directories = sorted(os.listdir(path_to_watershed_files), reverse=True)
+    for directory in directories:    
+        date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
+        time = directory.split(".")[-1]
+        path_to_files = os.path.join(path_to_watershed_files, directory)
+        if os.path.exists(path_to_files):
+            basin_files = glob(os.path.join(path_to_files,
+                                            "*"+basin_name+"*.nc"))
+            if len(basin_files) >0:
+                hour = int(time)/100
+                return basin_files, date + datetime.timedelta(0,int(hour)*60*60)
     #there are no files found
     return None, None
 

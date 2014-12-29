@@ -13,14 +13,16 @@
     <h1>Add a Watershed</h1>
     {% gizmo text_input watershed_name_input %}
     {% gizmo text_input subbasin_name_input %}
-    <h3>CKAN Data Storage Input</h3>
+
+    <h3>Data Storage Input</h3>
     <em>This is where the predictions are stored.</em><br/><br/>
-    {% gizmo text_input ckan_name_input %}
-    {% gizmo text_input ckan_endpoint_input %}
-    {% gizmo text_input ckan_api_key_input %}
+    {% gizmo select_input data_store_select_input %}
+    <p>Don't see the data store you want? Add one <a href="/apps/erfp-tool/add-data-store">here</a>.</p>
+
     <h3>KML Geoserver Location</h3> 
     <em>Where the reach and catchbasin KML files are stored.</em><br/><br/>
-    {% gizmo text_input geoserver_location_input %}
+    {% gizmo select_input geoserver_select_input %}
+    <p>Don't see the geoserver you want? Add one <a href="/apps/erfp-tool/add-geoserver">here</a>.</p>
     {% gizmo text_input geoserver_layers_input %}
 
     {% gizmo button_group add_button %}
@@ -31,6 +33,8 @@
   <li><a href="/apps/erfp-tool">Map</a></li>
   <li><a href="/apps/erfp-tool/settings">Settings</a></li>
   <li class="active"><a href="/apps/erfp-tool/add-watershed">Add a Watershed</a></li>
+  <li><a href="/apps/erfp-tool/add-data-store">Add a Data Store</a></li>
+  <li><a href="/apps/erfp-tool/add-geoserver">Add a GeoServer</a></li>
   <li class="separator"></li>
   <li><a href="">Information</a></li>
 {% endblock %}
