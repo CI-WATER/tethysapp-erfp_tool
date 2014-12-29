@@ -39,14 +39,14 @@ class BaseLayer(Base):
 
     # Columns
     id = Column(Integer, primary_key=True)
-    base_layer_name = Column(String)
+    name = Column(String)
     api_key = Column(String)
 
-    def __init__(self, base_layer_name, api_key):
+    def __init__(self, name, api_key):
         """
         Constructor for settings
         """
-        self.base_layer_name = base_layer_name
+        self.name = name
         self.api_key = api_key
 
 # SQLAlchemy ORM definition for the data_store table
@@ -82,15 +82,15 @@ class DataStoreType(Base):
 
     # Columns
     id = Column(Integer, primary_key=True)
-    data_store_type = Column(String)
-    data_store_name = Column(String)
+    code_name = Column(String)
+    human_readable_name = Column(String)
 
-    def __init__(self, data_store_type, data_store_name):
+    def __init__(self, code_name, human_readable_name):
         """
         Constructor for settings
         """
-        self.data_store_type = data_store_type
-        self.data_store_name = data_store_name
+        self.code_name = code_name
+        self.human_readable_name = human_readable_name
 
 # SQLAlchemy ORM definition for the data_store table
 class Geoserver(Base):
@@ -101,13 +101,15 @@ class Geoserver(Base):
 
     # Columns
     id = Column(Integer, primary_key=True)
-    geoserver_url = Column(String)
+    name = Column(String)
+    url = Column(String)
 
-    def __init__(self, geoserver_url):
+    def __init__(self, name, url):
         """
         Constructor for settings
         """
-        self.geoserver_url = geoserver_url
+        self.name = name
+        self.url = url
 
 # SQLAlchemy ORM definition for the data_store table
 class Watershed(Base):

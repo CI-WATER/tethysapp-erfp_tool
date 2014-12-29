@@ -7,6 +7,11 @@ import netCDF4 as NET
 import numpy as np
 import os
 
+#local import
+from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
+                    SettingsSessionMaker)
+
+
 def create_navigation_string(layer_name, layer_id):
     return ('                    <li class="dropdown">'
            '                      <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">%s<span class="caret"></span></a>' % layer_name + \
@@ -66,24 +71,43 @@ def settings(request):
     """
     Controller for the app settings page.
     """
+    
+    session = SettingsSessionMaker()
+    # Query DB for base layers
+    base_layers = session.query(BaseLayer).all()
+    base_layer_list = []
+    base_layer_api_keys = {}
+    for base_layer in base_layers:
+        base_layer_list.append((base_layer.name, base_layer.id))
+        base_layer_api_keys[base_layer.id] = base_layer.api_key
+
+    #Query DB for settings
+    settings = session.query(MainSettings).one()
+    
     base_layer_input = {
                 'display_text': 'Select a Base Layer',
                 'name': 'base_layer-input',
                 'multiple': False,
-                'options': [('BingMaps', '1'), ('GoogleMaps', '2'), ('WMS', '3')],
-                'initial': 'BingMaps'
+                'options': base_layer_list,
+                'initial': base_layer_list[settings.base_layer_id-1][0]
                 }
+
     base_layer_api_key_input = {
                 'display_text': 'Base Layer API Key',
                 'name': 'api-key-input',
-                'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9'
+                'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9',
+                'icon_append':'glyphicon glyphicon-lock',
+                'initial': base_layer_api_keys[base_layer_list[settings.base_layer_id-1][1]]
               }
+              
     ecmwf_rapid_input = {
                 'display_text': 'Local Location of ECMWF-RAPID files',
                 'name': 'ecmwf-rapid-location-input',
                 'placeholder': 'e.g.: /home/username/work/rapid/output',
-                'icon_append':'glyphicon glyphicon-folder-open'
+                'icon_append':'glyphicon glyphicon-folder-open',
+                'initial': settings.local_prediction_files
               }
+              
     submit_button = {'buttons': [
                                  {'display_text': 'Submit',
                                   'name': 'submit-changes-settings',
@@ -98,6 +122,7 @@ def settings(request):
                 'base_layer_api_key_input': base_layer_api_key_input,
                 'ecmwf_rapid_input': ecmwf_rapid_input,
                 'submit_button': submit_button,
+                'base_layer_api_keys': base_layer_api_keys,
               }
 
     return render(request, 'erfp_tool/settings.html', context)
@@ -106,36 +131,57 @@ def add_watershed(request):
     """
     Controller for the app add_watershed page.
     """
+    #initialize session
+    session = SettingsSessionMaker()
 
     watershed_name_input = {
                 'display_text': 'Watershed Name (this is the name in the data store server or folder name on local instance)',
                 'name': 'watershed-name-input',
-                'placeholder': 'e.g.: magdalena'
+                'placeholder': 'e.g.: magdalena',
+                'icon_append':'glyphicon glyphicon-home',
               }
+              
     subbasin_name_input = {
                 'display_text': 'Subbasin Name (this is the name in the data store server or folder name on local instance)',
                 'name': 'subbasin-name-input',
-                'placeholder': 'e.g.: el_banco'
+                'placeholder': 'e.g.: el_banco',
+                'icon_append':'glyphicon glyphicon-tree-deciduous',
               }
               
+    # Query DB for data stores
+    data_stores = session.query(DataStore).all()
+    data_store_list = []
+    for data_store in data_stores:
+        data_store_list.append((data_store.server_name + " (" + data_store.api_endpoint + ")", data_store.id))
+
+    if(len(data_store_list) <= 0):
+        data_store_list.append(('None', -1))
     data_store_select_input = {
                 'display_text': 'Select a Data Store',
                 'name': 'select-data-store',
-                'options': [('CKAN', '1'), ('BYU World Water', '2'), ('Test', '3')],
-                'initial': ['CKAN']
+                'options': data_store_list,
+                'initial': data_store_list[0][0]
                 }          
               
+    # Query DB for geoservers
+    geoservers = session.query(Geoserver).all()
+    geoserver_list = []
+    for geoserver in geoservers:
+        geoserver_list.append((geoserver.name + " (" + geoserver.url + ")", geoserver.id))
+
     geoserver_select_input = {
                 'display_text': 'Select a Geoserver',
                 'name': 'select-geoserver',
-                'options': [('geoserver1', '1'), ('geoserver2', '2'), ('geoserver3', '3')],
-                'initial': ['geoserver1']
+                'options': geoserver_list,
+                'initial': geoserver_list[0][0]
                 }
                 
     geoserver_layers_input = {
                 'display_text': 'Geoserver KML Layer',
                 'name': 'geoserver-layers-input',
-                'placeholder': 'e.g.: Streams:Developed'
+                'placeholder': 'e.g.: Streams:Developed',
+                'icon_append':'glyphicon glyphicon-link',
+
               }
               
 
@@ -162,16 +208,26 @@ def add_watershed(request):
     return render(request, 'erfp_tool/add_watershed.html', context)
     
 def add_data_store(request):        
+    #initialize session
+    session = SettingsSessionMaker()
+
     data_store_name_input = {
                 'display_text': 'Data Store Server Name',
                 'name': 'ckan-name-input',
                 'placeholder': 'e.g.: My CKAN Server'
               }
+
+    # Query DB for data store types
+    data_store_types = session.query(DataStoreType).all()
+    data_store_type_list = []
+    for data_store_type in data_store_types:
+        data_store_type_list.append((data_store_type.human_readable_name, data_store_type.id))
+
     data_store_type_select_input = {
                 'display_text': 'Data Store Type',
                 'name': 'select-data-store',
-                'options': [('CKAN', 'ckan'), ('HydroShare', 'hydroshare')],
-                'initial': ['CKAN']
+                'options': data_store_type_list,
+                'initial': data_store_type_list[0][0]
                 }          
 
     data_store_endpoint_input = {

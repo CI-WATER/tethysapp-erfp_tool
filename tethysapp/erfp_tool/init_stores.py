@@ -1,5 +1,5 @@
 # Put your persistent store initializer functions in here
-from .model import (Base, BaseLayer, DataStoreType, MainSettings,
+from .model import (Base, BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
                     settingsEngine, SettingsSessionMaker)
 
 def init_erfp_settings_db(first_time):
@@ -17,9 +17,16 @@ def init_erfp_settings_db(first_time):
         session.add(BaseLayer("MapQuest","",))
         
         #add all possible data story types
+        session.add(DataStoreType("local", "Local Server"))
         session.add(DataStoreType("ckan", "CKAN"))
         session.add(DataStoreType("hydroshare", "HydroShare"))
         
+        #add all possible data stores
+        session.add(DataStore("Local Server", 1, "local", ""))
+
+        #add all possible geoservers
+        session.add(Geoserver("Local Server", "media"))
+
         #add main settings
         session.add(MainSettings(1, ""))
         
