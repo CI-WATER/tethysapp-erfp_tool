@@ -25,13 +25,13 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
                     UrlMap(name='settings',
                            url='erfp-tool/settings',
                            controller='erfp_tool.controllers.settings'),
-                    UrlMap(name='add_watershed',
+                    UrlMap(name='add-watershed',
                            url='erfp-tool/add-watershed',
                            controller='erfp_tool.controllers.add_watershed'),
-                    UrlMap(name='add_geoserver',
+                    UrlMap(name='add-geoserver',
                            url='erfp-tool/add-geoserver',
                            controller='erfp_tool.controllers.add_geoserver'),
-                    UrlMap(name='add_data_store',
+                    UrlMap(name='add-data-store',
                            url='erfp-tool/add-data-store',
                            controller='erfp_tool.controllers.add_data_store'),
                     UrlMap(name='get_reach_statistical_hydrograph',
@@ -46,7 +46,7 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
         Add one or more persistent stores
         """
         stores = (PersistentStore(name='settings_db',
-                                  initializer='init_stores:settings_db',
+                                  initializer='init_stores:init_erfp_settings_db',
                                   spatial=False
                 ),
         )

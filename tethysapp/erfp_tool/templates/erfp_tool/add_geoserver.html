@@ -19,11 +19,11 @@
 
 {% block app_navigation_items %}
   <li class="title">App Navigation</li>
-  <li><a href="/apps/erfp-tool">Map</a></li>
-  <li><a href="/apps/erfp-tool/settings">Settings</a></li>
-  <li><a href="/apps/erfp-tool/add-watershed">Add a Watershed</a></li>
-  <li><a href="/apps/erfp-tool/add-data-store">Add a Data Store</a></li>
-  <li class="active"><a href="/apps/erfp-tool/add-geoserver">Add a GeoServer</a></li>
+  <li><a href="{% url 'erfp_tool:home' %}">Map</a></li>
+  <li><a href="{% url 'erfp_tool:settings' %}">Settings</a></li>
+  <li><a href="{% url 'erfp_tool:add-watershed' %}">Add a Watershed</a></li>
+  <li><a href="{% url 'erfp_tool:add-data-store' %}">Add a Data Store</a></li>
+  <li class="active"><a href="{% url 'erfp_tool:add-geoserver' %}">Add a GeoServer</a></li>
   <li class="separator"></li>
   <li><a href="">Information</a></li>
 {% endblock %}

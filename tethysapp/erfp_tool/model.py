@@ -1,53 +1,134 @@
 # Put your persistent store models in this file
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import relationship, sessionmaker
 
 from .utilities import get_persistent_store_engine
 
 # DB Engine, sessionmaker and base
-settings_engine = get_persistent_store_engine('settings_db')
-SettingsSessionMaker = sessionmaker(bind=settings_engine)
+settingsEngine = get_persistent_store_engine('settings_db')
+SettingsSessionMaker = sessionmaker(bind=settingsEngine)
 Base = declarative_base()
 
 # SQLAlchemy ORM definition for the main_settings table
-class MainSettings (Base):
+class MainSettings(Base):
     '''
     Main Settings DB Model
     '''
     __tablename__ = 'main_settings'
 
     # Columns
-    settings_id = Column(Integer, primary_key=True)
-    base_layer = Column(String)
-    api_key = Column(String)
+    id = Column(Integer, primary_key=True)
+    base_layer_id = Column(Integer,ForeignKey('base_layer.id'))
+    base_layer = relationship("BaseLayer")
     local_prediction_files = Column(String)
 
-    def __init__(self, base_layer, api_key, local_prediction_files):
+    def __init__(self, base_layer_id, local_prediction_files):
         """
         Constructor for settings
         """
-        self.base_layer = base_layer
-        self.api_key = api_key
+        self.base_layer_id = base_layer_id
         self.local_prediction_files = local_prediction_files
         
-# SQLAlchemy ORM definition for the main_settings table
-class DataStore (Base):
+# SQLAlchemy ORM definition for the data_store_type table
+class BaseLayer(Base):
+    '''
+    DataStore DB Model
+    '''
+    __tablename__ = 'base_layer'
+
+    # Columns
+    id = Column(Integer, primary_key=True)
+    base_layer_name = Column(String)
+    api_key = Column(String)
+
+    def __init__(self, base_layer_name, api_key):
+        """
+        Constructor for settings
+        """
+        self.base_layer_name = base_layer_name
+        self.api_key = api_key
+
+# SQLAlchemy ORM definition for the data_store table
+class DataStore(Base):
     '''
     DataStore DB Model
     '''
     __tablename__ = 'data_store'
 
     # Columns
-    data_store_id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     server_name = Column(String)
-    server_type = Column(Integer)
-    local_prediction_files = Column(String)
+    data_store_type_id = Column(Integer,ForeignKey('data_store_type.id'))
+    data_store_type = relationship("DataStoreType")
+    api_endpoint = Column(String)
+    api_key = Column(String)
 
-    def __init__(self, base_layer, api_key, local_prediction_files):
+    def __init__(self, server_name, data_store_type_id, api_endpoint, api_key):
         """
         Constructor for settings
         """
-        self.base_layer = base_layer
+        self.server_name = server_name
+        self.data_store_type_id = data_store_type_id
+        self.api_endpoint = api_endpoint
         self.api_key = api_key
+
+# SQLAlchemy ORM definition for the data_store_type table
+class DataStoreType(Base):
+    '''
+    DataStore DB Model
+    '''
+    __tablename__ = 'data_store_type'
+
+    # Columns
+    id = Column(Integer, primary_key=True)
+    data_store_type = Column(String)
+    data_store_name = Column(String)
+
+    def __init__(self, data_store_type, data_store_name):
+        """
+        Constructor for settings
+        """
+        self.data_store_type = data_store_type
+        self.data_store_name = data_store_name
+
+# SQLAlchemy ORM definition for the data_store table
+class Geoserver(Base):
+    '''
+    DataStore DB Model
+    '''
+    __tablename__ = 'geoserver'
+
+    # Columns
+    id = Column(Integer, primary_key=True)
+    geoserver_url = Column(String)
+
+    def __init__(self, geoserver_url):
+        """
+        Constructor for settings
+        """
+        self.geoserver_url = geoserver_url
+
+# SQLAlchemy ORM definition for the data_store table
+class Watershed(Base):
+    '''
+    DataStore DB Model
+    '''
+    __tablename__ = 'watershed'
+
+    # Columns
+    id = Column(Integer, primary_key=True)
+    watershed_name = Column(String)
+    subbasin_name = Column(String)
+    data_store_id = Column(Integer,ForeignKey('data_store.id'))
+    data_store = relationship("DataStore")
+    geoserver_id = Column(Integer,ForeignKey('geoserver.id'))
+    geoserver = relationship("Geoserver")
+
+    def __init__(self, server_name, data_store_type_id, local_prediction_files):
+        """
+        Constructor for settings
+        """
+        self.server_name = server_name
+        self.data_store_type_id = data_store_type_id
         self.local_prediction_files = local_prediction_files

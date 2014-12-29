@@ -17,12 +17,12 @@
     <h3>Data Storage Input</h3>
     <em>This is where the predictions are stored.</em><br/><br/>
     {% gizmo select_input data_store_select_input %}
-    <p>Don't see the data store you want? Add one <a href="/apps/erfp-tool/add-data-store">here</a>.</p>
+    <p>Don't see the data store you want? Add one <a href="{% url 'erfp_tool:add-data-store' %}">here</a>.</p>
 
     <h3>KML Geoserver Location</h3> 
     <em>Where the reach and catchbasin KML files are stored.</em><br/><br/>
     {% gizmo select_input geoserver_select_input %}
-    <p>Don't see the geoserver you want? Add one <a href="/apps/erfp-tool/add-geoserver">here</a>.</p>
+    <p>Don't see the geoserver you want? Add one <a href="{% url 'erfp_tool:add-geoserver' %}">here</a>.</p>
     {% gizmo text_input geoserver_layers_input %}
 
     {% gizmo button_group add_button %}
@@ -30,11 +30,11 @@
 
 {% block app_navigation_items %}
   <li class="title">App Navigation</li>
-  <li><a href="/apps/erfp-tool">Map</a></li>
-  <li><a href="/apps/erfp-tool/settings">Settings</a></li>
-  <li class="active"><a href="/apps/erfp-tool/add-watershed">Add a Watershed</a></li>
-  <li><a href="/apps/erfp-tool/add-data-store">Add a Data Store</a></li>
-  <li><a href="/apps/erfp-tool/add-geoserver">Add a GeoServer</a></li>
+  <li><a href="{% url 'erfp_tool:home' %}">Map</a></li>
+  <li><a href="{% url 'erfp_tool:settings' %}">Settings</a></li>
+  <li class="active"><a href="{% url 'erfp_tool:add-watershed' %}">Add a Watershed</a></li>
+  <li><a href="{% url 'erfp_tool:add-data-store' %}">Add a Data Store</a></li>
+  <li><a href="{% url 'erfp_tool:add-geoserver' %}">Add a GeoServer</a></li>
   <li class="separator"></li>
   <li><a href="">Information</a></li>
 {% endblock %}
