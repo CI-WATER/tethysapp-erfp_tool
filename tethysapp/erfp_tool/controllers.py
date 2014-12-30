@@ -6,6 +6,7 @@ import json
 import netCDF4 as NET
 import numpy as np
 import os
+from sqlalchemy import or_
 
 #local import
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
@@ -136,7 +137,7 @@ def settings(request):
 
     return render(request, 'erfp_tool/settings.html', context)
 
-def update_settings(request):
+def update_settings_ajax(request):
     """
     Controller for updating the settings.
     """
@@ -145,7 +146,6 @@ def update_settings(request):
     base_layer_id = get_info.get('base_layer_id')
     api_key = get_info.get('api_key')
     local_prediction_files = get_info.get('ecmwf_rapid_location')
-
     #initialize session
     session = SettingsSessionMaker()
     
@@ -157,7 +157,6 @@ def update_settings(request):
     session.commit()
     
     return JsonResponse({ 'success': "Settings Sucessfully Updated!" })
-    
 
 
 def add_watershed(request):
@@ -249,7 +248,7 @@ def add_data_store(request):
 
     data_store_name_input = {
                 'display_text': 'Data Store Server Name',
-                'name': 'ckan-name-input',
+                'name': 'data-store-name-input',
                 'placeholder': 'e.g.: My CKAN Server',
                 'icon_append':'glyphicon glyphicon-tag',
               }
@@ -262,7 +261,7 @@ def add_data_store(request):
 
     data_store_type_select_input = {
                 'display_text': 'Data Store Type',
-                'name': 'select-data-store',
+                'name': 'data-store-type-select',
                 'options': data_store_type_list,
                 'initial': data_store_type_list[0][0]
                 }          
@@ -286,7 +285,7 @@ def add_data_store(request):
                                   'icon': 'glyphicon glyphicon-plus',
                                   'style': 'success',
                                   'name': 'submit-add-data-store',
-                                  'attributes': 'onclick=alert(this.name);',
+                                  'attributes': 'id=submit-add-data-store',
                                   'type': 'submit'
                                   }
                                 ],
@@ -300,35 +299,111 @@ def add_data_store(request):
                 'add_button': add_button,
               }
     return render(request, 'erfp_tool/add_data_store.html', context)
+    
+def add_data_store_ajax(request):
+    """
+    Controller for adding a data store.
+    """
+    #get/check information from AJAX request
+    get_info = request.GET
+    data_store_name = get_info.get('data_store_name')
+    print data_store_name
+    data_store_type_id = get_info.get('data_store_type_id')
+    print data_store_type_id
+    data_store_endpoint = get_info.get('data_store_endpoint')
+    print data_store_endpoint
+    data_store_api_key = get_info.get('data_store_api_key')
+    print data_store_api_key
+
+    #initialize session
+    session = SettingsSessionMaker()
+    
+    #check to see if duplicate exists
+    num_similar_data_stores  = session.query(DataStore) \
+        .filter(
+            or_(
+                DataStore.server_name == data_store_name, 
+                DataStore.api_endpoint == data_store_endpoint
+            )
+        ) \
+        .count()
+    if(num_similar_data_stores > 0):
+        return JsonResponse({ 'error': "A data store with the same name or api endpoint exists." })
+        
+    #add Data Store
+    session.add(DataStore(data_store_name, data_store_type_id, data_store_endpoint, data_store_api_key))
+    session.commit()
+    
+    return JsonResponse({ 'success': "Data Store Sucessfully Added!" })
 
 def add_geoserver(request):        
     """
     Controller for the app add_geoserver page.
     """
-    geoserver_location_input = {
-                'display_text': 'Geoserver Location',
-                'name': 'geoserver-location-input',
-                'placeholder': 'e.g.: http://felek.cns.umass.edu:8080/geoserver/wms',
-                'icon_append':'glyphicon glyphicon-cloud-download',
-              }
+    geoserver_name_input = {
+        'display_text': 'Geoserver Name',
+        'name': 'geoserver-name-input',
+        'placeholder': 'e.g.: My Geoserver',
+        'icon_append':'glyphicon glyphicon-tag',
+        }
 
+    geoserver_url_input = {
+        'display_text': 'Geoserver Url',
+        'name': 'geoserver-url-input',
+        'placeholder': 'e.g.: http://felek.cns.umass.edu:8080/geoserver/wms',
+        'icon_append':'glyphicon glyphicon-cloud-download',
+        }
+              
+ 
     add_button = {'buttons': [
                                  {'display_text': 'Add Geoserver',
                                   'icon': 'glyphicon glyphicon-plus',
                                   'style': 'success',
                                   'name': 'submit-add-geoserver',
-                                  'attributes': 'onclick=alert(this.name);',
+                                  'attributes': 'id=submit-add-geoserver',
                                   'type': 'submit'
                                   }
                                 ],
                  }
 
     context = {
-                'geoserver_location_input': geoserver_location_input,
+                'geoserver_name_input': geoserver_name_input,
+                'geoserver_url_input': geoserver_url_input,
                 'add_button': add_button,
               }
 
     return render(request, 'erfp_tool/add_geoserver.html', context)
+    
+def add_geoserver_ajax(request):
+    """
+    Controller for ading a geoserver.
+    """
+    #get/check information from AJAX request
+    get_info = request.GET
+    geoserver_name = get_info.get('geoserver_name')
+    geoserver_url = get_info.get('geoserver_url')
+
+    #initialize session
+    session = SettingsSessionMaker()
+    
+    #check to see if duplicate exists
+    num_similar_geoservers  = session.query(Geoserver) \
+        .filter(
+            or_(
+                Geoserver.name == geoserver_name, 
+                Geoserver.url == geoserver_url
+            )
+        ) \
+        .count()
+    if(num_similar_geoservers > 0):
+        return JsonResponse({ 'error': "A geoserver with the same name or url exists." })
+        
+    #add Data Store
+    session.add(Geoserver(geoserver_name, geoserver_url))
+    session.commit()
+    
+    return JsonResponse({ 'success': "Geoserver Sucessfully Added!" })
+
 
 def get_reach_index(reach_id, basin_files):
     """
@@ -344,7 +419,7 @@ def get_reach_index(reach_id, basin_files):
         pass
     return reach_index
     
-def get_avaialable_dates(request):
+def get_avaialable_dates_ajax(request):
     """""
     Finds a list of directories with valid data and returns dates in select2 format
     """""
@@ -398,7 +473,6 @@ def find_most_current_files(path_to_watershed_files, basin_name,start_folder):
         directories = sorted(os.listdir(path_to_watershed_files), reverse=True)
     else:
         directories = [start_folder]
-        
     for directory in directories:    
         date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
         time = directory.split(".")[-1]
@@ -412,7 +486,7 @@ def find_most_current_files(path_to_watershed_files, basin_name,start_folder):
     #there are no files found
     return None, None
     
-def get_hydrograph(request):
+def get_hydrograph_ajax(request):
     """""
     Plots all 52 ensembles with min, max, avg
     """""

@@ -36,13 +36,19 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
                            controller='erfp_tool.controllers.add_data_store'),
                     UrlMap(name='get_reach_statistical_hydrograph',
                            url='erfp-tool/get-hydrograph',
-                           controller='erfp_tool.controllers.get_hydrograph'),
+                           controller='erfp_tool.controllers.get_hydrograph_ajax'),
                     UrlMap(name='get_avaialable_dates',
                            url='erfp-tool/get-avaialable-dates',
-                           controller='erfp_tool.controllers.get_avaialable_dates'),
+                           controller='erfp_tool.controllers.get_avaialable_dates_ajax'),
                     UrlMap(name='update_settings',
                            url='erfp-tool/settings/update-settings',
-                           controller='erfp_tool.controllers.update_settings'),
+                           controller='erfp_tool.controllers.update_settings_ajax'),
+                    UrlMap(name='add_data_store',
+                           url='erfp-tool/add-data-store/submit',
+                           controller='erfp_tool.controllers.add_data_store_ajax'),
+                    UrlMap(name='add_geoserver',
+                           url='erfp-tool/add-geoserver/submit',
+                           controller='erfp_tool.controllers.add_geoserver_ajax'),
         )
 
         return url_maps

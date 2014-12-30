@@ -97,6 +97,7 @@ var ERFP_MAP = (function() {
         // `attr` is false.  Check for both.
         if (typeof highcharts_attr !== typeof undefined && highcharts_attr !== false) {
             $('#erfp-chart').highcharts().destroy();
+            $('#erfp-chart').empty();
         }
 
         //get chart data
@@ -188,20 +189,16 @@ var ERFP_MAP = (function() {
             },
             success: function(data) {
                 if("success" in data) {
-                    //clear old select2 if exists
-                    if ($('#erfp-select').data('select2')) {
-                        $('#erfp-select').select2("destroy");
-                    }
-                    //create new select2
-                    //first element 
-                    //var first = Object.keys(data['output_directories'][0])[0];
+                    //sort to get first element 
                     var select2_data = data['output_directories'];
                     select2_data.sort(function(a,b) {
                         b.id.localeCompare(a);
                     });
+                    //create new select2
                     $('#erfp-select').select2({data: select2_data,
                                                 placeholder: select2_data[0]['text']});
                     $('#erfp-select').removeClass('hidden');
+                    //add on change function
                     $('#erfp-select').change(function() {
                         var folder = $(this).select2('data').id;
                         getChartData(id, watershed, subbasin, folder);

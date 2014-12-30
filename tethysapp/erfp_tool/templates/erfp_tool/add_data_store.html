@@ -6,10 +6,10 @@
 
 {% block styles %}
   {{ block.super }}
-  <link href="{% static 'erfp_tool/css/main.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block app_content %}
+    <div id="message" class="alert alert-danger hidden" role="alert"></div>
     <h3>Add Data Store</h3>
     <em>This is where the predictions are stored.</em><br/><br/>
     {% gizmo text_input data_store_name_input %}
