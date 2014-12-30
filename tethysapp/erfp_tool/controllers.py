@@ -329,24 +329,6 @@ def add_geoserver(request):
               }
 
     return render(request, 'erfp_tool/add_geoserver.html', context)
-    
-def find_most_current_files(path_to_watershed_files, basin_name):
-    """""
-    Finds the current output from downscaled ECMWF forecasts
-    """""
-    directories = sorted(os.listdir(path_to_watershed_files), reverse=True)
-    for directory in directories:    
-        date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
-        time = directory.split(".")[-1]
-        path_to_files = os.path.join(path_to_watershed_files, directory)
-        if os.path.exists(path_to_files):
-            basin_files = glob(os.path.join(path_to_files,
-                                            "*"+basin_name+"*.nc"))
-            if len(basin_files) >0:
-                hour = int(time)/100
-                return basin_files, date + datetime.timedelta(0,int(hour)*60*60)
-    #there are no files found
-    return None, None
 
 def get_reach_index(reach_id, basin_files):
     """
@@ -362,6 +344,74 @@ def get_reach_index(reach_id, basin_files):
         pass
     return reach_index
     
+def get_avaialable_dates(request):
+    """""
+    Finds a list of directories with valid data and returns dates in select2 format
+    """""
+    path_to_rapid_output = '/home/alan/work/rapid/output'
+
+    #get/check information from AJAX request
+    get_info = request.GET
+    watershed_name = format_name(get_info['watershed_name']) if 'watershed_name' in get_info else None
+    subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
+    reach_id = get_info.get('reach_id')
+    if not reach_id or not watershed_name or not subbasin_name:
+        return JsonResponse({'error' : 'AJAX request input faulty'})
+
+    #find/check current output datasets    
+    path_to_watershed_files = os.path.join(path_to_rapid_output, watershed_name)
+    directories = sorted(os.listdir(path_to_watershed_files), reverse=True)
+    output_directories = []
+    directory_count = 0
+    for directory in directories:    
+        date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
+        time = directory.split(".")[-1]
+        path_to_files = os.path.join(path_to_watershed_files, directory)
+        if os.path.exists(path_to_files):
+            basin_files = glob(os.path.join(path_to_files,
+                                            "*"+subbasin_name+"*.nc"))
+            #only add directory to the list if valid                                    
+            if len(basin_files) >0 and get_reach_index(reach_id, basin_files):
+                hour = int(time)/100
+                output_directories.append({
+                    'id' : directory, 
+                    'text' : str(date + datetime.timedelta(0,int(hour)*60*60))
+                })
+                directory_count += 1
+            #limit number of directories
+            if(directory_count>64):
+                break                
+    if len(output_directories)>0:
+        return JsonResponse({     
+                    "success" : "Data analysis complete!",
+                    "output_directories" : output_directories[:64],                   
+                })
+    else:
+        return JsonResponse({'error' : 'Recent forecasts for reach with id: ' + str(reach_id) + ' not found.'})    
+ 
+
+def find_most_current_files(path_to_watershed_files, basin_name,start_folder):
+    """""
+    Finds the current output from downscaled ECMWF forecasts
+    """""
+    if(start_folder=="most_recent"):
+        directories = sorted(os.listdir(path_to_watershed_files), reverse=True)
+    else:
+        directories = [start_folder]
+        
+    for directory in directories:    
+        date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
+        time = directory.split(".")[-1]
+        path_to_files = os.path.join(path_to_watershed_files, directory)
+        if os.path.exists(path_to_files):
+            basin_files = glob(os.path.join(path_to_files,
+                                            "*"+basin_name+"*.nc"))
+            if len(basin_files) >0:
+                hour = int(time)/100
+                return basin_files, date + datetime.timedelta(0,int(hour)*60*60)
+    #there are no files found
+    return None, None
+    
 def get_hydrograph(request):
     """""
     Plots all 52 ensembles with min, max, avg
@@ -372,20 +422,22 @@ def get_hydrograph(request):
     get_info = request.GET
     watershed_name = format_name(get_info['watershed_name']) if 'watershed_name' in get_info else None
     subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
-    reach_id = get_info['reach_id'] if 'reach_id' in get_info else None
+    reach_id = get_info.get('reach_id')
+    start_folder = get_info.get('start_folder')
+    
     if not reach_id or not watershed_name or not subbasin_name:
-        return JsonResponse({'error' : 'AJAX request input faulty'})
+        return JsonResponse({'error' : 'AJAX request input faulty.'})
 
     #find/check current output datasets    
     path_to_output_files = os.path.join(path_to_rapid_output, watershed_name)
-    basin_files, start_date = find_most_current_files(path_to_output_files,subbasin_name)
+    basin_files, start_date = find_most_current_files(path_to_output_files,subbasin_name,start_folder)
     if not basin_files or not start_date:
-        return JsonResponse({'error' : 'Recent forecast not found'})
+        return JsonResponse({'error' : 'Recent forecast not found.'})
 
     #get/check the index of the reach
     reach_index = get_reach_index(reach_id, basin_files)
     if not reach_index:
-        return JsonResponse({'error' : 'Reach with id: ' + str(reach_id) + ' not found'})    
+        return JsonResponse({'error' : 'Reach with id: ' + str(reach_id) + ' not found.'})    
 
     #get information from datasets
     all_data_first_half = []

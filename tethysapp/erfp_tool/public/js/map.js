@@ -25,7 +25,8 @@ var ERFP_MAP = (function() {
     /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
-    var bindInputs, zoomToAll, zoomToLayer, toTitleCase, displayHydrograph;
+    var bindInputs, zoomToAll, zoomToLayer, toTitleCase, updateInfoAlert, 
+        getChartData, displayHydrograph;
 
 
     /************************************************************************
@@ -68,11 +69,36 @@ var ERFP_MAP = (function() {
         return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
     }
 
-    //FUNCTION: displays hydrograph at stream segment
-    displayHydrograph = function(feature) {
-        var id = feature.get('name');
-        var watershed = feature.get("watershed_name");
-        var subbasin = feature.get("subbasin_name")
+    //FUNCTION: displays alert to user
+    updateInfoAlert = function(css_alert_class, alert_message) {
+        $("#erfp-info").removeClass('alert-info');
+        $("#erfp-info").removeClass('alert-warning');
+        $("#erfp-info").removeClass('alert-danger');
+        $("#erfp-info").addClass(css_alert_class);
+        var glyphycon = '';
+        if(css_alert_class == 'alert-info') {
+            glyphycon = '<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> ';
+        }
+        else if(css_alert_class == 'alert-warning') {
+            glyphycon = '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> ';
+        }
+        else if(css_alert_class == 'alert-danger') {
+            glyphycon = '<span class="glyphicon glyphicon-fire" aria-hidden="true"></span> ';
+        }
+
+        $("#erfp-chart").html(glyphycon + alert_message);
+
+    }
+
+    getChartData = function(id, watershed, subbasin, start_folder) {
+        //clear old chart
+        var highcharts_attr = $('#erfp-chart').attr('data-highcharts-chart');              
+        // For some browsers, `attr` is undefined; for others,
+        // `attr` is false.  Check for both.
+        if (typeof highcharts_attr !== typeof undefined && highcharts_attr !== false) {
+            $('#erfp-chart').highcharts().destroy();
+        }
+
         //get chart data
         jQuery.ajax({
             type: "GET",
@@ -81,10 +107,10 @@ var ERFP_MAP = (function() {
             data: {
                 watershed_name: watershed,
                 subbasin_name: subbasin,
-                reach_id: id                    
+                reach_id: id,
+                start_folder: start_folder,                    
             },
             success: function(data) {
-                $("#erfp-chart").empty();
                 if("success" in data) {
                     $("#erfp-chart").highcharts({
                         title: { text: toTitleCase(watershed)},
@@ -135,13 +161,59 @@ var ERFP_MAP = (function() {
                     });
                     
                 } else {
-                    $("#erfp-chart").text("Error: " + data["error"])
-                    console.log(data);
+                    updateInfoAlert('alert-danger', "Error: " + data["error"]);
                 }
             },
             error: function(request, status, error) {
-                $("#erfp-chart").text(error);
-                console.log(error);
+                updateInfoAlert('alert-danger', "Error: " + error);
+            },
+        });
+    };
+
+    //FUNCTION: displays hydrograph at stream segment
+    displayHydrograph = function(feature) {
+        var id = feature.get('name');
+        var watershed = feature.get("watershed_name");
+        var subbasin = feature.get("subbasin_name");
+        getChartData(id, watershed, subbasin, "most_recent");
+        //get the select data
+        jQuery.ajax({
+            type: "GET",
+            url: "get-avaialable-dates",
+            dataType: "json",
+            data: {
+                watershed_name: watershed,
+                subbasin_name: subbasin,
+                reach_id: id                    
+            },
+            success: function(data) {
+                if("success" in data) {
+                    //clear old select2 if exists
+                    if ($('#erfp-select').data('select2')) {
+                        $('#erfp-select').select2("destroy");
+                    }
+                    //create new select2
+                    //first element 
+                    //var first = Object.keys(data['output_directories'][0])[0];
+                    var select2_data = data['output_directories'];
+                    select2_data.sort(function(a,b) {
+                        b.id.localeCompare(a);
+                    });
+                    $('#erfp-select').select2({data: select2_data,
+                                                placeholder: select2_data[0]['text']});
+                    $('#erfp-select').removeClass('hidden');
+                    $('#erfp-select').change(function() {
+                        var folder = $(this).select2('data').id;
+                        getChartData(id, watershed, subbasin, folder);
+                    });
+                } else {
+                    updateInfoAlert('alert-danger', "Error: " + data["error"]);
+                    $('#erfp-select').addClass('hidden');
+                }
+            },
+            error: function(request, status, error) {
+                updateInfoAlert('alert-danger', "Error: " + error);
+                $('#erfp-select').addClass('hidden');
             },
         });
 
@@ -223,7 +295,7 @@ var ERFP_MAP = (function() {
 
         //send message to user if Drainage Line KML file not found
         if (kml_drainage_line_layers.length <= 0) {
-            $("#erfp-chart").text("No Drainage Line KML files found. Please upload to begin.");
+            updateInfoAlert('alert-warning', 'No Drainage Line KML files found. Please upload to begin.');
         }
 
         //make drainage line layers selectable
@@ -232,7 +304,7 @@ var ERFP_MAP = (function() {
                                 });
 
         //make chart control in map
-        var chart_control = new ol.control.Control({element: $("#erfp-chart").get(0)});
+        var chart_control = new ol.control.Control({element: $("#erfp-info").get(0)});
 
         var basemap_layer = new ol.layer.Tile({
                                 source: new ol.source.BingMaps({key: apiKey, imagerySet: "Aerial"}),
