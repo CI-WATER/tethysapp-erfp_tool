@@ -25,3 +25,7 @@
     float: right;
     color: grey;
 }
+
+.hidden {
+    display: none;
+}

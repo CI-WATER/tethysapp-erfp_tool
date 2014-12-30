@@ -25,12 +25,13 @@ var ERFP_MAP = (function() {
     /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
-    var bindInputs, updateExtents,zoomToLayer, toTitleCase, displayHydrograph;
+    var bindInputs, zoomToAll, zoomToLayer, toTitleCase, displayHydrograph;
 
 
     /************************************************************************
     *                    PRIVATE FUNCTION IMPLEMENTATIONS
     *************************************************************************/
+    //FUNCTION: binds dom elements to layer
     bindInputs = function(layerid, layer) {
       new ol.dom.Input($(layerid + ' .visible')[0])
           .bindTo('checked', layer, 'visible');
@@ -43,18 +44,10 @@ var ERFP_MAP = (function() {
       );
     }    
     //FUNCTION: zooms to all kml files
-    updateExtents = function() {
-        var new_extent = ol.extent.createEmpty();
-        var coordinates = [];
-        m_kml_drainage_line_layers.map(function(kml_vector_layer){
-            var vector_source = kml_vector_layer.getSource();
-            if (vector_source.getState() == 'ready') {
-                ol.extent.extend(extent, vector_source.getExtent());
-            }
-        });
-        m_map.getView().fitExtent(new_extent, m_map.getSize());
+    zoomToAll = function() {
+        m_map.getView().fitExtent(m_map_extent, m_map.getSize());
     };
-
+    //FUNCTION: zooms to kml layer with id layer_id
     zoomToLayer = function(layer_id) {
         m_map.getLayers().forEach(function(layer, i) {
             if (layer instanceof ol.layer.Group) {
@@ -68,7 +61,8 @@ var ERFP_MAP = (function() {
             }
         });    
     };
-    
+
+    //FUNCTION: converts string to title case  
     toTitleCase = function(str)
     {
         return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
@@ -144,7 +138,11 @@ var ERFP_MAP = (function() {
                     $("#erfp-chart").text("Error: " + data["error"])
                     console.log(data);
                 }
-            }
+            },
+            error: function(request, status, error) {
+                $("#erfp-chart").text(error);
+                console.log(error);
+            },
         });
 
 
@@ -162,7 +160,8 @@ var ERFP_MAP = (function() {
      * functions of the library because of JavaScript function scope.
      */
     public_interface = {
-        hello_goodbye: function() {
+        zoomToAll: function() {
+            zoomToAll();
         },
     };
     

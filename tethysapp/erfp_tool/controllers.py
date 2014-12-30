@@ -11,8 +11,16 @@ import os
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
                     SettingsSessionMaker)
 
+def format_name(string):
+    """
+    Formats watershed name for code
+    """
+    return string.strip().replace(" ", "_").lower()
 
 def create_navigation_string(layer_name, layer_id):
+    """
+    Formats navigation links for kml layer
+    """
     return ('                    <li class="dropdown">'
            '                      <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">%s<span class="caret"></span></a>' % layer_name + \
            '                      <ul id="%s" class="dropdown-menu" role="menu">' % layer_id + \
@@ -82,14 +90,15 @@ def settings(request):
         base_layer_api_keys[base_layer.id] = base_layer.api_key
 
     #Query DB for settings
-    settings = session.query(MainSettings).one()
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    
     
     base_layer_input = {
                 'display_text': 'Select a Base Layer',
-                'name': 'base_layer-input',
+                'name': 'base-layer-input',
                 'multiple': False,
                 'options': base_layer_list,
-                'initial': base_layer_list[settings.base_layer_id-1][0]
+                'initial': main_settings.base_layer.name
                 }
 
     base_layer_api_key_input = {
@@ -97,21 +106,21 @@ def settings(request):
                 'name': 'api-key-input',
                 'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9',
                 'icon_append':'glyphicon glyphicon-lock',
-                'initial': base_layer_api_keys[base_layer_list[settings.base_layer_id-1][1]]
+                'initial': main_settings.base_layer.api_key
               }
               
     ecmwf_rapid_input = {
-                'display_text': 'Local Location of ECMWF-RAPID files',
+                'display_text': 'Server Folder Location of ECMWF-RAPID files',
                 'name': 'ecmwf-rapid-location-input',
                 'placeholder': 'e.g.: /home/username/work/rapid/output',
                 'icon_append':'glyphicon glyphicon-folder-open',
-                'initial': settings.local_prediction_files
+                'initial': main_settings.local_prediction_files
               }
               
     submit_button = {'buttons': [
                                  {'display_text': 'Submit',
                                   'name': 'submit-changes-settings',
-                                  'attributes': 'onclick=alert(this.name);',
+                                  'attributes': 'id=submit-changes-settings',
                                   'type': 'submit'
                                   }
                                 ],
@@ -122,10 +131,34 @@ def settings(request):
                 'base_layer_api_key_input': base_layer_api_key_input,
                 'ecmwf_rapid_input': ecmwf_rapid_input,
                 'submit_button': submit_button,
-                'base_layer_api_keys': base_layer_api_keys,
+                'base_layer_api_keys': json.dumps(base_layer_api_keys),
               }
 
     return render(request, 'erfp_tool/settings.html', context)
+
+def update_settings(request):
+    """
+    Controller for updating the settings.
+    """
+    #get/check information from AJAX request
+    get_info = request.GET
+    base_layer_id = get_info.get('base_layer_id')
+    api_key = get_info.get('api_key')
+    local_prediction_files = get_info.get('ecmwf_rapid_location')
+
+    #initialize session
+    session = SettingsSessionMaker()
+    
+    #update main settings
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    main_settings.base_layer_id = base_layer_id
+    main_settings.local_prediction_files = local_prediction_files    
+    main_settings.base_layer.api_key = api_key
+    session.commit()
+    
+    return JsonResponse({ 'success': "Settings Sucessfully Updated!" })
+    
+
 
 def add_watershed(request):
     """
@@ -208,13 +241,17 @@ def add_watershed(request):
     return render(request, 'erfp_tool/add_watershed.html', context)
     
 def add_data_store(request):        
+    """
+    Controller for the app add_data_store page.
+    """
     #initialize session
     session = SettingsSessionMaker()
 
     data_store_name_input = {
                 'display_text': 'Data Store Server Name',
                 'name': 'ckan-name-input',
-                'placeholder': 'e.g.: My CKAN Server'
+                'placeholder': 'e.g.: My CKAN Server',
+                'icon_append':'glyphicon glyphicon-tag',
               }
 
     # Query DB for data store types
@@ -233,13 +270,15 @@ def add_data_store(request):
     data_store_endpoint_input = {
                 'display_text': 'Data Store API Endpoint',
                 'name': 'data-store-endpoint-input',
-                'placeholder': 'e.g.: http://ciwweb.chpc.utah.edu/api/3/action'
+                'placeholder': 'e.g.: http://ciwweb.chpc.utah.edu/api/3/action',
+                'icon_append':'glyphicon glyphicon-cloud-download',
               }
 
     data_store_api_key_input = {
                 'display_text': 'Data Store API Key',
                 'name': 'data-store-api-key-input',
-                'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9'
+                'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9',
+                'icon_append':'glyphicon glyphicon-lock',
               }
 
     add_button = {'buttons': [
@@ -263,10 +302,14 @@ def add_data_store(request):
     return render(request, 'erfp_tool/add_data_store.html', context)
 
 def add_geoserver(request):        
+    """
+    Controller for the app add_geoserver page.
+    """
     geoserver_location_input = {
                 'display_text': 'Geoserver Location',
                 'name': 'geoserver-location-input',
-                'placeholder': 'e.g.: http://felek.cns.umass.edu:8080/geoserver/wms'
+                'placeholder': 'e.g.: http://felek.cns.umass.edu:8080/geoserver/wms',
+                'icon_append':'glyphicon glyphicon-cloud-download',
               }
 
     add_button = {'buttons': [
@@ -319,9 +362,6 @@ def get_reach_index(reach_id, basin_files):
         pass
     return reach_index
     
-def format_name(string):
-    return string.strip().replace(" ", "_").lower()
-
 def get_hydrograph(request):
     """""
     Plots all 52 ensembles with min, max, avg
@@ -329,10 +369,10 @@ def get_hydrograph(request):
     path_to_rapid_output = '/home/alan/work/rapid/output'
 
     #get/check information from AJAX request
-    post_info = request.GET
-    watershed_name = format_name(post_info['watershed_name']) if 'watershed_name' in post_info else None
-    subbasin_name = format_name(post_info['subbasin_name']) if 'subbasin_name' in post_info else None
-    reach_id = post_info['reach_id'] if 'reach_id' in post_info else None
+    get_info = request.GET
+    watershed_name = format_name(get_info['watershed_name']) if 'watershed_name' in get_info else None
+    subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
+    reach_id = get_info['reach_id'] if 'reach_id' in get_info else None
     if not reach_id or not watershed_name or not subbasin_name:
         return JsonResponse({'error' : 'AJAX request input faulty'})
 

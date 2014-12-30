@@ -37,6 +37,9 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
                     UrlMap(name='get_reach_statistical_hydrograph',
                            url='erfp-tool/get-hydrograph',
                            controller='erfp_tool.controllers.get_hydrograph'),
+                    UrlMap(name='update_settings',
+                           url='erfp-tool/settings/update-settings',
+                           controller='erfp_tool.controllers.update_settings'),
         )
 
         return url_maps
