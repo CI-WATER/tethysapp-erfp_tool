@@ -6,7 +6,7 @@ import json
 import netCDF4 as NET
 import numpy as np
 import os
-from sqlalchemy import distinct, or_
+from sqlalchemy import or_
 
 #local import
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
@@ -499,7 +499,12 @@ def get_avaialable_dates_ajax(request):
     """""
     Finds a list of directories with valid data and returns dates in select2 format
     """""
-    path_to_rapid_output = '/home/alan/work/rapid/output'
+    #Query DB for path to rapid output
+    session = SettingsSessionMaker()
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    path_to_rapid_output = main_settings.local_prediction_files
+    if not os.path.exists(path_to_rapid_output):
+        return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})    
 
     #get/check information from AJAX request
     get_info = request.GET
@@ -566,7 +571,12 @@ def get_hydrograph_ajax(request):
     """""
     Plots all 52 ensembles with min, max, avg
     """""
-    path_to_rapid_output = '/home/alan/work/rapid/output'
+    #Query DB for path to rapid output
+    session = SettingsSessionMaker()
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    path_to_rapid_output = main_settings.local_prediction_files
+    if not os.path.exists(path_to_rapid_output):
+        return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})    
 
     #get/check information from AJAX request
     get_info = request.GET
