@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block app_content %}
-    <div id="map" class="map" kml-urls="{{kml_urls}}"></div>
+    <div id="map" class="map" base-layer-info="{{base_layer_info}}" kml-info="{{kml_info}}"></div>
     <div id="erfp-info" class="ol-control alert alert-info" role="alert">
         <div id="erfp-select" class="hidden" style="width:60%;margin:auto;"></div>
         <div id="erfp-chart"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Click on a reach to view flow predictions.</div>
@@ -36,9 +36,6 @@
     {{ map_navigation | safe }}
  
     </ul></div> <!-- div: mapNavigation -->
-
-    <li class="title">App Navigation</li>
-    <li><a href="{% url 'erfp_tool:home' %}">Map</a></li>
 
     {{ block.super}}  
     <li class="separator"></li>

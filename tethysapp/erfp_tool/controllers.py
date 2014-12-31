@@ -6,7 +6,7 @@ import json
 import netCDF4 as NET
 import numpy as np
 import os
-from sqlalchemy import or_
+from sqlalchemy import distinct, or_
 
 #local import
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
@@ -34,7 +34,21 @@ def create_navigation_string(layer_name, layer_id):
            '                      </ul>'
            '                    </li>')
 
-    
+def format_watershed_title(watershed, subbasin):
+    """
+    Formats title for watershed in navigation
+    """
+    max_length = 30
+    watershed = watershed.strip().replace("_"," ").title()
+    subbasin = subbasin.strip().replace("_"," ").title()
+    watershed_length = len(watershed)
+    if(watershed_length>max_length):
+        return watershed[:max_length-1].strip() + "..."
+    max_length -= watershed_length
+    subbasin_length = len(subbasin)
+    if(subbasin_length>max_length):
+        return (watershed + " (" + subbasin[:max_length-3].strip() + " ...)")
+    return (watershed + " (" + subbasin + ")")
 
 def home(request):
     """
@@ -42,36 +56,70 @@ def home(request):
     """
     ##find all kml files to add to page    
     kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml')
-    kml_urls = {}
+    kml_info = []
     watersheds = sorted(os.listdir(kml_file_location))
     #add kml urls to list and add their navigation items as well
     group_id = 0
     navigation_string = ""
     for watershed in watersheds:
+        one_layer_found = False
+        subbasin = ""
+        file_path = os.path.join(kml_file_location, watershed)
+        kml_urls = {'watershed':watershed}
+        #prepare kml files    
+        drainage_line_kml = glob(os.path.join(file_path, '*drainage_line.kml'))
+        if(len(drainage_line_kml)>0):
+            one_layer_found = True
+            drainage_line_kml = os.path.basename(drainage_line_kml[0])
+            kml_urls['drainage_line'] = '/static/erfp_tool/kml/%s/%s' % (watershed, drainage_line_kml)
+            subbasin = drainage_line_kml.split("-")[0]
+            kml_urls['subbasin'] = subbasin
+        catchment_kml = glob(os.path.join(file_path, '*catchment.kml'))
+        if(len(catchment_kml)>0):
+            catchment_kml = os.path.basename(catchment_kml[0])
+            one_layer_found = True
+            kml_urls['catchment'] = '/static/erfp_tool/kml/%s/%s' % (watershed, catchment_kml)
+            if not subbasin:
+                subbasin = catchment_kml.split("-")[0]
+                kml_urls['subbasin'] = subbasin
+
+        #prepare navigation string
         navigation_string += ('            <li><div id="%s-control">' % watershed + \
         '                <div class="collapse-control">'
         '                    <a class="closeall" data-toggle="collapse" data-target="#%s-layers">' % watershed + \
-        '%s</a>' % watershed.title().replace("_"," ") + \
+        '%s</a>' % format_watershed_title(watershed,subbasin) + \
         '                </div>'
         '                <div id="%s-layers" class="collapse in">' % watershed + \
         '                    <ul>')
 
-        file_path = os.path.join(kml_file_location, watershed)
-        kml_urls[watershed] = {}
-        for kml_file in glob(os.path.join(file_path, '*drainage_line.kml')):
-            kml_urls[watershed]['drainage_line'] = '/static/erfp_tool/kml/%s/%s' % (watershed, os.path.basename(kml_file))
+        if('drainage_line' in kml_urls):
             navigation_string += create_navigation_string("Drainage Line", "layer" + str(group_id)+str(0))
-        for kml_file in glob(os.path.join(file_path, '*catchment.kml')):
-            kml_urls[watershed]['catchment'] = '/static/erfp_tool/kml/%s/%s' % (watershed, os.path.basename(kml_file))
+        if('catchment' in kml_urls):
             navigation_string += create_navigation_string("Catchment", "layer" + str(group_id)+str(1))
+        if(not one_layer_found):
+            navigation_string +=   '<li>ERROR: NO LAYERS FOUND!</li>'          
         navigation_string += ('                    </ul>'
         '                </div> <!-- div: %s-layers -->' % watershed + \
-        '            </div></li>  <!-- div: %s-control -->' % watershed) 
+        '            </div></li>  <!-- div: %s-control -->' % watershed)
+        kml_info.append(kml_urls)
         group_id += 1
+        
+    #get the base layer information
+    session = SettingsSessionMaker()
+    #Query DB for settings
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    base_layer = main_settings.base_layer
+    #Bing_apiKey = "AiW41aALyX4pDfE0jQG93WywSHLih1ihycHtwbaIPmtpZEOuw1iloQuuBmwJm5UA";
+ 
+    base_layer_info = {
+                        'name': base_layer.name,
+                        'api_key':base_layer.api_key,
+                        }
             
     context = {
-                'kml_urls' : json.dumps(kml_urls),
-                'map_navigation' : navigation_string
+                'kml_info' : json.dumps(kml_info),
+                'map_navigation' : navigation_string,
+                'base_layer_info' : json.dumps(base_layer_info),
               }
 
     return render(request, 'erfp_tool/home.html', context)

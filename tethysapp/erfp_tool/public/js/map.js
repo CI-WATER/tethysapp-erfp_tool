@@ -26,7 +26,7 @@ var ERFP_MAP = (function() {
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
     var bindInputs, zoomToAll, zoomToLayer, toTitleCase, updateInfoAlert, 
-        getChartData, displayHydrograph;
+        getBaseLayer, getChartData, displayHydrograph;
 
 
     /************************************************************************
@@ -67,7 +67,7 @@ var ERFP_MAP = (function() {
     toTitleCase = function(str)
     {
         return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-    }
+    };
 
     //FUNCTION: displays alert to user
     updateInfoAlert = function(css_alert_class, alert_message) {
@@ -88,7 +88,20 @@ var ERFP_MAP = (function() {
 
         $("#erfp-chart").html(glyphycon + alert_message);
 
-    }
+    };
+
+    //FUNCTION: adds appropriate base layer based on name
+    getBaseLayer = function(base_layer_name, api_key) {
+        if(base_layer_name == "BingMaps") {
+            return new ol.source.BingMaps({key: api_key, imagerySet: "Aerial"});
+        } 
+        else if (base_layer_name == "OSM") {
+
+            return new ol.source.OSM();
+        }
+        return new ol.source.MapQuest({layer: 'sat'});
+
+    };
 
     getChartData = function(id, watershed, subbasin, start_folder) {
         //clear old chart
@@ -247,30 +260,26 @@ var ERFP_MAP = (function() {
     // Initialization: jQuery function that gets called when 
     // the DOM tree finishes loading
     $(function() {
-
-        var apiKey = "AiW41aALyX4pDfE0jQG93WywSHLih1ihycHtwbaIPmtpZEOuw1iloQuuBmwJm5UA";
-
+        //load base layer
+        var base_layer_info = JSON.parse($("#map").attr('base-layer-info'));
+        
+        var basemap_layer = new ol.layer.Tile({
+                                source: getBaseLayer(base_layer_info.name,base_layer_info.api_key),
+                            });
+        
         //load drainage line kml layers
-        var kml_urls = JSON.parse($("#map").attr('kml-urls'));
+        var kml_info = JSON.parse($("#map").attr('kml-info'));
         var all_group_layers = [];
         var kml_drainage_line_layers = [];
-        //get sorted list of watersheds
-        var watershed_list = [];
-        for (var watershed in kml_urls) {
-            if(kml_urls.hasOwnProperty(watershed)) {
-                watershed_list.push(watershed);
-            }
-        };
-        watershed_list.sort();
         //add each watershed kml group
-        watershed_list.forEach(function(watershed, group_index) {
+        kml_info.forEach(function(kml_url, group_index) {
             var kml_layers = [];                
             //add catchment if exists
-            if('catchment' in kml_urls[watershed]) {
+            if('catchment' in kml_url) {
                 var catchment = new ol.layer.Vector({
                     source: new ol.source.KML({
                         projection: new ol.proj.get('EPSG:3857'),
-                        url: kml_urls[watershed]['catchment'],
+                        url: kml_url['catchment'],
                     }),
                 });
                 catchment.set('layer_id', 'layer' + group_index + 1);
@@ -278,11 +287,11 @@ var ERFP_MAP = (function() {
             }
             
             //add drainage line if exists
-            if('drainage_line' in kml_urls[watershed]) {
+            if('drainage_line' in kml_url) {
                 var drainage_line = new ol.layer.Vector({
                     source: new ol.source.KML({
                         projection: new ol.proj.get('EPSG:3857'),
-                        url: kml_urls[watershed]['drainage_line'],
+                        url: kml_url['drainage_line'],
                     }),
                 });
                 drainage_line.set('layer_id', 'layer' + group_index + 0);
@@ -308,10 +317,6 @@ var ERFP_MAP = (function() {
 
         //make chart control in map
         var chart_control = new ol.control.Control({element: $("#erfp-info").get(0)});
-
-        var basemap_layer = new ol.layer.Tile({
-                                source: new ol.source.BingMaps({key: apiKey, imagerySet: "Aerial"}),
-                            });
 
         var all_map_layers = [basemap_layer].concat(all_group_layers);
         //create map
