@@ -32,7 +32,7 @@ $('#submit-changes-settings').click(function(){
                 ecmwf_rapid_location: ecmwf_rapid_location                    
                 };
 
-        ajax_update_database("update-settings",data)
+        ajax_update_database("update",data)
     }
 
 });

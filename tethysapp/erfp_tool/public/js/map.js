@@ -189,14 +189,20 @@ var ERFP_MAP = (function() {
             },
             success: function(data) {
                 if("success" in data) {
+                    //remove select2 if exists
+                    if($('#erfp-select').data('select2')) {
+                        //remove selection
+                        $('#erfp-select').select2('val', '');
+                        //destroy
+                        $('#erfp-select').select2('destroy');
+                    }
+                    
                     //sort to get first element 
                     var select2_data = data['output_directories'];
-                    select2_data.sort(function(a,b) {
-                        b.id.localeCompare(a);
-                    });
+
                     //create new select2
                     $('#erfp-select').select2({data: select2_data,
-                                                placeholder: select2_data[0]['text']});
+                                                placeholder: "Select a Date"});
                     $('#erfp-select').removeClass('hidden');
                     //add on change function
                     $('#erfp-select').change(function() {

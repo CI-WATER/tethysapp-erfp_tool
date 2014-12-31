@@ -29,18 +29,9 @@ $('#submit-add-data-store').click(function(){
 
         ajax_update_database("submit",data);
         $('#data-store-name-input').val('');
-        $('#data-store-type-select').val('');
+        $('#data-store-type-select').select2('val','');
         $('#data-store-endpoint-input').val('');
         $('#data-store-api-key-input').val('');
     }
 
-});
-
-//change api key based on the input
-$('#base-layer-input').change(function() {
-    var base_layer_id = $(this).select2('data').id;
-    var api_keys = JSON.parse($('#base-layer-api-keys').attr('base-layer-api-keys'));
-    if(api_keys[base_layer_id]) {
-        $('#api-key-input').val(api_keys[base_layer_id]);
-    }
 });

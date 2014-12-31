@@ -10,7 +10,7 @@ from sqlalchemy import or_
 
 #local import
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
-                    SettingsSessionMaker)
+                    SettingsSessionMaker, Watershed)
 
 def format_name(string):
     """
@@ -188,24 +188,24 @@ def add_watershed(request):
 
     if(len(data_store_list) <= 0):
         data_store_list.append(('None', -1))
-    data_store_select_input = {
+    data_store_select = {
                 'display_text': 'Select a Data Store',
-                'name': 'select-data-store',
+                'name': 'data-store-select',
                 'options': data_store_list,
-                'initial': data_store_list[0][0]
+                'placeholder': 'Select a Data Store',
                 }          
               
     # Query DB for geoservers
     geoservers = session.query(Geoserver).all()
     geoserver_list = []
     for geoserver in geoservers:
-        geoserver_list.append((geoserver.name + " (" + geoserver.url + ")", geoserver.id))
+        geoserver_list.append(( "%s (%s)" % (geoserver.name, geoserver.url), geoserver.id))
 
-    geoserver_select_input = {
+    geoserver_select= {
                 'display_text': 'Select a Geoserver',
-                'name': 'select-geoserver',
+                'name': 'geoserver-select',
                 'options': geoserver_list,
-                'initial': geoserver_list[0][0]
+                'placeholder': 'Select a Geoserver',
                 }
                 
     geoserver_layers_input = {
@@ -213,7 +213,6 @@ def add_watershed(request):
                 'name': 'geoserver-layers-input',
                 'placeholder': 'e.g.: Streams:Developed',
                 'icon_append':'glyphicon glyphicon-link',
-
               }
               
 
@@ -222,7 +221,7 @@ def add_watershed(request):
                                   'icon': 'glyphicon glyphicon-plus',
                                   'style': 'success',
                                   'name': 'submit-add-watershed',
-                                  'attributes': 'onclick=alert(this.name);',
+                                  'attributes': 'id=submit-add-watershed',
                                   'type': 'submit'
                                   }
                                 ],
@@ -231,14 +230,43 @@ def add_watershed(request):
     context = {
                 'watershed_name_input': watershed_name_input,
                 'subbasin_name_input': subbasin_name_input,
-                'geoserver_select_input': geoserver_select_input,
+                'data_store_select': data_store_select,
+                'geoserver_select': geoserver_select,
                 'geoserver_layers_input': geoserver_layers_input,
-                'data_store_select_input': data_store_select_input,
                 'add_button': add_button,
               }
 
     return render(request, 'erfp_tool/add_watershed.html', context)
     
+def add_watershed_ajax(request):
+    """
+    Controller for ading a watershed.
+    """
+    #get/check information from AJAX request
+    get_info = request.GET
+    watershed_name = get_info.get('watershed_name')
+    subbasin_name = get_info.get('subbasin_name')
+    data_store_id = get_info.get('data_store_id')
+    geoserver_id = get_info.get('geoserver_id')
+    geoserver_layer = get_info.get('geoserver_layer')
+
+    #initialize session
+    session = SettingsSessionMaker()
+    
+    #check to see if duplicate exists
+    num_similar_watersheds  = session.query(Watershed) \
+        .filter(Watershed.watershed_name == watershed_name) \
+        .filter(Watershed.subbasin_name == subbasin_name) \
+        .count()
+    if(num_similar_watersheds > 0):
+        return JsonResponse({ 'error': "A watershed with the same name exists." })
+        
+    #add Data Store
+    session.add(Watershed(watershed_name, subbasin_name, data_store_id, geoserver_id, geoserver_layer))
+    session.commit()
+    
+    return JsonResponse({ 'success': "Watershed Sucessfully Added!" })
+
 def add_data_store(request):        
     """
     Controller for the app add_data_store page.
@@ -459,7 +487,7 @@ def get_avaialable_dates_ajax(request):
     if len(output_directories)>0:
         return JsonResponse({     
                     "success" : "Data analysis complete!",
-                    "output_directories" : output_directories[:64],                   
+                    "output_directories" : output_directories,                   
                 })
     else:
         return JsonResponse({'error' : 'Recent forecasts for reach with id: ' + str(reach_id) + ' not found.'})    

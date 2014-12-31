@@ -26,12 +26,3 @@ $('#submit-add-geoserver').click(function(){
     }
 
 });
-
-//change api key based on the input
-$('#base-layer-input').change(function() {
-    var base_layer_id = $(this).select2('data').id;
-    var api_keys = JSON.parse($('#base-layer-api-keys').attr('base-layer-api-keys'));
-    if(api_keys[base_layer_id]) {
-        $('#api-key-input').val(api_keys[base_layer_id]);
-    }
-});

@@ -34,23 +34,25 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
                     UrlMap(name='add-data-store',
                            url='erfp-tool/add-data-store',
                            controller='erfp_tool.controllers.add_data_store'),
-                    UrlMap(name='get_reach_statistical_hydrograph',
+                    UrlMap(name='get_reach_statistical_hydrograph_ajax',
                            url='erfp-tool/get-hydrograph',
                            controller='erfp_tool.controllers.get_hydrograph_ajax'),
-                    UrlMap(name='get_avaialable_dates',
+                    UrlMap(name='get_avaialable_dates_ajax',
                            url='erfp-tool/get-avaialable-dates',
                            controller='erfp_tool.controllers.get_avaialable_dates_ajax'),
-                    UrlMap(name='update_settings',
-                           url='erfp-tool/settings/update-settings',
+                    UrlMap(name='update_settings_ajax',
+                           url='erfp-tool/settings/update',
                            controller='erfp_tool.controllers.update_settings_ajax'),
-                    UrlMap(name='add_data_store',
+                    UrlMap(name='add_data_store_ajax',
                            url='erfp-tool/add-data-store/submit',
                            controller='erfp_tool.controllers.add_data_store_ajax'),
-                    UrlMap(name='add_geoserver',
+                    UrlMap(name='add_watershed_ajax',
+                           url='erfp-tool/add-watershed/submit',
+                           controller='erfp_tool.controllers.add_watershed_ajax'),
+                    UrlMap(name='add_geoserver_ajax',
                            url='erfp-tool/add-geoserver/submit',
                            controller='erfp_tool.controllers.add_geoserver_ajax'),
         )
-
         return url_maps
         
     def persistent_stores(self):

@@ -18,14 +18,11 @@
 {% block app_title %}{{ tethys_app.name }}{% endblock %}
 
 {% block app_navigation_items %}
-  <li class="title">App Navigation</li>
-  <li class="active"><a href="">Home</a></li>
-  <li class="title">Watersheds</li>
-  <li><a href="">Magdalena</a></li>
-  <li><a href="">Nicaragua</a></li>
-  <li><a href="">Dominican Republic</a></li>
-  <li class="separator"></li>
-  <li><a href="">Information</a></li>
+  <li class="title">Configuration</li>
+  <li><a href="{% url 'erfp_tool:settings' %}">Settings</a></li>
+  <li><a href="{% url 'erfp_tool:add-watershed' %}">Add a Watershed</a></li>
+  <li><a href="{% url 'erfp_tool:add-data-store' %}">Add a Data Store</a></li>
+  <li><a href="{% url 'erfp_tool:add-geoserver' %}">Add a GeoServer</a></li>
 {% endblock %}
 
 {% block app_content %}

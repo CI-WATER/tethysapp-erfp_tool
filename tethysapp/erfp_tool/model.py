@@ -126,11 +126,13 @@ class Watershed(Base):
     data_store = relationship("DataStore")
     geoserver_id = Column(Integer,ForeignKey('geoserver.id'))
     geoserver = relationship("Geoserver")
+    geoserver_layer_name = Column(String)
 
-    def __init__(self, server_name, data_store_type_id, local_prediction_files):
+    def __init__(self, watershed_name, subbasin_name, data_store_id, geoserver_id, geoserver_layer_name):
         """
         Constructor for settings
         """
-        self.server_name = server_name
-        self.data_store_type_id = data_store_type_id
-        self.local_prediction_files = local_prediction_files
+        self.watershed_name = watershed_name
+        self.subbasin_name = subbasin_name
+        self.geoserver_id = geoserver_id
+        self.geoserver_layer_name = geoserver_layer_name
