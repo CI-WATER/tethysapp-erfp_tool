@@ -13,20 +13,34 @@
     <div id="message" class="alert alert-danger hidden" role="alert"></div>
     <h1>Add a Watershed</h1>
     {% gizmo text_input watershed_name_input %}
+    <p class="help-block">This is the name in the data store server or folder name on local instance</p>
     {% gizmo text_input subbasin_name_input %}
+    <p class="help-block">This is the name in the data store server or KML file name on local instance</p>
 
     <h3>Data Storage Input</h3>
     <em>This is where the predictions are stored.</em><br/><br/>
     {% gizmo select_input data_store_select %}
-    <p>Don't see the data store you want? Add one <a href="{% url 'erfp_tool:add-data-store' %}">here</a>.</p>
+    <p class="help-block">Don't see the data store you want? Add one <a href="{% url 'erfp_tool:add-data-store' %}">here</a>.</p>
 
     <h3>KML Geoserver Location</h3> 
     <em>Where the reach and catchbasin KML files are stored.</em><br/><br/>
     {% gizmo select_input geoserver_select %}
-    <p>Don't see the geoserver you want? Add one <a href="{% url 'erfp_tool:add-geoserver' %}">here</a>.</p>
-    {% gizmo text_input geoserver_layers_input %}
-
-    {% gizmo button_group add_button %}
+    <p class="help-block">Don't see the geoserver you want? Add one <a href="{% url 'erfp_tool:add-geoserver' %}">here</a>.</p>
+    {% gizmo text_input geoserver_drainage_line_input %}
+    <div class="form-group">
+        <label class="control-label" for="drainage-line-kml-upload-input">Drainage Line KML File</label>
+        <input id="drainage-line-kml-upload-input" name="drainage-line-kml-upload-input" type="file" accept="*.kml">
+        <p class="help-block hidden">Must select file to submit!</p>
+    </div>
+    <p class="help-block">This is the KML file representing the river network.</p>
+    {% gizmo text_input geoserver_catchment_input %}
+    <div class="form-group">
+        <label class="control-label" for="catchment-kml-upload-input">Catchment KML File</label>
+        <input id="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept="*.kml">
+        <p class="help-block hidden">Must select file to submit!</p>
+    </div>
+    <p class="help-block">This is the KML file representing the watershed basin.</p>
+{% gizmo button_group add_button %}
 {% endblock %}
 
 {% block app_navigation_items %}

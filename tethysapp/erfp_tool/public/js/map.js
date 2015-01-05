@@ -93,13 +93,27 @@ var ERFP_MAP = (function() {
     //FUNCTION: adds appropriate base layer based on name
     getBaseLayer = function(base_layer_name, api_key) {
         if(base_layer_name == "BingMaps") {
-            return new ol.source.BingMaps({key: api_key, imagerySet: "Aerial"});
+            return new ol.layer.Tile({
+                        source: new ol.source.BingMaps({key: api_key, imagerySet: "AerialWithLabels"}),
+                    });
         } 
         else if (base_layer_name == "OSM") {
 
-            return new ol.source.OSM();
+            return new ol.layer.Tile({
+                        source: new ol.source.OSM(),
+                    });
         }
-        return new ol.source.MapQuest({layer: 'sat'});
+        return new ol.layer.Group({
+                        style: 'AerialWithLabels',
+                        layers: [
+                          new ol.layer.Tile({
+                            source: new ol.source.MapQuest({layer: 'sat'})
+                          }),
+                          new ol.layer.Tile({
+                            source: new ol.source.MapQuest({layer: 'hyb'})
+                          })
+                        ]
+                });
 
     };
 
@@ -263,9 +277,7 @@ var ERFP_MAP = (function() {
         //load base layer
         var base_layer_info = JSON.parse($("#map").attr('base-layer-info'));
         
-        var basemap_layer = new ol.layer.Tile({
-                                source: getBaseLayer(base_layer_info.name,base_layer_info.api_key),
-                            });
+        var basemap_layer = getBaseLayer(base_layer_info.name,base_layer_info.api_key);
         
         //load drainage line kml layers
         var kml_info = JSON.parse($("#map").attr('kml-info'));

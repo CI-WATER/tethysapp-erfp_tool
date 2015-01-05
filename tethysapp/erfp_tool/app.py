@@ -1,4 +1,4 @@
-from tethys_apps.base import DatasetService, TethysAppBase, url_map_maker
+from tethys_apps.base import TethysAppBase, url_map_maker
 from tethys_apps.base import PersistentStore
 
 class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
@@ -22,36 +22,39 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
         url_maps = (UrlMap(name='home',
                            url='erfp-tool',
                            controller='erfp_tool.controllers.home'),
-                    UrlMap(name='settings',
-                           url='erfp-tool/settings',
-                           controller='erfp_tool.controllers.settings'),
-                    UrlMap(name='add-watershed',
-                           url='erfp-tool/add-watershed',
-                           controller='erfp_tool.controllers.add_watershed'),
-                    UrlMap(name='add-geoserver',
-                           url='erfp-tool/add-geoserver',
-                           controller='erfp_tool.controllers.add_geoserver'),
-                    UrlMap(name='add-data-store',
-                           url='erfp-tool/add-data-store',
-                           controller='erfp_tool.controllers.add_data_store'),
                     UrlMap(name='get_reach_statistical_hydrograph_ajax',
                            url='erfp-tool/get-hydrograph',
                            controller='erfp_tool.controllers.get_hydrograph_ajax'),
                     UrlMap(name='get_avaialable_dates_ajax',
                            url='erfp-tool/get-avaialable-dates',
                            controller='erfp_tool.controllers.get_avaialable_dates_ajax'),
+                    UrlMap(name='settings',
+                           url='erfp-tool/settings',
+                           controller='erfp_tool.controllers.settings'),
                     UrlMap(name='update_settings_ajax',
                            url='erfp-tool/settings/update',
                            controller='erfp_tool.controllers.update_settings_ajax'),
-                    UrlMap(name='add_data_store_ajax',
-                           url='erfp-tool/add-data-store/submit',
-                           controller='erfp_tool.controllers.add_data_store_ajax'),
-                    UrlMap(name='add_watershed_ajax',
+                    UrlMap(name='add-watershed',
+                           url='erfp-tool/add-watershed',
+                           controller='erfp_tool.controllers.add_watershed'),
+                    UrlMap(name='add-watershed-ajax',
                            url='erfp-tool/add-watershed/submit',
                            controller='erfp_tool.controllers.add_watershed_ajax'),
-                    UrlMap(name='add_geoserver_ajax',
+                    UrlMap(name='add-geoserver',
+                           url='erfp-tool/add-geoserver',
+                           controller='erfp_tool.controllers.add_geoserver'),
+                    UrlMap(name='add-geoserver-ajax',
                            url='erfp-tool/add-geoserver/submit',
                            controller='erfp_tool.controllers.add_geoserver_ajax'),
+                    UrlMap(name='add-data-store',
+                           url='erfp-tool/add-data-store',
+                           controller='erfp_tool.controllers.add_data_store'),
+                    UrlMap(name='add-data-store-ajax',
+                           url='erfp-tool/add-data-store/submit',
+                           controller='erfp_tool.controllers.add_data_store_ajax'),
+                    UrlMap(name='manage-data-stores',
+                           url='erfp-tool/manage-data-stores',
+                           controller='erfp_tool.controllers.manage_data_stores'),
         )
         return url_maps
         
@@ -66,16 +69,3 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
         )
 
         return stores
-
-    def dataset_services(self):
-        """
-        Add one or more dataset services
-        """
-        dataset_services = (DatasetService(name='ciwweb',
-                                           type='ckan',
-                                           endpoint='http://ciwweb.chpc.utah.edu/api/3/action',
-                                           apikey='8dcc1b34-0e09-4ddc-8356-df4a24e5be87'
-                                           ),
-        )
-
-        return dataset_services

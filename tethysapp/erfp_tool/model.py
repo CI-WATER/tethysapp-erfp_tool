@@ -58,7 +58,7 @@ class DataStore(Base):
 
     # Columns
     id = Column(Integer, primary_key=True)
-    server_name = Column(String)
+    name = Column(String)
     data_store_type_id = Column(Integer,ForeignKey('data_store_type.id'))
     data_store_type = relationship("DataStoreType")
     api_endpoint = Column(String)
@@ -68,7 +68,7 @@ class DataStore(Base):
         """
         Constructor for settings
         """
-        self.server_name = server_name
+        self.name = server_name
         self.data_store_type_id = data_store_type_id
         self.api_endpoint = api_endpoint
         self.api_key = api_key
@@ -126,13 +126,16 @@ class Watershed(Base):
     data_store = relationship("DataStore")
     geoserver_id = Column(Integer,ForeignKey('geoserver.id'))
     geoserver = relationship("Geoserver")
-    geoserver_layer_name = Column(String)
+    geoserver_drainage_line_layer = Column(String)
+    geoserver_catchment_layer = Column(String)
 
-    def __init__(self, watershed_name, subbasin_name, data_store_id, geoserver_id, geoserver_layer_name):
+    def __init__(self, watershed_name, subbasin_name, data_store_id, geoserver_id,
+                 geoserver_drainage_line_layer, geoserver_catchment_layer):
         """
         Constructor for settings
         """
         self.watershed_name = watershed_name
         self.subbasin_name = subbasin_name
         self.geoserver_id = geoserver_id
-        self.geoserver_layer_name = geoserver_layer_name
+        self.geoserver_drainage_line_layer = geoserver_drainage_line_layer
+        self.geoserver_catchment_layer = geoserver_catchment_layer

@@ -1,3 +1,36 @@
+//get cookie
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+//find if method is csrf safe
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+//add csrf token to approporiate ajax requests
+$(document).ready(function() {
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+            }
+        }
+    });
+});
+
 //form submission check function
 function checkInputWithError(input, safe_to_submit, select) {
     select = typeof select !== 'undefined' ? select : false;
@@ -34,9 +67,13 @@ function addErrorMessage(error) {
 
 //send data to database with error messages
 function ajax_update_database(ajax_url, ajax_data) {
+    //backslash at end of url is requred
+    if (ajax_url.substr(-1) !== "/") {
+        ajax_url = ajax_url.concat("/");
+    }
     //update database
     jQuery.ajax({
-        type: "GET",
+        type: "POST",
         url: ajax_url,
         dataType: "json",
         data: ajax_data,
@@ -50,8 +87,9 @@ function ajax_update_database(ajax_url, ajax_data) {
                 addErrorMessage(data['error']);
             }
         }, 
-        error: function(request, status, error) {
+        error: function(xhr, status, error) {
             addErrorMessage(error);
+            console.log(xhr.responseText);
         },
     });
 }
