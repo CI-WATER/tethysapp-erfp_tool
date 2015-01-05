@@ -55,6 +55,12 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
                     UrlMap(name='manage-data-stores',
                            url='erfp-tool/manage-data-stores',
                            controller='erfp_tool.controllers.manage_data_stores'),
+                    UrlMap(name='update-data-store-ajax',
+                           url='erfp-tool/manage-data-stores/submit',
+                           controller='erfp_tool.controllers.update_data_store_ajax'),
+                    UrlMap(name='delete-data-store-ajax',
+                           url='erfp-tool/manage-data-stores/delete',
+                           controller='erfp_tool.controllers.delete_data_store_ajax'),
         )
         return url_maps
         

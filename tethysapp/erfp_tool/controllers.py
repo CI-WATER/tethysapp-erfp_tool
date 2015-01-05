@@ -658,13 +658,82 @@ def manage_data_stores(request):
     session = SettingsSessionMaker()
 
     # Query DB for data store types
-    data_stores = session.query(DataStore).all()
+    data_stores = session.query(DataStore).filter(DataStore.id>1).all()
+
+    update_button = {'buttons': [
+                                 {'display_text': 'Update',
+                                  'icon': 'glyphicon glyphicon-floppy-disk',
+                                  'style': 'warning',
+                                  'name': 'submit-add-data-store',
+                                  'attributes': 'class=submit-update-data-store',
+                                  'type': 'submit'
+                                  }
+                                ],
+                 }
+    delete_button = {'buttons': [
+                                 {'display_text': 'Delete',
+                                  'icon': 'glyphicon glyphicon-remove',
+                                  'style': 'danger',
+                                  'name': 'submit-delete-data-store',
+                                  'attributes': 'class=submit-delete-data-store',
+                                  'type': 'submit'
+                                  }
+                                ],
+                 }
 
     context = {
                 'data_stores': data_stores,
+                'update_button': update_button,
+                'delete_button': delete_button,
               }
     return render(request, 'erfp_tool/manage_data_stores.html', context)
     
+def update_data_store_ajax(request):
+    """
+    Controller for updating a data store.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        #get/check information from AJAX request
+        post_info = request.POST
+        data_store_id = post_info.get('data_store_id')
+        data_store_name = post_info.get('data_store_name')
+        data_store_api_endpoint = post_info.get('data_store_api_endpoint')
+        data_store_api_key = post_info.get('data_store_api_key')
+    
+        if int(data_store_id) != 1:
+            #initialize session
+            session = SettingsSessionMaker()
+            #update data store
+            data_store  = session.query(DataStore).get(data_store_id)
+            data_store.name = data_store_name
+            data_store.api_endpoint= data_store_api_endpoint    
+            data_store.api_key = data_store_api_key
+            session.commit()
+            return JsonResponse({ 'success': "Data Store Sucessfully Updated!" })
+        return JsonResponse({ 'error': "Cannot change this data store." })
+    return JsonResponse({ 'error': "A problem with your request exists." })
+
+def delete_data_store_ajax(request):
+    """
+    Controller for updating a data store.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        #get/check information from AJAX request
+        post_info = request.POST
+        data_store_id = post_info.get('data_store_id')
+    
+        if int(data_store_id) != 1:
+            #initialize session
+            session = SettingsSessionMaker()
+            #update data store
+            data_store  = session.query(DataStore).get(data_store_id)
+            session.delete(data_store)
+            session.commit()
+            return JsonResponse({ 'success': "Data Store Sucessfully Deleted!" })
+        return JsonResponse({ 'error': "Cannot change this data store." })
+    return JsonResponse({ 'error': "A problem with your request exists." })
+
+
 def add_geoserver(request):        
     """
     Controller for the app add_geoserver page.

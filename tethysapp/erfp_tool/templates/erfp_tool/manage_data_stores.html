@@ -1,0 +1,53 @@
+{% extends "erfp_tool/base.html" %}
+
+{% load staticfiles %}
+
+{% block styles %}
+  {{ block.super }}
+{% endblock %}
+
+{% block app_content %}
+    <div id="message" class="alert alert-danger hidden" role="alert"></div>
+    <h3>Manage Data Stores</h3>
+    <table class="table table-striped">
+        <thead>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>API Endpoint</th>
+            <th>API Key</th>
+        </thead>
+    <tbody>
+    {% for data_store in data_stores %}
+        <tr>
+            <td class="data-store-id">{{data_store.id}}</td>
+            <td class="data-store-name" contenteditable>{{data_store.name}}</td>
+            <td class="data-store-type">{{data_store.data_store_type.human_readable_name}}</td>
+            <td class="data-store-api-endpoint" contenteditable>{{data_store.api_endpoint}}</td>
+            <td class="data-store-api-key" contenteditable>{{data_store.api_key}}</td>
+            <td><div class=" btn-group "><a name="submit-update-data-store" class="btn btn-warning submit-update-data-store" role="button">
+                <span class="glyphicon glyphicon-floppy-disk"></span> Update </a>
+                </div>
+            </td>
+            <td><div class=" btn-group "><a name="submit-delete-data-store" class="btn btn-danger submit-delete-data-store" role="button">
+                <span class="glyphicon glyphicon-remove"></span> Delete </a>
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+{% endblock %}
+
+{% block app_navigation_items %}
+  <li class="title">App Navigation</li>
+  <li><a href="{% url 'erfp_tool:home' %}">Map</a></li>
+  {{ block.super}}
+  <li class="separator"></li>
+  <li><a href="">Information</a></li>
+{% endblock %}
+
+{% block scripts %}
+  {{ block.super }}
+  <script src="{% static 'erfp_tool/js/manage_data_stores.js' %}" type="text/javascript"></script>
+{% endblock %}

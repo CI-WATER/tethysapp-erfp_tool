@@ -32,11 +32,11 @@ $(document).ready(function() {
 });
 
 //form submission check function
-function checkInputWithError(input, safe_to_submit, select) {
-    select = typeof select !== 'undefined' ? select : false;
+function checkInputWithError(input, safe_to_submit, one_parent) {
+    one_parent = typeof one_parent !== 'undefined' ? one_parent : false;
     var data_value = input.val();
 
-    if(select){
+    if(one_parent){
         var parent = input.parent();
     } else {
         var parent = input.parent().parent();    
@@ -50,6 +50,21 @@ function checkInputWithError(input, safe_to_submit, select) {
         safe_to_submit.val = false;
         parent.addClass('has-error');
         parent.find('.help-block').removeClass('hidden');
+        return null;
+    }
+}
+//form submission check function
+function checkTableCellInputWithError(input, safe_to_submit) {
+    var data_value = input.text();
+    var parent = input.parent();
+
+    if(data_value) {
+        parent.removeClass('danger');
+        return data_value;
+    } else {
+        safe_to_submit.val = false;
+        safe_to_submit.error = "Data missing in input";
+        parent.addClass('danger');
         return null;
     }
 }
