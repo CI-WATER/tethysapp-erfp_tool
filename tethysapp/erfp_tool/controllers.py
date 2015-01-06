@@ -13,8 +13,6 @@ from tethys_datasets.engines import CkanDatasetEngine, HydroShareDatasetEngine
 #local import
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
                     SettingsSessionMaker, Watershed)
-                    
-from .forms import KMLUploadFileForm
 
 def load_prediction_datasets():
     """
@@ -49,6 +47,9 @@ def format_name(string):
     return string.strip().replace(" ", "_").lower()
 
 def handle_uploaded_file(f, file_path, file_name):
+    """
+    Uploads file to specifies path
+    """
     if not os.path.exists(file_path):
         os.mkdir(file_path)
         
@@ -56,22 +57,6 @@ def handle_uploaded_file(f, file_path, file_name):
         for chunk in f.chunks():
             destination.write(chunk)
             
-def create_navigation_string(layer_name, layer_id):
-    """
-    Formats navigation links for kml layer
-    """
-    return ('                    <li class="dropdown">'
-           '                      <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">%s<span class="caret"></span></a>' % layer_name + \
-           '                      <ul id="%s" class="dropdown-menu" role="menu">' % layer_id + \
-           '                        <li><a class="zoom-to-layer" href="#">Zoom To Layer</a></li>'
-           '                        <li class="divider"></li>'
-           '                        <li><p style="margin-left:20px;"><input class="visible" type="checkbox"> Visibility </p></li>'
-           '                        <li><label style="margin-left:15px;">Opacity</label>'
-           '                            <input style="margin-left:15px; width:80%;" class="opacity" type="range" min="0" max="1" step="0.01">'
-           '                        </li>'
-           '                      </ul>'
-           '                    </li>')
-
 def format_watershed_title(watershed, subbasin):
     """
     Formats title for watershed in navigation
@@ -98,16 +83,13 @@ def home(request):
     watersheds = sorted(os.listdir(kml_file_location))
     #add kml urls to list and add their navigation items as well
     group_id = 0
-    navigation_string = ""
     for watershed in watersheds:
-        one_layer_found = False
         subbasin = ""
         file_path = os.path.join(kml_file_location, watershed)
         kml_urls = {'watershed':watershed}
         #prepare kml files    
         drainage_line_kml = glob(os.path.join(file_path, '*drainage_line.kml'))
         if(len(drainage_line_kml)>0):
-            one_layer_found = True
             drainage_line_kml = os.path.basename(drainage_line_kml[0])
             kml_urls['drainage_line'] = '/static/erfp_tool/kml/%s/%s' % (watershed, drainage_line_kml)
             subbasin = drainage_line_kml.split("-")[0]
@@ -115,30 +97,11 @@ def home(request):
         catchment_kml = glob(os.path.join(file_path, '*catchment.kml'))
         if(len(catchment_kml)>0):
             catchment_kml = os.path.basename(catchment_kml[0])
-            one_layer_found = True
             kml_urls['catchment'] = '/static/erfp_tool/kml/%s/%s' % (watershed, catchment_kml)
             if not subbasin:
                 subbasin = catchment_kml.split("-")[0]
                 kml_urls['subbasin'] = subbasin
-
-        #prepare navigation string
-        navigation_string += ('            <li><div id="%s-control">' % watershed + \
-        '                <div class="collapse-control">'
-        '                    <a class="closeall" data-toggle="collapse" data-target="#%s-layers">' % watershed + \
-        '%s</a>' % format_watershed_title(watershed,subbasin) + \
-        '                </div>'
-        '                <div id="%s-layers" class="collapse in">' % watershed + \
-        '                    <ul>')
-
-        if('drainage_line' in kml_urls):
-            navigation_string += create_navigation_string("Drainage Line", "layer" + str(group_id)+str(0))
-        if('catchment' in kml_urls):
-            navigation_string += create_navigation_string("Catchment", "layer" + str(group_id)+str(1))
-        if(not one_layer_found):
-            navigation_string +=   '<li>ERROR: NO LAYERS FOUND!</li>'          
-        navigation_string += ('                    </ul>'
-        '                </div> <!-- div: %s-layers -->' % watershed + \
-        '            </div></li>  <!-- div: %s-control -->' % watershed)
+        kml_urls['title'] = format_watershed_title(watershed,subbasin)
         kml_info.append(kml_urls)
         group_id += 1
         
@@ -153,10 +116,10 @@ def home(request):
                         'name': base_layer.name,
                         'api_key':base_layer.api_key,
                         }
-            
+
     context = {
-                'kml_info' : json.dumps(kml_info),
-                'map_navigation' : navigation_string,
+                'kml_info_json' : json.dumps(kml_info),
+                'kml_info': kml_info,
                 'base_layer_info' : json.dumps(base_layer_info),
               }
 

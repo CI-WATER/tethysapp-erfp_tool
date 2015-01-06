@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block app_content %}
-    <div id="map" class="map" base-layer-info="{{base_layer_info}}" kml-info="{{kml_info}}"></div>
+    <div id="map" class="map" base-layer-info="{{base_layer_info}}" kml-info="{{kml_info_json}}"></div>
     <div id="erfp-info" class="ol-control alert alert-info" role="alert">
         <div id="erfp-select" class="hidden" style="width:60%;margin:auto;"></div>
         <div id="erfp-chart"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Click on a reach to view flow predictions.</div>
@@ -26,14 +26,55 @@
 {% endblock %}
 
 {% block app_navigation_items %}
-    <li class="title collapse-control">
-        <a class="closeall" data-toggle="collapse" data-target="#mapNavigation">
-          Watersheds
-        </a>
-    </li>
-    <div id="mapNavigation" class="collapse in"><ul>
-
-    {{ map_navigation | safe }}
+    {% if kml_info %}
+        <li class="title collapse-control">
+            <a class="closeall" data-toggle="collapse" data-target="#mapNavigation">
+              Watersheds
+            </a>
+        </li>
+        <div id="mapNavigation" class="collapse in">
+        <ul>
+        {% for watershed_kml in kml_info %}
+            <li>
+            <div id="{{watershed_kml.watershed}}-control">
+                <div class="collapse-control">
+                <a class="closeall" data-toggle="collapse" data-target="#{{watershed_kml.watershed}}-layers">
+                {{watershed_kml.title}}</a>
+                </div>
+                <div id="{{watershed_kml.watershed}}-layers" class="collapse in">
+                    <ul>
+            {% if "drainage_line" in watershed_kml %}
+                    <li class="dropdown">
+                        <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Drainage Line<span class="caret"></span></a>
+                        <ul id="layer{{forloop.counter0}}0" class="dropdown-menu" role="menu">
+                            <li><a class="zoom-to-layer" href="#">Zoom To Layer</a></li>
+                            <li class="divider"></li>
+                            <li><p style="margin-left:20px;"><input class="visible" type="checkbox"> Visibility </p></li>
+                            <li><label style="margin-left:15px;">Opacity</label>
+                                <input style="margin-left:15px; width:80%;" class="opacity" type="range" min="0" max="1" step="0.01">
+                            </li>
+                        </ul>
+                    </li>
+            {% endif%}
+            {% if "catchment" in watershed_kml %}
+                    <li class="dropdown">
+                        <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Catchment<span class="caret"></span></a>
+                        <ul id="layer{{forloop.counter0}}1" class="dropdown-menu" role="menu">
+                            <li><a class="zoom-to-layer" href="#">Zoom To Layer</a></li>
+                            <li class="divider"></li>
+                            <li><p style="margin-left:20px;"><input class="visible" type="checkbox"> Visibility </p></li>
+                            <li><label style="margin-left:15px;">Opacity</label>
+                                <input style="margin-left:15px; width:80%;" class="opacity" type="range" min="0" max="1" step="0.01">
+                            </li>
+                        </ul>
+                    </li>
+            {% endif%}
+                    </ul>
+                </div> <!-- div: {{watershed_kml.watershed}}-layers -->
+            </div></li>  <!-- div: {{watershed_kml.watershed}}-control -->
+        {% endfor%}
+    {% endif %}
+    <!--{{ map_navigation }} -->
  
     </ul></div> <!-- div: mapNavigation -->
 
