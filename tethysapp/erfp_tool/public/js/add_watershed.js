@@ -52,6 +52,7 @@ $('#submit-add-watershed').click(function(){
     var watershed_name = checkInputWithError($('#watershed-name-input'),safe_to_submit);
     var subbasin_name = checkInputWithError($('#subbasin-name-input'),safe_to_submit);
     var data_store_id = checkInputWithError($('#data-store-select'),safe_to_submit, true);
+    console.log(data_store_id);
     var geoserver_id = checkInputWithError($('#geoserver-select'),safe_to_submit, true);
     if(geoserver_id==1){
         //local upload
@@ -90,11 +91,11 @@ $('#submit-add-watershed').click(function(){
             ajax_update_database("submit",data);
         }
         //reset inputs
-        /*$('#watershed-name-input').val('');
+        $('#watershed-name-input').val('');
         $('#subbasin-name-input').val('');
         $('#data-store-select').select2('val','');
         $('#geoserver-select').select2('val','');
-        $('#geoserver-layers-input').val('');*/
+        $('#geoserver-layers-input').val('');
     }
 
 });

@@ -32,7 +32,7 @@
               Watersheds
             </a>
         </li>
-        <div id="mapNavigation" class="collapse in">
+        <div id="map-navigation" class="collapse in">
         <ul>
         {% for watershed_kml in kml_info %}
             <li>
@@ -71,12 +71,11 @@
             {% endif%}
                     </ul>
                 </div> <!-- div: {{watershed_kml.watershed}}-layers -->
-            </div></li>  <!-- div: {{watershed_kml.watershed}}-control -->
+            </div><!-- div: {{watershed_kml.watershed}}-control -->
+            </li>  
         {% endfor%}
     {% endif %}
-    <!--{{ map_navigation }} -->
- 
-    </ul></div> <!-- div: mapNavigation -->
+    </ul></div> <!-- div: map-navigation -->
 
     {{ block.super}}  
     <li class="separator"></li>

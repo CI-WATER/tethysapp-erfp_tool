@@ -136,6 +136,7 @@ class Watershed(Base):
         """
         self.watershed_name = watershed_name
         self.subbasin_name = subbasin_name
+        self.data_store_id = data_store_id
         self.geoserver_id = geoserver_id
         self.geoserver_drainage_line_layer = geoserver_drainage_line_layer
         self.geoserver_catchment_layer = geoserver_catchment_layer

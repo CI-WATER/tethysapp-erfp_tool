@@ -410,8 +410,6 @@ def add_watershed(request):
     for data_store in data_stores:
         data_store_list.append((data_store.name + " (" + data_store.api_endpoint + ")", data_store.id))
 
-    if(len(data_store_list) <= 0):
-        data_store_list.append(('None', -1))
     data_store_select = {
                 'display_text': 'Select a Data Store',
                 'name': 'data-store-select',
@@ -512,6 +510,29 @@ def add_watershed_ajax(request):
         return JsonResponse({ 'success': "Watershed Sucessfully Added!" })
 
     return JsonResponse({ 'error': "A problem with your request exists." })
+
+def manage_watersheds(request):        
+    """
+    Controller for the app manage_watersheds page.
+    """
+    #initialize session
+    session = SettingsSessionMaker()
+
+    # Query DB for watersheds
+    watersheds = session.query(Watershed).all()
+
+    # Query DB for data stores
+    data_stores = session.query(DataStore).all()
+              
+    # Query DB for geoservers
+    geoservers = session.query(Geoserver).all()
+
+    context = {
+                'watersheds': watersheds,
+                'data_stores': data_stores,
+                'geoservers': geoservers,
+              }
+    return render(request, 'erfp_tool/manage_watersheds.html', context)
 
 def add_data_store(request):        
     """

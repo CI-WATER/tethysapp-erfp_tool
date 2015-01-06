@@ -9,30 +9,34 @@
 {% block app_content %}
     <div id="message" class="alert alert-danger hidden" role="alert"></div>
     <h3>Manage Geoservers</h3>
-    <table class="table table-striped">
-        <thead>
-            <th>ID</th>
-            <th>Name</th>
-            <th>URL</th>
-        </thead>
-    <tbody>
-    {% for geoserver in geoservers %}
-        <tr>
-            <td class="geoserver-id">{{geoserver.id}}</td>
-            <td class="geoserver-name" contenteditable>{{geoserver.name}}</td>
-            <td class="geoserver-url" contenteditable>{{geoserver.url}}</td>
-            <td><div class=" btn-group "><a name="submit-update-geoserver" class="btn btn-warning submit-update-geoserver" role="button">
-                <span class="glyphicon glyphicon-floppy-disk"></span> Update </a>
-                </div>
-            </td>
-            <td><div class=" btn-group "><a name="submit-delete-geoserver" class="btn btn-danger submit-delete-geoserver" role="button">
-                <span class="glyphicon glyphicon-remove"></span> Delete </a>
-                </div>
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-    </table>
+    <div class="table-overflow">
+        <table class="table table-striped">
+            <thead>
+                <th>Update</th>
+                <th>Delete</th>
+                <th>ID</th>
+                <th>Name</th>
+                <th>URL</th>
+            </thead>
+        <tbody>
+        {% for geoserver in geoservers %}
+            <tr>
+                <td class="table-button"><div class=" btn-group "><a name="submit-update-geoserver" class="btn btn-warning submit-update-geoserver" role="button">
+                    <span class="glyphicon glyphicon-floppy-disk"></span> Update </a>
+                    </div>
+                </td>
+                <td class="table-button"><div class=" btn-group "><a name="submit-delete-geoserver" class="btn btn-danger submit-delete-geoserver" role="button">
+                    <span class="glyphicon glyphicon-remove"></span> Delete </a>
+                    </div>
+                </td>
+                <td class="geoserver-id">{{geoserver.id}}</td>
+                <td class="geoserver-name" contenteditable>{{geoserver.name}}</td>
+                <td class="geoserver-url" contenteditable>{{geoserver.url}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+    </div>
 {% endblock %}
 
 {% block app_navigation_items %}
