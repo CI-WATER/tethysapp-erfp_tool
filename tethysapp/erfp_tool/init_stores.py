@@ -12,9 +12,9 @@ def init_erfp_settings_db(first_time):
         session = SettingsSessionMaker()
         
         #add all possible base layers
-        session.add(BaseLayer("MapQuest","",))
+        session.add(BaseLayer("MapQuest","none",))
         session.add(BaseLayer("BingMaps","",))
-        session.add(BaseLayer("OSM","",))
+        session.add(BaseLayer("OSM","none",))
         
         #add all possible data story types
         session.add(DataStoreType("local", "Local Server"))

@@ -660,31 +660,8 @@ def manage_data_stores(request):
     # Query DB for data store types
     data_stores = session.query(DataStore).filter(DataStore.id>1).all()
 
-    update_button = {'buttons': [
-                                 {'display_text': 'Update',
-                                  'icon': 'glyphicon glyphicon-floppy-disk',
-                                  'style': 'warning',
-                                  'name': 'submit-add-data-store',
-                                  'attributes': 'class=submit-update-data-store',
-                                  'type': 'submit'
-                                  }
-                                ],
-                 }
-    delete_button = {'buttons': [
-                                 {'display_text': 'Delete',
-                                  'icon': 'glyphicon glyphicon-remove',
-                                  'style': 'danger',
-                                  'name': 'submit-delete-data-store',
-                                  'attributes': 'class=submit-delete-data-store',
-                                  'type': 'submit'
-                                  }
-                                ],
-                 }
-
     context = {
                 'data_stores': data_stores,
-                'update_button': update_button,
-                'delete_button': delete_button,
               }
     return render(request, 'erfp_tool/manage_data_stores.html', context)
     
@@ -715,7 +692,7 @@ def update_data_store_ajax(request):
 
 def delete_data_store_ajax(request):
     """
-    Controller for updating a data store.
+    Controller for delete a data store.
     """
     if request.is_ajax() and request.method == 'POST':
         #get/check information from AJAX request
@@ -804,3 +781,60 @@ def add_geoserver_ajax(request):
 
     return JsonResponse({ 'error': "A problem with your request exists." })
 
+def manage_geoservers(request):        
+    """
+    Controller for the app manage_geoservers page.
+    """
+    #initialize session
+    session = SettingsSessionMaker()
+
+    # Query DB for data store types
+    geoservers = session.query(Geoserver).filter(Geoserver.id>1).all()
+
+    context = {
+                'geoservers': geoservers,
+              }
+    return render(request, 'erfp_tool/manage_geoservers.html', context)
+
+def update_geoserver_ajax(request):
+    """
+    Controller for updating a data store.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        #get/check information from AJAX request
+        post_info = request.POST
+        geoserver_id = post_info.get('geoserver_id')
+        geoserver_name = post_info.get('geoserver_name')
+        geoserver_url = post_info.get('geoserver_url')
+    
+        if int(geoserver_id) != 1:
+            #initialize session
+            session = SettingsSessionMaker()
+            #update data store
+            geoserver = session.query(Geoserver).get(geoserver_id)
+            geoserver.name = geoserver_name
+            geoserver.url= geoserver_url    
+            session.commit()
+            return JsonResponse({ 'success': "Geoserver Sucessfully Updated!" })
+        return JsonResponse({ 'error': "Cannot change this geoserver." })
+    return JsonResponse({ 'error': "A problem with your request exists." })
+
+def delete_geoserver_ajax(request):
+    """
+    Controller for delete a data store.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        #get/check information from AJAX request
+        post_info = request.POST
+        geoserver_id = post_info.get('geoserver_id')
+    
+        if int(geoserver_id) != 1:
+            #initialize session
+            session = SettingsSessionMaker()
+            #update data store
+            geoserver  = session.query(Geoserver).get(geoserver_id)
+            session.delete(geoserver)
+            session.commit()
+            return JsonResponse({ 'success': "Geoserver Sucessfully Deleted!" })
+        return JsonResponse({ 'error': "Cannot change this geoserver." })
+    return JsonResponse({ 'error': "A problem with your request exists." })
