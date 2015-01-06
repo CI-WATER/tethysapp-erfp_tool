@@ -75,6 +75,24 @@ def format_watershed_title(watershed, subbasin):
         return (watershed + " (" + subbasin[:max_length-3].strip() + " ...)")
     return (watershed + " (" + subbasin + ")")
 
+def get_subbasin_list(file_path):
+    """
+    Gets a list of subbasins in the watershed
+    """
+    subbasin_list = []
+    drainage_line_kmls = glob(os.path.join(file_path, '*drainage_line.kml'))
+    for drainage_line_kml in drainage_line_kmls:
+        subbasin_name = "-".join(os.path.basename(drainage_line_kml).split("-")[:-1])
+        if subbasin_name not in subbasin_list:
+            subbasin_list.append(subbasin_name)
+    catchment_kmls = glob(os.path.join(file_path, '*catchment.kml'))
+    for catchment_kml in catchment_kmls:
+        subbasin_name = "-".join(os.path.basename(catchment_kml).split("-")[:-1])
+        if subbasin_name not in subbasin_list:
+            subbasin_list.append(subbasin_name)
+    subbasin_list.sort()
+    return subbasin_list
+
 def home(request):
     """
     Controller for the app home page.
@@ -86,26 +104,23 @@ def home(request):
     #add kml urls to list and add their navigation items as well
     group_id = 0
     for watershed in watersheds:
-        subbasin = ""
         file_path = os.path.join(kml_file_location, watershed)
-        kml_urls = {'watershed':watershed}
-        #prepare kml files    
-        drainage_line_kml = glob(os.path.join(file_path, '*drainage_line.kml'))
-        if(len(drainage_line_kml)>0):
-            drainage_line_kml = os.path.basename(drainage_line_kml[0])
-            kml_urls['drainage_line'] = '/static/erfp_tool/kml/%s/%s' % (watershed, drainage_line_kml)
-            subbasin = drainage_line_kml.split("-")[0]
-            kml_urls['subbasin'] = subbasin
-        catchment_kml = glob(os.path.join(file_path, '*catchment.kml'))
-        if(len(catchment_kml)>0):
-            catchment_kml = os.path.basename(catchment_kml[0])
-            kml_urls['catchment'] = '/static/erfp_tool/kml/%s/%s' % (watershed, catchment_kml)
-            if not subbasin:
-                subbasin = catchment_kml.split("-")[0]
-                kml_urls['subbasin'] = subbasin
-        kml_urls['title'] = format_watershed_title(watershed,subbasin)
-        kml_info.append(kml_urls)
-        group_id += 1
+        subbasin_list = get_subbasin_list(file_path)
+        for subbasin in subbasin_list:
+            kml_urls = {'watershed':watershed, 'subbasin':subbasin}
+            #prepare kml files
+            drainage_line_kml = os.path.join(file_path, subbasin + '-drainage_line.kml')
+            if os.path.exists(drainage_line_kml):
+                drainage_line_kml = os.path.basename(drainage_line_kml)
+                kml_urls['drainage_line'] = '/static/erfp_tool/kml/%s/%s' % (watershed, drainage_line_kml)
+            catchment_kml = os.path.join(file_path, subbasin + '-catchment.kml')
+            if os.path.exists(catchment_kml):
+                catchment_kml = os.path.basename(catchment_kml)
+                kml_urls['catchment'] = '/static/erfp_tool/kml/%s/%s' % (watershed, catchment_kml)
+
+            kml_urls['title'] = format_watershed_title(watershed,subbasin)
+            kml_info.append(kml_urls)
+            group_id += 1
         
     #get the base layer information
     session = SettingsSessionMaker()
