@@ -32,9 +32,15 @@ $(document).ready(function() {
 });
 
 //form submission check function
-function checkInputWithError(input, safe_to_submit, one_parent) {
+function checkInputWithError(input, safe_to_submit, one_parent, select_two) {
     one_parent = typeof one_parent !== 'undefined' ? one_parent : false;
-    var data_value = input.val();
+    select_two = typeof select_two !== 'undefined' ? select_two : false;
+
+    if(select_two) {
+        var data_value = input.select2("val");
+    } else {
+        var data_value = input.val();
+    }
 
     if(one_parent){
         var parent = input.parent();
@@ -87,7 +93,7 @@ function ajax_update_database(ajax_url, ajax_data) {
         ajax_url = ajax_url.concat("/");
     }
     //update database
-    jQuery.ajax({
+    var xhr = jQuery.ajax({
         type: "POST",
         url: ajax_url,
         dataType: "json",
@@ -107,4 +113,38 @@ function ajax_update_database(ajax_url, ajax_data) {
             console.log(xhr.responseText);
         },
     });
+    return xhr;
+}
+
+//ajax file submit
+//send data to database with error messages
+function ajax_update_database_with_file(ajax_url, ajax_data) {
+    //backslash at end of url is requred
+    if (ajax_url.substr(-1) !== "/") {
+        ajax_url = ajax_url.concat("/");
+    }
+    //update database
+    var xhr = jQuery.ajax({
+        url: ajax_url,
+        type: "POST",
+        data: ajax_data,
+        dataType: "json",
+        processData: false, // Don't process the files
+        contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+        success: function(data) {
+            if("success" in data) {
+                $('#message').html(
+                  '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>' +
+                  '<span class="sr-only">Sucess:</span> ' + data['success']
+                ).removeClass('hidden').removeClass('alert-danger').addClass('alert-success');
+            } else {
+                addErrorMessage(data['error']);
+            }
+        }, 
+        error: function(xhr, status, error) {
+            addErrorMessage(error);
+            console.log(xhr.responseText);
+        },
+    });
+    return xhr;
 }

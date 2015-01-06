@@ -72,6 +72,7 @@
                             <input class="drainage-line-kml-upload-input" name="drainage-line-kml-upload-input" type="file" accept="*.kml">
                             <p class="help-block hidden">Must select file to submit!</p>
                          </div>
+                        <p class="help-block">Current: {{watershed.geoserver_drainage_line_layer}}</p>
                     {% else %}   
                         contenteditable>{{watershed.geoserver_drainage_line_layer}}
                     {% endif %}
@@ -82,6 +83,7 @@
                             <input class="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept="*.kml">
                             <p class="help-block hidden">Must select file to submit!</p>
                          </div>
+                        <p class="help-block">Current: {{watershed.geoserver_catchment_layer}}</p>
                     {% else %}   
                         contenteditable>{{watershed.geoserver_catchment_layer}}
                     {% endif %}

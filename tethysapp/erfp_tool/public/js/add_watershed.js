@@ -13,37 +13,7 @@ $('#geoserver-drainage-line-input').parent().parent().addClass('hidden');
 help_html = '<p class="help-block hidden">No Geoserver catchment layer name specified.</p>';
 $('#geoserver-catchment-input').parent().parent().append(help_html);
 $('#geoserver-catchment-input').parent().parent().addClass('hidden');
-//ajax file submit
-//send data to database with error messages
-function ajax_update_database_with_file(ajax_url, ajax_data) {
-    //backslash at end of url is requred
-    if (ajax_url.substr(-1) !== "/") {
-        ajax_url = ajax_url.concat("/");
-    }
-    //update database
-    jQuery.ajax({
-        url: ajax_url,
-        type: "POST",
-        data: ajax_data,
-        dataType: "json",
-        processData: false, // Don't process the files
-        contentType: false, // Set content type to false as jQuery will tell the server its a query string request
-        success: function(data) {
-            if("success" in data) {
-                $('#message').html(
-                  '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>' +
-                  '<span class="sr-only">Sucess:</span> ' + data['success']
-                ).removeClass('hidden').removeClass('alert-danger').addClass('alert-success');
-            } else {
-                addErrorMessage(data['error']);
-            }
-        }, 
-        error: function(xhr, status, error) {
-            addErrorMessage(error);
-            console.log(xhr.responseText);
-        },
-    });
-}
+
 //handle the submit event
 $('#submit-add-watershed').click(function(){
     var safe_to_submit = {val: true};

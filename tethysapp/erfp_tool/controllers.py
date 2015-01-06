@@ -6,7 +6,9 @@ import json
 import netCDF4 as NET
 import numpy as np
 import os
+from shutil import move
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 #tethys imports
 from tethys_datasets.engines import CkanDatasetEngine, HydroShareDatasetEngine
 
@@ -487,8 +489,10 @@ def add_watershed_ajax(request):
         if(int(geoserver_id) == 1):
             if 'drainage_line_kml_file' in request.FILES and 'catchment_kml_file' in request.FILES:
                 kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed_name))
-                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),kml_file_location, format_name(subbasin_name) + "-drainage_line.kml")
-                handle_uploaded_file(request.FILES.get('catchment_kml_file'),kml_file_location, format_name(subbasin_name) + "-catchment.kml")
+                geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
+                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),kml_file_location, geoserver_drainage_line_layer)
+                geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
+                handle_uploaded_file(request.FILES.get('catchment_kml_file'),kml_file_location, geoserver_catchment_layer)
             else:
                 return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
 
@@ -533,6 +537,118 @@ def manage_watersheds(request):
                 'geoservers': geoservers,
               }
     return render(request, 'erfp_tool/manage_watersheds.html', context)
+
+def update_watershed_ajax(request):
+    """
+    Controller for updating a watershed.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        post_info = request.POST
+        #get/check information from AJAX request
+        watershed_id = post_info.get('watershed_id')
+        watershed_name = post_info.get('watershed_name')
+        subbasin_name = post_info.get('subbasin_name')
+        data_store_id = post_info.get('data_store_id')
+        geoserver_id = post_info.get('geoserver_id')
+        geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
+        geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
+        
+        #initialize session
+        session = SettingsSessionMaker()
+        
+        #get desired watershed
+        watershed  = session.query(Watershed).get(watershed_id)
+
+        #upload files if ready
+        if(int(geoserver_id) == 1):
+            #remove old files if they exist
+            new_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed_name))
+            #add new directory if it does not exist                
+            try:
+                os.mkdir(new_kml_file_location)
+            except OSError:
+                pass
+            #move/update kml files as needed                
+            try:
+                old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed.watershed_name))
+                if(watershed_name != watershed.watershed_name or subbasin_name != watershed.subbasin_name):
+                    #move drainage line kml
+                    old_geoserver_drainage_line_layer = format_name(watershed.subbasin_name) + "-drainage_line.kml"
+                    geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
+                    move(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer),
+                         os.path.join(new_kml_file_location, geoserver_drainage_line_layer))
+                    #move catchment kml
+                    old_geoserver_catchment_layer = format_name(watershed.subbasin_name) + "-catchment.kml"
+                    geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
+                    move(os.path.join(old_kml_file_location, old_geoserver_catchment_layer),
+                         os.path.join(new_kml_file_location, geoserver_catchment_layer))
+                else:
+                    #delete old files
+                    if('drainage_line_kml_file' in request.FILES):
+                        os.remove(os.path.join(old_kml_file_location, watershed.geoserver_drainage_line_layer))
+                    if('catchment_kml_file' in request.FILES):
+                        os.remove(os.path.join(old_kml_file_location, watershed.geoserver_catchment_layer))
+                os.rmdir(old_kml_file_location)
+            except OSError as er:
+                print er
+                pass
+            #upload new files if they exist
+            if('drainage_line_kml_file' in request.FILES):
+                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),new_kml_file_location, geoserver_drainage_line_layer)
+            if('catchment_kml_file' in request.FILES):
+                handle_uploaded_file(request.FILES.get('catchment_kml_file'),new_kml_file_location, geoserver_catchment_layer)
+     
+        
+        #change watershed attributes
+        watershed.watershed_name = watershed_name
+        watershed.subbasin_name = subbasin_name
+        watershed.data_store_id = data_store_id
+        watershed.geoserver_id = geoserver_id
+        watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer
+        watershed.geoserver_catchment_layer = geoserver_catchment_layer
+        
+        #update database
+        session.commit()
+        
+        return JsonResponse({ 'success': "Watershed sucessfully updated!" })
+
+    return JsonResponse({ 'error': "A problem with your request exists." })
+
+def delete_watershed_ajax(request):
+    """
+    Controller for deleting a watershed.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        #get/check information from AJAX request
+        post_info = request.POST
+        watershed_id = post_info.get('watershed_id')
+    
+        
+        if watershed_id:
+            #initialize session
+            session = SettingsSessionMaker()
+            #get watershed to delete
+            watershed  = session.query(Watershed).get(watershed_id)
+            
+            #remove watershed kml files
+            kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed.watershed_name))
+            drainage_line_kml_file = os.path.join(kml_file_location, format_name(watershed.subbasin_name) + "-drainage_line.kml")
+            catchment_kml_file = os.path.join(kml_file_location, format_name(watershed.subbasin_name) + "-catchment.kml")
+            try:
+                os.remove(drainage_line_kml_file)
+                os.remove(catchment_kml_file)
+                #this will throw an exception if it is not empty
+                os.rmdir(kml_file_location)
+            except OSError:
+                pass
+                
+            #delete watershed from database
+            session.delete(watershed)
+            session.commit()
+
+            return JsonResponse({ 'success': "Watershed sucessfully deleted!" })
+        return JsonResponse({ 'error': "Cannot delete this watershed." })
+    return JsonResponse({ 'error': "A problem with your request exists." })
 
 def add_data_store(request):        
     """
@@ -636,7 +752,7 @@ def add_data_store_ajax(request):
 
 def manage_data_stores(request):        
     """
-    Controller for the app add_data_store page.
+    Controller for the app manage_data_stores page.
     """
     #initialize session
     session = SettingsSessionMaker()
@@ -676,7 +792,7 @@ def update_data_store_ajax(request):
 
 def delete_data_store_ajax(request):
     """
-    Controller for delete a data store.
+    Controller for deleting a data store.
     """
     if request.is_ajax() and request.method == 'POST':
         #get/check information from AJAX request
@@ -684,12 +800,15 @@ def delete_data_store_ajax(request):
         data_store_id = post_info.get('data_store_id')
     
         if int(data_store_id) != 1:
-            #initialize session
-            session = SettingsSessionMaker()
-            #update data store
-            data_store  = session.query(DataStore).get(data_store_id)
-            session.delete(data_store)
-            session.commit()
+            try:
+                #initialize session
+                session = SettingsSessionMaker()
+                #update data store
+                data_store  = session.query(DataStore).get(data_store_id)
+                session.delete(data_store)
+                session.commit()
+            except IntegrityError:
+                return JsonResponse({ 'error': "This data store is connected with a watershed! Must remove connection to delete." })
             return JsonResponse({ 'success': "Data Store Sucessfully Deleted!" })
         return JsonResponse({ 'error': "Cannot change this data store." })
     return JsonResponse({ 'error': "A problem with your request exists." })
@@ -734,7 +853,7 @@ def add_geoserver(request):
  
 def add_geoserver_ajax(request):
     """
-    Controller for ading a geoserver.
+    Controller for adding a geoserver.
     """
     if request.is_ajax() and request.method == 'POST':
         print "POST"
@@ -782,7 +901,7 @@ def manage_geoservers(request):
 
 def update_geoserver_ajax(request):
     """
-    Controller for updating a data store.
+    Controller for updating a geoserver.
     """
     if request.is_ajax() and request.method == 'POST':
         #get/check information from AJAX request
@@ -799,13 +918,13 @@ def update_geoserver_ajax(request):
             geoserver.name = geoserver_name
             geoserver.url= geoserver_url    
             session.commit()
-            return JsonResponse({ 'success': "Geoserver Sucessfully Updated!" })
+            return JsonResponse({ 'success': "Geoserver sucessfully updated!" })
         return JsonResponse({ 'error': "Cannot change this geoserver." })
     return JsonResponse({ 'error': "A problem with your request exists." })
 
 def delete_geoserver_ajax(request):
     """
-    Controller for delete a data store.
+    Controller for deleting a geoserver.
     """
     if request.is_ajax() and request.method == 'POST':
         #get/check information from AJAX request
@@ -815,10 +934,13 @@ def delete_geoserver_ajax(request):
         if int(geoserver_id) != 1:
             #initialize session
             session = SettingsSessionMaker()
-            #update data store
-            geoserver  = session.query(Geoserver).get(geoserver_id)
-            session.delete(geoserver)
-            session.commit()
-            return JsonResponse({ 'success': "Geoserver Sucessfully Deleted!" })
+            try:
+                #update data store
+                geoserver  = session.query(Geoserver).get(geoserver_id)
+                session.delete(geoserver)
+                session.commit()
+            except IntegrityError:
+                return JsonResponse({ 'error': "This geoserver is connected with a watershed! Must remove connection to delete." })
+            return JsonResponse({ 'success': "Geoserver sucessfully deleted!" })
         return JsonResponse({ 'error': "Cannot change this geoserver." })
     return JsonResponse({ 'error': "A problem with your request exists." })

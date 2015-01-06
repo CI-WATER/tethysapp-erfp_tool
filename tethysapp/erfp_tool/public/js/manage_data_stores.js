@@ -25,12 +25,17 @@ $('.submit-update-data-store').click(function(){
 //handle the submit update event
 $('.submit-delete-data-store').click(function(){
     if (window.confirm("Are you sure?")) {
+        var parent_row = $(this).parent().parent().parent();
         //update database
         data = {
-                data_store_id: $(this).parent().parent().parent().find('.data-store-id').text(),
+                data_store_id: parent_row.find('.data-store-id').text(),
                 };
     
-        ajax_update_database("delete",data);
-        $(this).parent().parent().parent().remove();
+        var xhr = ajax_update_database("delete",data);
+        xhr.done(function(data) {
+            if ('success' in data) {
+                parent_row.remove();
+            }
+        });
     }
 });
