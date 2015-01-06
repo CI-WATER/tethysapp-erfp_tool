@@ -25,10 +25,10 @@ $(document).ready(function() {
         } else {
             var drainage_line_element = $(this).parent().parent().find('.drainage-line-kml');
             drainage_line_element.attr('contenteditable','true')
-                                .text(drainage_line_element.attr('kml-file'));
+                                .text(drainage_line_element.attr('geoserver-kml-file'));
             var catchment_element = $(this).parent().parent().find('.catchment-kml');
             catchment_element.attr('contenteditable','true')
-                                .text(catchment_element.attr('kml-file'));
+                                .text(catchment_element.attr('geoserver-kml-file'));
 
         }
     });   
@@ -50,19 +50,19 @@ $('.submit-update-watershed').click(function(){
         //upload new kml files if selected or if old does not exist
 
         //drainage line
-        var old_drainage_line_kml = parent_row.find('.drainage-line-kml').attr('kml-file');
-        var new_drainage_line_kml = parent_row.find('.drainage-line-kml-upload-input').val();
-        if(new_drainage_line_kml || !old_drainage_line_kml) {
+        var old_drainage_line_kml = parent_row.find('.drainage-line-kml').attr('local-kml-file');
+        var new_drainage_line_kml = parent_row.find('.drainage-line-kml-upload-input');
+        if(new_drainage_line_kml.val() || !old_drainage_line_kml) {
             var geoserver_drainage_line_layer = checkInputWithError(new_drainage_line_kml,safe_to_submit, true);
         } else {
             var geoserver_drainage_line_layer = old_drainage_line_kml;
         }
 
         //catchment
-        var old_catchment_kml = parent_row.find('.catchment-kml').attr('kml-file');
-        var new_catchment_kml = parent_row.find('.catchment-kml-upload-input').val();
-        if(new_drainage_line_kml || !old_catchment_kml) {
-            var geoserver_catchment_layer = checkInputWithError(parent_row.find('.catchment-kml-upload-input'),safe_to_submit, true);
+        var old_catchment_kml = parent_row.find('.catchment-kml').attr('local-kml-file');
+        var new_catchment_kml = parent_row.find('.catchment-kml-upload-input');
+        if(new_catchment_kml.val() || !old_catchment_kml) {
+            var geoserver_catchment_layer = checkInputWithError(new_catchment_kml,safe_to_submit, true);
         } else {
             var geoserver_catchment_layer = old_catchment_kml;
         }
@@ -83,15 +83,15 @@ $('.submit-update-watershed').click(function(){
             data.append("subbasin_name",subbasin_name);
             data.append("data_store_id",data_store_id);
             data.append("geoserver_id",geoserver_id);
+            data.append("geoserver_drainage_line_layer",geoserver_drainage_line_layer);
+            data.append("geoserver_catchment_layer",geoserver_catchment_layer);
             //append the file if it exists
             if(geoserver_drainage_line_layer != old_drainage_line_kml) {
-                data.append("geoserver_drainage_line_layer",geoserver_drainage_line_layer);
+                data.append("drainage_line_kml_file",parent_row.find('.drainage-line-kml-upload-input')[0].files[0]);
             }
             if(geoserver_catchment_layer != old_catchment_kml) {
-                data.append("geoserver_catchment_layer",geoserver_catchment_layer);
+                data.append("catchment_kml_file",parent_row.find('.catchment-kml-upload-input')[0].files[0]);
             }
-            data.append("drainage_line_kml_file",parent_row.find('.drainage-line-kml-upload-input')[0].files[0]);
-            data.append("catchment_kml_file",parent_row.find('.catchment-kml-upload-input')[0].files[0]);
             var xhr = ajax_update_database_with_file("submit",data);
         } else {
             var data = {
@@ -106,6 +106,8 @@ $('.submit-update-watershed').click(function(){
     
             ajax_update_database("submit",data);
         }
+    } else {
+        addErrorMessage("Not submitted. Please fix form errors to proceed.");
     }
 
 });
