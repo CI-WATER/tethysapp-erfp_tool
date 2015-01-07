@@ -5,6 +5,7 @@ from glob import glob
 import json
 import netCDF4 as NET
 import numpy as np
+from re import sub
 import os
 from shutil import move
 from sqlalchemy import or_
@@ -46,8 +47,11 @@ def format_name(string):
     """
     Formats watershed name for code
     """
-    return string.strip().replace(" ", "_").lower()
-
+    formatted_string = string.strip().replace(" ", "_").lower()
+    formatted_string = sub('[!@#$./?:;#%*^&()><,-]', '', formatted_string)
+    formatted_string = formatted_string.replace("\"","").replace("\'","").replace("\\","")
+    return formatted_string
+    
 def handle_uploaded_file(f, file_path, file_name):
     """
     Uploads file to specifies path
@@ -493,13 +497,16 @@ def add_watershed_ajax(request):
     if request.is_ajax() and request.method == 'POST':
         post_info = request.POST
         #get/check information from AJAX request
-        watershed_name = post_info.get('watershed_name')
-        subbasin_name = post_info.get('subbasin_name')
+        watershed_name = format_name(post_info.get('watershed_name'))
+        subbasin_name = format_name(post_info.get('subbasin_name'))
         data_store_id = post_info.get('data_store_id')
         geoserver_id = post_info.get('geoserver_id')
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
-        #file_form = KMLUploadFileForm(request.POST,request.FILES)
+        if not watershed_name or not subbasin_name or not data_store_id \
+            or not geoserver_drainage_line_layer or not geoserver_catchment_layer:
+            return JsonResponse({'error' : 'AJAX request input faulty'})
+       #file_form = KMLUploadFileForm(request.POST,request.FILES)
         #if file_form.is_valid():
         if(int(geoserver_id) == 1):
             if 'drainage_line_kml_file' in request.FILES and 'catchment_kml_file' in request.FILES:
@@ -576,13 +583,17 @@ def update_watershed_ajax(request):
         post_info = request.POST
         #get/check information from AJAX request
         watershed_id = post_info.get('watershed_id')
-        watershed_name = post_info.get('watershed_name')
-        subbasin_name = post_info.get('subbasin_name')
+        watershed_name = format_name(post_info.get('watershed_name'))
+        subbasin_name = format_name(post_info.get('subbasin_name'))
         data_store_id = post_info.get('data_store_id')
         geoserver_id = post_info.get('geoserver_id')
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
-        
+
+        if not watershed_id or not watershed_name or not subbasin_name or not data_store_id \
+            or not geoserver_id or not geoserver_drainage_line_layer or not geoserver_catchment_layer:
+            return JsonResponse({'error' : 'AJAX request input faulty'})
+            
         #initialize session
         session = SettingsSessionMaker()
         
@@ -591,11 +602,10 @@ def update_watershed_ajax(request):
 
         #upload files to local server if ready
         if(int(geoserver_id) == 1):
-            print "new local"
             old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed.watershed_name))
             new_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed_name))
-            geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
-            geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
+            geoserver_drainage_line_layer = subbasin_name + "-drainage_line.kml"
+            geoserver_catchment_layer = subbasin_name + "-catchment.kml"
             #add new directory if it does not exist                
             try:
                 os.mkdir(new_kml_file_location)
