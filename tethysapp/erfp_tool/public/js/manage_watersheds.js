@@ -105,6 +105,11 @@ $('.submit-update-watershed').click(function(){
                     };
     
             ajax_update_database("submit",data);
+            if(geoserver_id!=1) {
+                //clean up data
+                parent_row.find('.drainage-line-kml').removeAttr('local-kml-file');
+                parent_row.find('.catchment-kml').removeAttr('local-kml-file');
+            }
         }
     } else {
         addErrorMessage("Not submitted. Please fix form errors to proceed.");

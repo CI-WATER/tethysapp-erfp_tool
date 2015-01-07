@@ -68,8 +68,8 @@
                 </td>
                 <td class="drainage-line-kml"
                     {% if watershed.geoserver_id == 1 %}
-                        geoserver-kml-file=""
                         local-kml-file="{{watershed.geoserver_drainage_line_layer}}"
+                        geoserver-kml-file=""
                         ><div class="form-group">
                             <input class="drainage-line-kml-upload-input" name="drainage-line-kml-upload-input" type="file" accept="*.kml">
                             <p class="help-block hidden">Must select file to submit!</p>
@@ -77,14 +77,13 @@
                         <p class="help-block">Current: {{watershed.geoserver_drainage_line_layer}}</p>
                     {% else %}   
                         geoserver-kml-file="{{watershed.geoserver_drainage_line_layer}}"
-                        local-kml-file=""
                         contenteditable>{{watershed.geoserver_drainage_line_layer}}
                     {% endif %}
                 </td>  
                 <td class="catchment-kml"
                     {% if watershed.geoserver_id == 1 %}
-                        geoserver-kml-file=""
                         local-kml-file="{{watershed.geoserver_catchment_layer}}"
+                        geoserver-kml-file=""
                         ><div class="form-group">
                             <input class="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept="*.kml">
                             <p class="help-block hidden">Must select file to submit!</p>
@@ -92,7 +91,6 @@
                         <p class="help-block">Current: {{watershed.geoserver_catchment_layer}}</p>
                     {% else %}   
                         geoserver-kml-file="{{watershed.geoserver_catchment_layer}}"
-                        local-kml-file=""
                         contenteditable>{{watershed.geoserver_catchment_layer}}
                     {% endif %}
             </tr>

@@ -552,6 +552,21 @@ def manage_watersheds(request):
                 'geoservers': geoservers,
               }
     return render(request, 'erfp_tool/manage_watersheds.html', context)
+    
+def delete_old_watershed_files(watershed_name, subbasin_name):
+    """
+    Removes old watershed files from system
+    """
+    old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed_name))
+    old_geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
+    old_geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
+    #remove old files if not on local server
+    try:
+        os.remove(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer))
+        os.remove(os.path.join(old_kml_file_location, old_geoserver_catchment_layer))
+        os.rmdir(old_kml_file_location)
+    except OSError:
+        pass
 
 def update_watershed_ajax(request):
     """
@@ -574,45 +589,46 @@ def update_watershed_ajax(request):
         #get desired watershed
         watershed  = session.query(Watershed).get(watershed_id)
 
-        #upload files if ready
+        #upload files to local server if ready
         if(int(geoserver_id) == 1):
-            #remove old files if they exist
+            print "new local"
+            old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed.watershed_name))
             new_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed_name))
+            geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
+            geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
             #add new directory if it does not exist                
             try:
                 os.mkdir(new_kml_file_location)
             except OSError:
                 pass
-            #move/update kml files as needed                
-            try:
-                old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed.watershed_name))
-                if(watershed_name != watershed.watershed_name or subbasin_name != watershed.subbasin_name):
-                    #move drainage line kml
-                    old_geoserver_drainage_line_layer = format_name(watershed.subbasin_name) + "-drainage_line.kml"
-                    geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
-                    move(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer),
-                         os.path.join(new_kml_file_location, geoserver_drainage_line_layer))
-                    #move catchment kml
-                    old_geoserver_catchment_layer = format_name(watershed.subbasin_name) + "-catchment.kml"
-                    geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
-                    move(os.path.join(old_kml_file_location, old_geoserver_catchment_layer),
-                         os.path.join(new_kml_file_location, geoserver_catchment_layer))
-                else:
-                    #delete old files
-                    if('drainage_line_kml_file' in request.FILES):
-                        os.remove(os.path.join(old_kml_file_location, watershed.geoserver_drainage_line_layer))
-                    if('catchment_kml_file' in request.FILES):
-                        os.remove(os.path.join(old_kml_file_location, watershed.geoserver_catchment_layer))
-                os.rmdir(old_kml_file_location)
-            except OSError as er:
-                print er
-                pass
-            #upload new files if they exist
-            if('drainage_line_kml_file' in request.FILES):
-                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),new_kml_file_location, geoserver_drainage_line_layer)
-            if('catchment_kml_file' in request.FILES):
-                handle_uploaded_file(request.FILES.get('catchment_kml_file'),new_kml_file_location, geoserver_catchment_layer)
-     
+
+            #if the name of watershed or subbasin is changed, update file name/location
+            if(watershed_name != watershed.watershed_name or subbasin_name != watershed.subbasin_name):
+                #move drainage line kml
+                old_geoserver_drainage_line_layer = format_name(watershed.subbasin_name) + "-drainage_line.kml"
+                move(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer),
+                     os.path.join(new_kml_file_location, geoserver_drainage_line_layer))
+                #move catchment kml
+                old_geoserver_catchment_layer = format_name(watershed.subbasin_name) + "-catchment.kml"
+                move(os.path.join(old_kml_file_location, old_geoserver_catchment_layer),
+                     os.path.join(new_kml_file_location, geoserver_catchment_layer))
+                #remove old directory if exists
+                try:
+                    os.rmdir(old_kml_file_location)
+                except OSError:
+                    pass
+            else:
+                #remove old files if they exist
+                delete_old_watershed_files(watershed.watershed_name, watershed.subbasin_name)
+                #upload new files if they exist
+                if('drainage_line_kml_file' in request.FILES):
+                    handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),new_kml_file_location, geoserver_drainage_line_layer)
+                if('catchment_kml_file' in request.FILES):
+                    handle_uploaded_file(request.FILES.get('catchment_kml_file'),new_kml_file_location, geoserver_catchment_layer)
+        else:
+            #remove old files if not on local server
+            delete_old_watershed_files(watershed.watershed_name, watershed.subbasin_name)
+            
         
         #change watershed attributes
         watershed.watershed_name = watershed_name
@@ -646,16 +662,7 @@ def delete_watershed_ajax(request):
             watershed  = session.query(Watershed).get(watershed_id)
             
             #remove watershed kml files
-            kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed.watershed_name))
-            drainage_line_kml_file = os.path.join(kml_file_location, format_name(watershed.subbasin_name) + "-drainage_line.kml")
-            catchment_kml_file = os.path.join(kml_file_location, format_name(watershed.subbasin_name) + "-catchment.kml")
-            try:
-                os.remove(drainage_line_kml_file)
-                os.remove(catchment_kml_file)
-                #this will throw an exception if it is not empty
-                os.rmdir(kml_file_location)
-            except OSError:
-                pass
+            delete_old_watershed_files(watershed.watershed_name, watershed.subbasin_name)
                 
             #delete watershed from database
             session.delete(watershed)
