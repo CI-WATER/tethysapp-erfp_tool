@@ -47,7 +47,7 @@ $('#submit-add-watershed').click(function(){
             data.append("geoserver_catchment_layer",geoserver_catchment_layer);
             data.append("drainage_line_kml_file",$('#drainage-line-kml-upload-input')[0].files[0]);
             data.append("catchment_kml_file",$('#catchment-kml-upload-input')[0].files[0]);
-            ajax_update_database_with_file("submit",data);
+            var xhr = ajax_update_database_with_file("submit",data);
         } else {
             var data = {
                     watershed_name: watershed_name,
@@ -58,14 +58,18 @@ $('#submit-add-watershed').click(function(){
                     geoserver_catchment_layer: geoserver_catchment_layer,
                     };
     
-            ajax_update_database("submit",data);
+            var xhr = ajax_update_database("submit",data);
         }
-        //reset inputs
-        $('#watershed-name-input').val('');
-        $('#subbasin-name-input').val('');
-        $('#data-store-select').select2('val','');
-        $('#geoserver-select').select2('val','');
-        $('#geoserver-layers-input').val('');
+        xhr.done(function(data) {
+            if ('success' in data) {
+                //reset inputs
+                $('#watershed-name-input').val('');
+                $('#subbasin-name-input').val('');
+                $('#data-store-select').select2('val','');
+                $('#geoserver-select').select2('val','');
+                $('#geoserver-layers-input').val('');
+            }
+        });
     }
 
 });

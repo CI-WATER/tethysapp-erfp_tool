@@ -27,11 +27,16 @@ $('#submit-add-data-store').click(function(){
                 data_store_api_key: data_store_api_key
                 };
 
-        ajax_update_database("submit",data);
-        $('#data-store-name-input').val('');
-        $('#data-store-type-select').select2('val','');
-        $('#data-store-endpoint-input').val('');
-        $('#data-store-api-key-input').val('');
+        var xhr = ajax_update_database("submit",data);
+        xhr.done(function(data) {
+            if ('success' in data) {
+                //reset inputs
+                $('#data-store-name-input').val('');
+                $('#data-store-type-select').select2('val','');
+                $('#data-store-endpoint-input').val('');
+                $('#data-store-api-key-input').val('');
+            }
+        });
     }
 
 });

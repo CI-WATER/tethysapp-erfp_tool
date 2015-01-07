@@ -104,13 +104,17 @@ $('.submit-update-watershed').click(function(){
                     geoserver_catchment_layer: geoserver_catchment_layer,
                     };
     
-            ajax_update_database("submit",data);
-            if(geoserver_id!=1) {
-                //clean up data
-                parent_row.find('.drainage-line-kml').removeAttr('local-kml-file');
-                parent_row.find('.catchment-kml').removeAttr('local-kml-file');
-            }
+            var xhr = ajax_update_database("submit",data);
         }
+        xhr.done(function(data) {
+            if ('success' in data) {
+                if(geoserver_id!=1) {
+                    //clean up data
+                    parent_row.find('.drainage-line-kml').removeAttr('local-kml-file');
+                    parent_row.find('.catchment-kml').removeAttr('local-kml-file');
+                }
+            }
+        });
     } else {
         addErrorMessage("Not submitted. Please fix form errors to proceed.");
     }

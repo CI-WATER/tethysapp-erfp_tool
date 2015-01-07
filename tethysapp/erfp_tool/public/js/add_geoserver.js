@@ -19,10 +19,14 @@ $('#submit-add-geoserver').click(function(){
                 geoserver_url: geoserver_url,
                 };
 
-        ajax_update_database("submit",data);
-        //reset the inputs
-        $('#geoserver-name-input').val('');
-        $('#geoserver-url-input').val('');
+        var xhr = ajax_update_database("submit",data);
+        xhr.done(function(data) {
+            if ('success' in data) {
+                //reset inputs
+                $('#geoserver-name-input').val('');
+                $('#geoserver-url-input').val('');
+            }
+        });
     }
 
 });
