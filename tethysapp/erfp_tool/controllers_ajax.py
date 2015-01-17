@@ -278,6 +278,8 @@ def get_hydrograph(request):
         #get information from datasets
         all_data_first_half = []
         all_data_second_half = []
+        high_res_data = []
+        control_data = []
         time = []
         for in_nc in basin_files:
             index = int(os.path.basename(in_nc)[:-3].split("_")[-1])
@@ -293,6 +295,10 @@ def get_hydrograph(request):
             all_data_first_half.append(dataValues[:40].clip(min=0))
             if(index < 52):
                 all_data_second_half.append(dataValues[40:].clip(min=0))
+            if(index == 52):
+                high_res_data = dataValues
+            if(index == 51):
+                control_data = dataValues
             data_nc.close()
     
         #perform analysis on datasets
@@ -326,6 +332,8 @@ def get_hydrograph(request):
                         "mean" : zip(time, mean_series.tolist()),
                         "mean_plus_std" : zip(time, mean_plus_std.tolist()),
                         "mean_minus_std" : zip(time, mean_mins_std.tolist()),
+                        "high_res" : zip(time,high_res_data.tolist()),
+                        "control" : zip(time,control_data.tolist()),
                        
                     })
                     

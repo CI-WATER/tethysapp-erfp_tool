@@ -38,10 +38,10 @@
             <li>
             <div id="{{watershed_kml.watershed}}-control">
                 <div class="collapse-control">
-                <a class="closeall" data-toggle="collapse" data-target="#{{watershed_kml.watershed}}-layers">
+                <a class="closeall" data-toggle="collapse" data-target="#{{watershed_kml.watershed}}-{{watershed_kml.subbasin}}-layers">
                 {{watershed_kml.title}}</a>
                 </div>
-                <div id="{{watershed_kml.watershed}}-layers" class="collapse in">
+                <div id="{{watershed_kml.watershed}}-{{watershed_kml.subbasin}}-layers" class="collapse in">
                     <ul>
             {% if "drainage_line" in watershed_kml %}
                     <li class="dropdown">
@@ -70,12 +70,12 @@
                     </li>
             {% endif%}
                     </ul>
-                </div> <!-- div: {{watershed_kml.watershed}}-layers -->
-            </div><!-- div: {{watershed_kml.watershed}}-control -->
+                </div> <!-- div: {{watershed_kml.watershed}}-{{watershed_kml.subbasin}}-layers -->
+            </div><!-- div: {{watershed_kml.watershed}}-{{watershed_kml.subbasin}}-control -->
             </li>  
         {% endfor%}
+        </ul></div> <!-- div: map-navigation -->
     {% endif %}
-    </ul></div> <!-- div: map-navigation -->
 
     {{ block.super}}  
     <li class="separator"></li>

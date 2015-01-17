@@ -167,23 +167,40 @@ var ERFP_MAP = (function() {
                         series: [
                             {
                                 name: "Maximum",
-                                data: data['max']
+                                data: data['max'],
+                                color: '#BE2625',
                             },
                             {
                                 name: "Mean Plus Std. Dev.",
-                                data: data['mean_plus_std']
+                                data: data['mean_plus_std'],
+                                color: '#61B329',
                             },
                             {
                                 name: "Mean",
-                                data: data['mean']
+                                data: data['mean'],
+                                color: '#00688B',
                             },
                             {
                                 name: "Mean Minus Std. Dev.",
-                                data: data['mean_minus_std']
+                                data: data['mean_minus_std'],
+                                color: '#61B329',
                             },
                             {
                                 name: "Minimum",
-                                data: data['min']
+                                data: data['min'],
+                                color: '#BE2625',
+                            },
+                            {
+                                name: "High Res.",
+                                data: data['high_res'],
+                                dashStyle: 'longdash',
+                                color: '#A020F0'
+                            },
+                            {
+                                name: "Control.",
+                                data: data['control'],
+                                dashStyle: 'longdashdot',
+                                color: '#ffa500'
                             },
                         ]
                     });
@@ -331,6 +348,7 @@ var ERFP_MAP = (function() {
         var chart_control = new ol.control.Control({element: $("#erfp-info").get(0)});
 
         var all_map_layers = [basemap_layer].concat(all_group_layers);
+        //var all_map_layers = all_group_layers;
         //create map
         m_map = new ol.Map({
             target: 'map',

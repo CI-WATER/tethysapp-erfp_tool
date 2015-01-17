@@ -15,6 +15,7 @@ def home(request):
     """
     Controller for the app home page.
     """
+   
     ##find all kml files to add to page    
     kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml')
     kml_info = []
@@ -313,6 +314,7 @@ def manage_data_stores(request):
     context = {
                 'data_stores': data_stores,
               }
+              
     return render(request, 'erfp_tool/manage_data_stores.html', context)
     
 @user_passes_test(user_permission_test)
