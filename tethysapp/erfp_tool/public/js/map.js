@@ -19,14 +19,24 @@ var ERFP_MAP = (function() {
     *************************************************************************/
     var public_interface,                // Object returned by the module
        m_map,                    // the main map
-       m_map_extent;            //the extent of all objects in map
+       m_map_extent,           //the extent of all objects in map
+       m_select_interaction,
+       m_selected_feature,
+       m_selected_watershed,
+       m_selected_subbasin,
+       m_selected_reach_id,
+       m_downloading_hydrograph,
+       m_downloading_select,
+       m_chart_data_ajax_handle,
+       m_select_data_ajax_handle;
         
     
     /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
     var bindInputs, zoomToAll, zoomToLayer, toTitleCase, updateInfoAlert, 
-        getBaseLayer, getChartData, displayHydrograph;
+        getBaseLayer, clearMessages, clearOldChart, getChartData, 
+        displayHydrograph;
 
 
     /************************************************************************
@@ -85,8 +95,8 @@ var ERFP_MAP = (function() {
         else if(css_alert_class == 'alert-danger') {
             glyphycon = '<span class="glyphicon glyphicon-fire" aria-hidden="true"></span> ';
         }
-
-        $("#erfp-chart").html(glyphycon + alert_message);
+        $("#erfp-message").removeClass('hidden');
+        $("#erfp-message").html(glyphycon + alert_message);
 
     };
 
@@ -117,8 +127,13 @@ var ERFP_MAP = (function() {
 
     };
 
-    getChartData = function(id, watershed, subbasin, start_folder) {
-        //clear old chart
+    clearMessages = function() {
+        $('#erfp-message').addClass('hidden');
+        $('#erfp-message').empty();
+    };
+
+    clearOldChart = function() {
+       //clear old chart
         var highcharts_attr = $('#erfp-chart').attr('data-highcharts-chart');              
         // For some browsers, `attr` is undefined; for others,
         // `attr` is false.  Check for both.
@@ -126,144 +141,179 @@ var ERFP_MAP = (function() {
             $('#erfp-chart').highcharts().destroy();
             $('#erfp-chart').empty();
         }
+    };
 
-        //get chart data
-        jQuery.ajax({
-            type: "GET",
-            url: "get-hydrograph",
-            dataType: "json",
-            data: {
-                watershed_name: watershed,
-                subbasin_name: subbasin,
-                reach_id: id,
-                start_folder: start_folder,                    
-            },
-            success: function(data) {
-                if("success" in data) {
-                    $("#erfp-chart").highcharts({
-                        title: { text: toTitleCase(watershed)},
-                        subtitle: {text: toTitleCase(subbasin) + ": " + id},
-                        chart: {zoomType: 'x',},
-                        plotOptions: {
-                            series: {
-                                marker: {
-                                    enabled: false
+    getChartData = function(start_folder) {
+        m_chart_data_ajax_handle = null;
+        //make sure old chart is removed
+        clearOldChart();
+        if(!m_downloading_hydrograph && !m_downloading_select) {
+            updateInfoAlert('alert-info', "Retrieving Data ...");
+            m_downloading_hydrograph = true;
+            //get chart data
+            m_chart_data_ajax_handle = jQuery.ajax({
+                type: "GET",
+                url: "get-hydrograph",
+                dataType: "json",
+                data: {
+                    watershed_name: m_selected_watershed,
+                    subbasin_name: m_selected_subbasin,
+                    reach_id: m_selected_reach_id,
+                    start_folder: start_folder,                    
+                },
+                success: function(data) {
+                    if("success" in data) {
+                        $("#erfp-chart").highcharts({
+                            title: { text: toTitleCase(m_selected_watershed)},
+                            subtitle: {text: toTitleCase(m_selected_subbasin) + ": " + m_selected_reach_id},
+                            chart: {zoomType: 'x',},
+                            plotOptions: {
+                                series: {
+                                    marker: {
+                                        enabled: false
+                                    }
                                 }
-                            }
-                        },
-                        xAxis: {
-                            type: 'datetime',
-                            title: {
-                                text: 'Date'
                             },
-                            minRange: 1 * 24 * 3600000 // one day
-                        },
-                        yAxis: {            
-                            title: {
-                                text: 'Flow (cms)'
+                            xAxis: {
+                                type: 'datetime',
+                                title: {
+                                    text: 'Date'
+                                },
+                                minRange: 1 * 24 * 3600000 // one day
                             },
-                            min: 0
-                        },
-                        series: [
-                            {
-                                name: "Maximum",
-                                data: data['max'],
-                                color: '#BE2625',
+                            yAxis: {            
+                                title: {
+                                    text: 'Flow (cms)'
+                                },
+                                min: 0
                             },
-                            {
-                                name: "Mean Plus Std. Dev.",
-                                data: data['mean_plus_std'],
-                                color: '#61B329',
-                            },
-                            {
-                                name: "Mean",
-                                data: data['mean'],
-                                color: '#00688B',
-                            },
-                            {
-                                name: "Mean Minus Std. Dev.",
-                                data: data['mean_minus_std'],
-                                color: '#61B329',
-                            },
-                            {
-                                name: "Minimum",
-                                data: data['min'],
-                                color: '#BE2625',
-                            },
-                            {
-                                name: "High Res.",
-                                data: data['high_res'],
-                                dashStyle: 'longdash',
-                                color: '#A020F0'
-                            },
-                            {
-                                name: "Control.",
-                                data: data['control'],
-                                dashStyle: 'longdashdot',
-                                color: '#ffa500'
-                            },
-                        ]
-                    });
-                    
-                } else {
-                    updateInfoAlert('alert-danger', "Error: " + data["error"]);
-                }
-            },
-            error: function(request, status, error) {
-                updateInfoAlert('alert-danger', "Error: " + error);
-            },
-        });
+                            series: [
+                                {
+                                    name: "Maximum",
+                                    data: data['max'],
+                                    color: '#BE2625',
+                                },
+                                {
+                                    name: "Mean Plus Std. Dev.",
+                                    data: data['mean_plus_std'],
+                                    color: '#61B329',
+                                },
+                                {
+                                    name: "Mean",
+                                    data: data['mean'],
+                                    color: '#00688B',
+                                },
+                                {
+                                    name: "Mean Minus Std. Dev.",
+                                    data: data['mean_minus_std'],
+                                    color: '#61B329',
+                                },
+                                {
+                                    name: "Minimum",
+                                    data: data['min'],
+                                    color: '#BE2625',
+                                },
+                                {
+                                    name: "High Res.",
+                                    data: data['high_res'],
+                                    dashStyle: 'longdash',
+                                    color: '#A020F0'
+                                },
+                                {
+                                    name: "Control",
+                                    data: data['control'],
+                                    dashStyle: 'longdashdot',
+                                    color: '#ffa500'
+                                },
+                            ]
+                        });
+                        $('#erfp-select').removeClass('hidden');
+                        clearMessages();
+                    } else {
+                        updateInfoAlert('alert-danger', "Error: " + data["error"]);
+                    }
+                },
+                error: function(request, status, error) {
+                    updateInfoAlert('alert-danger', "Error: " + error);
+                },
+            })
+            .always(function() {
+                m_downloading_hydrograph = false;
+            });
+        }
+        else {
+             //updateInfoAlert
+            updateInfoAlert('alert-warning', "Please wait for datasets to download before making another selection.");
+       }
     };
 
     //FUNCTION: displays hydrograph at stream segment
     displayHydrograph = function(feature) {
-        var id = feature.get('name');
-        var watershed = feature.get("watershed_name");
-        var subbasin = feature.get("subbasin_name");
-        getChartData(id, watershed, subbasin, "most_recent");
-        //get the select data
-        jQuery.ajax({
-            type: "GET",
-            url: "get-avaialable-dates",
-            dataType: "json",
-            data: {
-                watershed_name: watershed,
-                subbasin_name: subbasin,
-                reach_id: id                    
-            },
-            success: function(data) {
-                if("success" in data) {
-                    //remove select2 if exists
-                    if($('#erfp-select').data('select2')) {
-                        //remove selection
-                        $('#erfp-select').select2('val', '');
-                        //destroy
-                        $('#erfp-select').select2('destroy');
+        //remove old chart reguardless
+        clearOldChart();
+        //check if old ajax call still running
+        if(!m_downloading_hydrograph && !m_downloading_select) {
+            m_selected_feature = feature;
+            m_selected_reach_id = feature.get('name');
+            m_selected_watershed = feature.get("watershed_name");
+            m_selected_subbasin = feature.get("subbasin_name");
+            $('#erfp-select').addClass('hidden');
+            getChartData("most_recent");
+            //get the select data
+            m_downloading_select = true;
+            m_select_data_ajax_handle = jQuery.ajax({
+                type: "GET",
+                url: "get-avaialable-dates",
+                dataType: "json",
+                data: {
+                    watershed_name: m_selected_watershed,
+                    subbasin_name: m_selected_subbasin,
+                    reach_id: m_selected_reach_id                    
+                },
+                success: function(data) {
+                    if("success" in data) {
+                        //remove select2 if exists
+                        if($('#erfp-select').data('select2')) {
+                            //remove event handler
+                            $('#erfp-select').off();
+                            //remove selection
+                            $('#erfp-select').select2('val', '');
+                            //destroy
+                            $('#erfp-select').select2('destroy');
+                        }
+                        
+                        //sort to get first element 
+                        var select2_data = data['output_directories'];
+    
+                        //create new select2
+                        $('#erfp-select').select2({data: select2_data,
+                                                    placeholder: "Select a Date"});
+                        //add on change event handler
+                        $('#erfp-select').change(function() {
+                            var folder = $(this).select2('data').id;
+                            getChartData(folder);
+                        });
+                    } else {
+                        updateInfoAlert('alert-danger', "Error: " + data["error"]);
+                        $('#erfp-select').addClass('hidden');
                     }
-                    
-                    //sort to get first element 
-                    var select2_data = data['output_directories'];
-
-                    //create new select2
-                    $('#erfp-select').select2({data: select2_data,
-                                                placeholder: "Select a Date"});
-                    $('#erfp-select').removeClass('hidden');
-                    //add on change function
-                    $('#erfp-select').change(function() {
-                        var folder = $(this).select2('data').id;
-                        getChartData(id, watershed, subbasin, folder);
-                    });
-                } else {
-                    updateInfoAlert('alert-danger', "Error: " + data["error"]);
+                },
+                error: function(request, status, error) {
+                    updateInfoAlert('alert-danger', "Error: " + error);
                     $('#erfp-select').addClass('hidden');
-                }
-            },
-            error: function(request, status, error) {
-                updateInfoAlert('alert-danger', "Error: " + error);
-                $('#erfp-select').addClass('hidden');
-            },
-        });
-
+                },
+            })
+            .always(function() {
+                m_downloading_select = false;
+            });
+        }
+        else {
+            //updateInfoAlert
+            updateInfoAlert('alert-warning', "Please wait for datasets to download before making another selection.");
+            //clear selection and select previously selected feature
+            m_select_interaction.getFeatures().clear();
+            m_select_interaction.getFeatures().push(m_selected_feature);
+        }
 
     };
 
@@ -291,6 +341,15 @@ var ERFP_MAP = (function() {
     // Initialization: jQuery function that gets called when 
     // the DOM tree finishes loading
     $(function() {
+        //initialize map global variables
+        m_selected_feature = null;
+        m_selected_watershed = null;
+        m_selected_subbasin = null;
+        m_selected_reach_id = null;
+        m_downloading_hydrograph = false;
+        m_downloading_select = false;
+        m_chart_data_ajax_handle = null;
+        m_select_data_ajax_handle = null;
         //load base layer
         var base_layer_info = JSON.parse($("#map").attr('base-layer-info'));
         
@@ -340,7 +399,7 @@ var ERFP_MAP = (function() {
         }
 
         //make drainage line layers selectable
-        var select_interaction = new ol.interaction.Select({
+        m_select_interaction = new ol.interaction.Select({
                                     layers: kml_drainage_line_layers,
                                 });
 
@@ -359,7 +418,7 @@ var ERFP_MAP = (function() {
             ]),
             interactions: ol.interaction.defaults().extend([
                 new ol.interaction.DragRotateAndZoom(),
-                select_interaction,
+                m_select_interaction,
 
             ]),
             layers : all_map_layers,
@@ -387,11 +446,11 @@ var ERFP_MAP = (function() {
         });
 
         //when selected, call function to make hydrograph
-        select_interaction.getFeatures().on('change:length', function(e) {
+        m_select_interaction.getFeatures().on('change:length', function(e) {
           if (e.target.getArray().length === 0) {
             // this means it's changed to no features selected
           } else {
-            // this means there is at least 1 feature selected
+           // this means there is at least 1 feature selected
             displayHydrograph(e.target.item(0)); // 1st feature in Collection
           }
         });
