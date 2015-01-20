@@ -1,0 +1,94 @@
+{% extends "erfp_tool/base.html" %}
+
+{% load staticfiles %}
+
+{% block global_scripts %}
+  {{ block.super }}
+  <!-- <script src="http://openlayers.org/en/v3.0.0/build/ol.js" type="text/javascript"></script>--> 
+  <script src="{% static 'erfp_tool/vendor/openlayers/v3.0.0/ol.js' %}" type="text/javascript"></script>
+  <script src="{% static 'erfp_tool/vendor/highcharts/highcharts.js' %}" type="text/javascript"></script>
+  <script src="{% static 'erfp_tool/vendor/select2/v3.5.2/select2.js' %}" type="text/javascript"></script>
+{% endblock %}
+
+{% block styles %}
+  {{ block.super }}
+  <!-- <link rel="stylesheet" href="http://openlayers.org/en/v3.0.0/css/ol.css" type="text/css"> -->
+  <link rel="stylesheet" href="{% static 'erfp_tool/vendor/openlayers/v3.0.0/ol.css' %}" type="text/css">
+  <link rel="stylesheet" href="{% static 'erfp_tool/vendor/select2/v3.5.2/select2.css' %}" type="text/css">
+{% endblock %}
+
+{% block app_content %}
+    <div id="map" class="map" base-layer-info="{{base_layer_info}}" layer-info="{{layer_info_json}}"></div>
+    <div id="erfp-info" class="ol-control alert alert-info" role="alert">
+        <div id="erfp-select" class="hidden" style="width:60%;margin:auto;"></div>
+        <div id="erfp-chart"></div>
+        <div id="erfp-message"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Click on a reach to view flow predictions.</div>
+    </div>
+{% endblock %}
+
+{% block app_navigation_items %}
+    <li class="title">App Navigation</li>
+    <li><a href="{% url 'erfp_tool:home' %}">Select Watershed(s)</a></li>
+    {% if layer_info %}
+        <li class="title collapse-control">
+            <a class="closeall" data-toggle="collapse" data-target="#map-navigation">
+              Watersheds
+            </a>
+        </li>
+        <div id="map-navigation" class="collapse in">
+        <ul>
+        {% for watershed in layer_info %}
+            <li>
+            <div id="{{watershed.watershed}}-control">
+                <div class="collapse-control">
+                <a class="closeall" data-toggle="collapse" data-target="#{{watershed.watershed}}-{{watershed.subbasin}}-layers">
+                {{watershed.title}}</a>
+                </div>
+                <div id="{{watershed.watershed}}-{{watershed.subbasin}}-layers" class="collapse in">
+                    <ul>
+            {% if "drainage_line" in watershed %}
+                    <li class="dropdown">
+                        <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Drainage Line<span class="caret"></span></a>
+                        <ul id="layer{{forloop.counter0}}0" class="dropdown-menu" role="menu">
+                            <li><a class="zoom-to-layer" href="#">Zoom To Layer</a></li>
+                            <li class="divider"></li>
+                            <li><p style="margin-left:20px;"><input class="visible" type="checkbox"> Visibility </p></li>
+                            <li><label style="margin-left:15px;">Opacity</label>
+                                <input style="margin-left:15px; width:80%;" class="opacity" type="range" min="0" max="1" step="0.01">
+                            </li>
+                        </ul>
+                    </li>
+            {% endif%}
+            {% if "catchment" in watershed %}
+                    <li class="dropdown">
+                        <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Catchment<span class="caret"></span></a>
+                        <ul id="layer{{forloop.counter0}}1" class="dropdown-menu" role="menu">
+                            <li><a class="zoom-to-layer" href="#">Zoom To Layer</a></li>
+                            <li class="divider"></li>
+                            <li><p style="margin-left:20px;"><input class="visible" type="checkbox"> Visibility </p></li>
+                            <li><label style="margin-left:15px;">Opacity</label>
+                                <input style="margin-left:15px; width:80%;" class="opacity" type="range" min="0" max="1" step="0.01">
+                            </li>
+                        </ul>
+                    </li>
+            {% endif%}
+                    </ul>
+                </div> <!-- div: {{watershed.watershed}}-{{watershed.subbasin}}-layers -->
+            </div><!-- div: {{watershed.watershed}}-{{watershed.subbasin}}-control -->
+            </li>  
+        {% endfor%}
+        </ul></div> <!-- div: map-navigation -->
+
+    {% else %}
+        <li class="title"> No Watersheds Found</li>
+    {% endif %}
+
+    <li class="separator"></li>
+    <li><a href="">Information</a></li>
+{% endblock %}
+
+{% block scripts %}
+  {{ block.super }}
+  <!-- <script src="{% static 'erfp_tool/js/main.js' %}" type="text/javascript"></script> -->
+  <script src="{% static 'erfp_tool/js/map.js' %}" type="text/javascript"></script>
+{% endblock %}

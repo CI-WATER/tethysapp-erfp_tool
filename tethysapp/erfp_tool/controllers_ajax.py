@@ -279,7 +279,6 @@ def get_hydrograph(request):
         all_data_first_half = []
         all_data_second_half = []
         high_res_data = []
-        control_data = []
         time = []
         for in_nc in basin_files:
             index = int(os.path.basename(in_nc)[:-3].split("_")[-1])
@@ -297,8 +296,6 @@ def get_hydrograph(request):
                 all_data_second_half.append(dataValues[40:].clip(min=0))
             if(index == 52):
                 high_res_data = dataValues
-            if(index == 51):
-                control_data = dataValues
             data_nc.close()
     
         #perform analysis on datasets
@@ -333,8 +330,6 @@ def get_hydrograph(request):
                         "mean_plus_std" : zip(time, mean_plus_std.tolist()),
                         "mean_minus_std" : zip(time, mean_mins_std.tolist()),
                         "high_res" : zip(time,high_res_data.tolist()),
-                        "control" : zip(time,control_data.tolist()),
-                       
                     })
                     
 @user_passes_test(user_permission_test)
@@ -489,14 +484,19 @@ def watershed_update(request):
                     os.rmdir(old_kml_file_location)
                 except OSError:
                     pass
-            else:
-                #remove old files if they exist
-                delete_old_watershed_files(watershed.watershed_name, watershed.subbasin_name)
-                #upload new files if they exist
-                if('drainage_line_kml_file' in request.FILES):
-                    handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),new_kml_file_location, geoserver_drainage_line_layer)
-                if('catchment_kml_file' in request.FILES):
-                    handle_uploaded_file(request.FILES.get('catchment_kml_file'),new_kml_file_location, geoserver_catchment_layer)
+            #upload new files if they exist
+            if('drainage_line_kml_file' in request.FILES):
+                try:
+                    os.remove(os.path.join(new_kml_file_location, geoserver_drainage_line_layer))
+                except OSError:
+                    pass
+                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),new_kml_file_location, geoserver_drainage_line_layer)
+            if('catchment_kml_file' in request.FILES):
+                try:
+                    os.remove(os.path.join(new_kml_file_location, geoserver_catchment_layer))
+                except OSError:
+                    pass
+                handle_uploaded_file(request.FILES.get('catchment_kml_file'),new_kml_file_location, geoserver_catchment_layer)
         else:
             #remove old files if not on local server
             delete_old_watershed_files(watershed.watershed_name, watershed.subbasin_name)

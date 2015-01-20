@@ -3,12 +3,12 @@ import os
 
 #django imports
 from django.contrib.auth.decorators import user_passes_test
-from django.shortcuts import render
+from django.shortcuts import redirect, render 
 
 #local imports
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
                     SettingsSessionMaker, Watershed)
-from .functions import (format_watershed_title, get_subbasin_list, 
+from .functions import (format_name, format_watershed_title, 
                         user_permission_test)
 
 def home(request):
@@ -16,50 +16,93 @@ def home(request):
     Controller for the app home page.
     """
    
-    ##find all kml files to add to page    
-    kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml')
-    kml_info = []
-    watersheds = sorted(os.listdir(kml_file_location))
-    #add kml urls to list and add their navigation items as well
-    group_id = 0
-    for watershed in watersheds:
-        file_path = os.path.join(kml_file_location, watershed)
-        subbasin_list = get_subbasin_list(file_path)
-        for subbasin in subbasin_list:
-            kml_urls = {'watershed':watershed, 'subbasin':subbasin}
-            #prepare kml files
-            drainage_line_kml = os.path.join(file_path, subbasin + '-drainage_line.kml')
-            if os.path.exists(drainage_line_kml):
-                drainage_line_kml = os.path.basename(drainage_line_kml)
-                kml_urls['drainage_line'] = '/static/erfp_tool/kml/%s/%s' % (watershed, drainage_line_kml)
-            catchment_kml = os.path.join(file_path, subbasin + '-catchment.kml')
-            if os.path.exists(catchment_kml):
-                catchment_kml = os.path.basename(catchment_kml)
-                kml_urls['catchment'] = '/static/erfp_tool/kml/%s/%s' % (watershed, catchment_kml)
-
-            kml_urls['title'] = format_watershed_title(watershed,subbasin)
-            kml_info.append(kml_urls)
-            group_id += 1
-        
     #get the base layer information
     session = SettingsSessionMaker()
     #Query DB for settings
-    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
-    base_layer = main_settings.base_layer
-    #Bing_apiKey = "AiW41aALyX4pDfE0jQG93WywSHLih1ihycHtwbaIPmtpZEOuw1iloQuuBmwJm5UA";
- 
-    base_layer_info = {
-                        'name': base_layer.name,
-                        'api_key':base_layer.api_key,
-                        }
+    watersheds  = session.query(Watershed).order_by(Watershed.watershed_name,Watershed.subbasin_name).all()
+    watershed_list = []
+    for watershed in watersheds:
+        watershed_list.append((watershed.watershed_name + " (" + watershed.subbasin_name + ")", watershed.id))
 
+    watershed_select = {
+                'display_text': 'Select Watershed(s)',
+                'name': 'watershed_select',
+                'options': watershed_list,
+                'multiple': True,
+                'placeholder': 'Select Watershed(s)',
+                }          
     context = {
-                'kml_info_json' : json.dumps(kml_info),
-                'kml_info': kml_info,
-                'base_layer_info' : json.dumps(base_layer_info),
+                'watershed_select' : watershed_select,
+                'watersheds_length': len(watersheds),
               }
 
     return render(request, 'erfp_tool/home.html', context)
+
+def map(request):
+    """
+    Controller for the app map page.
+    """
+    if request.method == 'GET':
+        #get/check information from AJAX request
+        post_info = request.GET
+        watershed_ids = post_info.getlist('watershed_select')
+        if not watershed_ids:
+            return redirect('/apps/erfp-tool/')
+        #get the base layer information
+        session = SettingsSessionMaker()
+        #Query DB for settings
+        watersheds  = session.query(Watershed) \
+                        .order_by(Watershed.watershed_name,Watershed.subbasin_name) \
+                        .filter(Watershed.id.in_(watershed_ids)) \
+                        .all()
+            
+        ##find all kml files to add to page    
+        kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml')
+        layer_info = []
+        #add kml urls to list and add their navigation items as well
+        group_id = 0
+        for watershed in watersheds:
+            if watershed.geoserver_id == 1:
+                file_path = os.path.join(kml_file_location, format_name(watershed.watershed_name))
+                kml_urls = {'watershed':watershed.watershed_name, 
+                            'subbasin':watershed.subbasin_name,
+                            'file_type': 'kml'}
+                #prepare kml files
+                drainage_line_kml = os.path.join(file_path, watershed.geoserver_drainage_line_layer)
+                if os.path.exists(drainage_line_kml):
+                    drainage_line_kml = os.path.basename(drainage_line_kml)
+                    kml_urls['drainage_line'] = '/static/erfp_tool/kml/%s/%s' % (format_name(watershed.watershed_name), watershed.geoserver_drainage_line_layer)
+                catchment_kml = os.path.join(file_path, watershed.geoserver_catchment_layer)
+                if os.path.exists(catchment_kml):
+                    catchment_kml = os.path.basename(catchment_kml)
+                    kml_urls['catchment'] = '/static/erfp_tool/kml/%s/%s' % (format_name(watershed.watershed_name), watershed.geoserver_catchment_layer)
+        
+                kml_urls['title'] = format_watershed_title(watershed.watershed_name,watershed.subbasin_name)
+                layer_info.append(kml_urls)
+            #else (get geoserver info)    
+            group_id += 1
+            
+        #get the base layer information
+        session = SettingsSessionMaker()
+        #Query DB for settings
+        main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+        base_layer = main_settings.base_layer
+        #Bing_apiKey = "AiW41aALyX4pDfE0jQG93WywSHLih1ihycHtwbaIPmtpZEOuw1iloQuuBmwJm5UA";
+     
+        base_layer_info = {
+                            'name': base_layer.name,
+                            'api_key':base_layer.api_key,
+                            }
+    
+        context = {
+                    'layer_info_json' : json.dumps(layer_info),
+                    'layer_info': layer_info,
+                    'base_layer_info' : json.dumps(base_layer_info),
+                  }
+    
+        return render(request, 'erfp_tool/map.html', context)
+    #send them home
+    return redirect('/apps/erfp-tool/')
 
 
 @user_passes_test(user_permission_test)

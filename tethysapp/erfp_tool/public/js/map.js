@@ -217,12 +217,6 @@ var ERFP_MAP = (function() {
                                     name: "High Res.",
                                     data: data['high_res'],
                                     dashStyle: 'longdash',
-                                    color: '#A020F0'
-                                },
-                                {
-                                    name: "Control",
-                                    data: data['control'],
-                                    dashStyle: 'longdashdot',
                                     color: '#ffa500'
                                 },
                             ]
@@ -356,7 +350,7 @@ var ERFP_MAP = (function() {
         var basemap_layer = getBaseLayer(base_layer_info.name,base_layer_info.api_key);
         
         //load drainage line kml layers
-        var kml_info = JSON.parse($("#map").attr('kml-info'));
+        var kml_info = JSON.parse($("#map").attr('layer-info'));
         var all_group_layers = [];
         var kml_drainage_line_layers = [];
         //add each watershed kml group

@@ -59,8 +59,8 @@ def format_watershed_title(watershed, subbasin):
     Formats title for watershed in navigation
     """
     max_length = 30
-    watershed = watershed.strip().replace("_"," ").title()
-    subbasin = subbasin.strip().replace("_"," ").title()
+    watershed = watershed.strip()
+    subbasin = subbasin.strip()
     watershed_length = len(watershed)
     if(watershed_length>max_length):
         return watershed[:max_length-1].strip() + "..."
