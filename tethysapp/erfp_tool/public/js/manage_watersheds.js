@@ -74,6 +74,7 @@ $('.submit-update-watershed').click(function(){
 
     //submit if it form is ok
     if(safe_to_submit.val) {
+        var submit_button = $(this);
         //give user information
         addInfoMessage("Submitting Data. Please Wait.");
         submit_button.text('Submitting ...');
