@@ -621,7 +621,7 @@ def watershed_group_update(request):
 
             #get watershed group
             watershed_group  = session.query(WatershedGroup).get(watershed_group_id)
-            
+            watershed_group.name = watershed_group_name
             #find new watersheds
             new_watersheds  = session.query(Watershed) \
                     .filter(Watershed.id.in_(watershed_group_watershed_ids)) \

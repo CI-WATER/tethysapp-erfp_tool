@@ -84,8 +84,8 @@ def map(request):
         for watershed in watersheds:
             if watershed.geoserver_id == 1:
                 file_path = os.path.join(kml_file_location, format_name(watershed.watershed_name))
-                kml_urls = {'watershed':watershed.watershed_name, 
-                            'subbasin':watershed.subbasin_name,
+                kml_urls = {'watershed':watershed.folder_name, 
+                            'subbasin':watershed.file_name,
                             'file_type': 'kml'}
                 #prepare kml files
                 drainage_line_kml = os.path.join(file_path, watershed.geoserver_drainage_line_layer)
