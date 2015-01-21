@@ -37,6 +37,6 @@
     {% endif %}
     {% if user.is_superuser or user.is_staff %}
     <p class="help-block">Don't see the watershed group you want? Add one 
-    <a href="{% url 'erfp_tool:add-watershed' %}">here</a>.</p>
+    <a href="{% url 'erfp_tool:add-watershed-group' %}">here</a>.</p>
     {% endif %}
 {% endblock %}

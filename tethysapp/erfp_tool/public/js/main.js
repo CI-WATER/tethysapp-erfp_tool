@@ -170,10 +170,11 @@ function submitRowData(submit_button, data, safe_to_submit) {
     if(safe_to_submit.val) {
         //give user information
         addInfoMessage("Submitting Data. Please Wait.");
+        var submit_button_html = submit_button.html();
         submit_button.text('Submitting ...');
         var xhr = ajax_update_database("submit",data);
         xhr.always(function(){
-            submit_button.html('<span class="glyphicon glyphicon-floppy-disk"></span>Update');
+            submit_button.html(submit_button_html);
         });
     } else {
         addErrorMessage(safe_to_submit.error);
@@ -185,6 +186,7 @@ function deleteRowData(submit_button, data) {
         var parent_row = submit_button.parent().parent().parent();
         //give user information
         addInfoMessage("Deleting Data. Please Wait.");
+        var submit_button_html = submit_button.html();
         submit_button.text('Deleting ...');
     
         var xhr = ajax_update_database("delete",data);
@@ -193,7 +195,7 @@ function deleteRowData(submit_button, data) {
                 parent_row.remove();
             }
         }).always(function(){
-            submit_button.html('<span class="glyphicon glyphicon-remove"></span>Delete');
+            submit_button.html(submit_button_html);
         });
     }
 }

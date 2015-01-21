@@ -12,6 +12,7 @@ $('#submit-add-watershed-group').click(function(){
     var watershed_group_watershed_ids = checkInputWithError($('#watershed_select'),safe_to_submit, true);
     if(safe_to_submit.val) {
         var submit_button = $(this);
+        var submit_button_html = submit_button.html();
         //give user information
         addInfoMessage("Submitting Data. Please Wait.");
         submit_button.text('Submitting ...');
@@ -30,7 +31,7 @@ $('#submit-add-watershed-group').click(function(){
             }
         })
         .always(function() {
-            submit_button.html('<span class="glyphicon glyphicon-plus"></span>Add Watershed Group');
+            submit_button.html(submit_button_html);
         });
 
     }

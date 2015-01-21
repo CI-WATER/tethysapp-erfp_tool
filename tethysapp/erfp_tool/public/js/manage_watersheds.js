@@ -74,6 +74,9 @@ $('.submit-update-watershed').click(function(){
 
     //submit if it form is ok
     if(safe_to_submit.val) {
+        //give user information
+        addInfoMessage("Submitting Data. Please Wait.");
+        submit_button.text('Submitting ...');
         //update database
         if(geoserver_id==1 && (geoserver_drainage_line_layer != old_drainage_line_kml || geoserver_catchment_layer != old_catchment_kml)){
             //local upload
@@ -114,6 +117,8 @@ $('.submit-update-watershed').click(function(){
                     parent_row.find('.catchment-kml').removeAttr('local-kml-file');
                 }
             }
+        }).always(function(){
+            submit_button.html('<span class="glyphicon glyphicon-floppy-disk"></span> Update');
         });
     } else {
         addErrorMessage("Not submitted. Please fix form errors to proceed.");

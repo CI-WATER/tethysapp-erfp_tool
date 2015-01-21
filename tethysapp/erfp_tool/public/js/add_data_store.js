@@ -20,6 +20,7 @@ $('#submit-add-data-store').click(function(){
 
     if(safe_to_submit.val) {
         var submit_button = $(this);
+        var submit_button_html = submit_button.html();
         //give user information
         addInfoMessage("Submitting Data. Please Wait.");
         submit_button.text('Submitting ...');
@@ -42,7 +43,7 @@ $('#submit-add-data-store').click(function(){
             }
         })
         .always(function() {
-            submit_button.html('<span class="glyphicon glyphicon-plus"></span>Add Data Store');
+            submit_button.html(submit_button_html);
         });
     }
 
