@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import user_passes_test
 
 #local imports
 from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
-                    Watershed)
+                    Watershed, WatershedGroup)
 
 from .functions import (delete_old_watershed_files, find_most_current_files, 
                         format_name, get_reach_index, handle_uploaded_file,
@@ -28,13 +28,9 @@ def data_store_add(request):
         #get/check information from AJAX request
         post_info = request.POST
         data_store_name = post_info.get('data_store_name')
-        print data_store_name
         data_store_type_id = post_info.get('data_store_type_id')
-        print data_store_type_id
         data_store_endpoint = post_info.get('data_store_endpoint')
-        print data_store_endpoint
         data_store_api_key = post_info.get('data_store_api_key')
-        print data_store_api_key
     
         #initialize session
         session = SettingsSessionMaker()
@@ -115,7 +111,6 @@ def geoserver_add(request):
     Controller for adding a geoserver.
     """
     if request.is_ajax() and request.method == 'POST':
-        print "POST"
         #get/check information from AJAX request
         post_info = request.POST
         geoserver_name = post_info.get('geoserver_name')
@@ -363,40 +358,47 @@ def watershed_add(request):
     if request.is_ajax() and request.method == 'POST':
         post_info = request.POST
         #get/check information from AJAX request
-        watershed_name = format_name(post_info.get('watershed_name'))
-        subbasin_name = format_name(post_info.get('subbasin_name'))
+        watershed_name = post_info.get('watershed_name')
+        subbasin_name = post_info.get('subbasin_name')
+        folder_name = format_name(watershed_name) if watershed_name else None
+        file_name = format_name(subbasin_name) if subbasin_name else None
         data_store_id = post_info.get('data_store_id')
         geoserver_id = post_info.get('geoserver_id')
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
         if not watershed_name or not subbasin_name or not data_store_id \
-            or not geoserver_drainage_line_layer or not geoserver_catchment_layer:
+            or not geoserver_drainage_line_layer \
+            or not geoserver_catchment_layer \
+            or not folder_name or not file_name:
             return JsonResponse({'error' : 'AJAX request input faulty'})
-       #file_form = KMLUploadFileForm(request.POST,request.FILES)
-        #if file_form.is_valid():
         if(int(geoserver_id) == 1):
             if 'drainage_line_kml_file' in request.FILES and 'catchment_kml_file' in request.FILES:
-                kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed_name))
+                kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                 'public','kml',folder_name)
                 geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
-                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),kml_file_location, geoserver_drainage_line_layer)
+                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),
+                                     kml_file_location, geoserver_drainage_line_layer)
                 geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
-                handle_uploaded_file(request.FILES.get('catchment_kml_file'),kml_file_location, geoserver_catchment_layer)
+                handle_uploaded_file(request.FILES.get('catchment_kml_file'),kml_file_location, 
+                                     geoserver_catchment_layer)
             else:
                 return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
-
         #initialize session
         session = SettingsSessionMaker()
         
         #check to see if duplicate exists
         num_similar_watersheds  = session.query(Watershed) \
-            .filter(Watershed.watershed_name == watershed_name) \
-            .filter(Watershed.subbasin_name == subbasin_name) \
+            .filter(Watershed.folder_name == folder_name) \
+            .filter(Watershed.file_name == file_name) \
             .count()
         if(num_similar_watersheds > 0):
             return JsonResponse({ 'error': "A watershed with the same name exists." })
             
         #add Data Store
-        session.add(Watershed(watershed_name, subbasin_name, data_store_id, geoserver_id, geoserver_drainage_line_layer, geoserver_catchment_layer))
+        session.add(Watershed(watershed_name, subbasin_name, folder_name, 
+                              file_name, data_store_id, geoserver_id, 
+                              geoserver_drainage_line_layer,
+                              geoserver_catchment_layer))
         session.commit()
         
         return JsonResponse({ 'success': "Watershed Sucessfully Added!" })
@@ -421,7 +423,7 @@ def watershed_delete(request):
             watershed  = session.query(Watershed).get(watershed_id)
             
             #remove watershed kml files
-            delete_old_watershed_files(watershed.watershed_name, watershed.subbasin_name)
+            delete_old_watershed_files(watershed)
                 
             #delete watershed from database
             session.delete(watershed)
@@ -440,29 +442,42 @@ def watershed_update(request):
         post_info = request.POST
         #get/check information from AJAX request
         watershed_id = post_info.get('watershed_id')
-        watershed_name = format_name(post_info.get('watershed_name'))
-        subbasin_name = format_name(post_info.get('subbasin_name'))
+        watershed_name = post_info.get('watershed_name')
+        subbasin_name = post_info.get('subbasin_name')
+        folder_name = format_name(watershed_name)
+        file_name = format_name(subbasin_name)
         data_store_id = post_info.get('data_store_id')
         geoserver_id = post_info.get('geoserver_id')
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
 
         if not watershed_id or not watershed_name or not subbasin_name or not data_store_id \
-            or not geoserver_id or not geoserver_drainage_line_layer or not geoserver_catchment_layer:
+            or not geoserver_id or not geoserver_drainage_line_layer \
+            or not geoserver_catchment_layer or not folder_name:
             return JsonResponse({'error' : 'AJAX request input faulty'})
-            
+
         #initialize session
         session = SettingsSessionMaker()
+        #check to see if duplicate exists
+        num_similar_watersheds  = session.query(Watershed) \
+            .filter(Watershed.folder_name == folder_name) \
+            .filter(Watershed.file_name == file_name) \
+            .filter(Watershed.id != watershed_id) \
+            .count()
+        if(num_similar_watersheds > 0):
+            return JsonResponse({ 'error': "A watershed with the same name exists." })
         
         #get desired watershed
         watershed  = session.query(Watershed).get(watershed_id)
 
         #upload files to local server if ready
         if(int(geoserver_id) == 1):
-            old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed.watershed_name))
-            new_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed_name))
-            geoserver_drainage_line_layer = subbasin_name + "-drainage_line.kml"
-            geoserver_catchment_layer = subbasin_name + "-catchment.kml"
+            old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                 'public','kml',watershed.folder_name)
+            new_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                 'public','kml',folder_name)
+            geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
+            geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
             #add new directory if it does not exist                
             try:
                 os.mkdir(new_kml_file_location)
@@ -499,12 +514,13 @@ def watershed_update(request):
                 handle_uploaded_file(request.FILES.get('catchment_kml_file'),new_kml_file_location, geoserver_catchment_layer)
         else:
             #remove old files if not on local server
-            delete_old_watershed_files(watershed.watershed_name, watershed.subbasin_name)
+            delete_old_watershed_files(watershed)
             
         
         #change watershed attributes
         watershed.watershed_name = watershed_name
         watershed.subbasin_name = subbasin_name
+        watershed.folder_name = folder_name
         watershed.data_store_id = data_store_id
         watershed.geoserver_id = geoserver_id
         watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer
@@ -515,4 +531,113 @@ def watershed_update(request):
         
         return JsonResponse({ 'success': "Watershed sucessfully updated!" })
 
+    return JsonResponse({ 'error': "A problem with your request exists." })
+
+@user_passes_test(user_permission_test)
+def watershed_group_add(request):
+    """
+    Controller for adding a watershed_group.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        #get/check information from AJAX request
+        post_info = request.POST
+        watershed_group_name = post_info.get('watershed_group_name')
+        watershed_group_watershed_ids = post_info.getlist('watershed_group_watershed_ids[]')
+        if not watershed_group_name or not watershed_group_watershed_ids:
+            return JsonResponse({ 'error': 'AJAX request input faulty' })
+        #initialize session
+        session = SettingsSessionMaker()
+        
+        #check to see if duplicate exists
+        num_similar_watershed_groups  = session.query(WatershedGroup) \
+            .filter(WatershedGroup.name == watershed_group_name) \
+            .count()
+        if(num_similar_watershed_groups > 0):
+            return JsonResponse({ 'error': "A watershed group with the same name." })
+            
+        #add Watershed Group
+        group = WatershedGroup(watershed_group_name)
+
+        #update watersheds
+        watersheds  = session.query(Watershed) \
+                .filter(Watershed.id.in_(watershed_group_watershed_ids)) \
+                .all()
+        for watershed in watersheds:
+            group.watersheds.append(watershed)
+        session.add(group)
+        session.commit()
+
+        return JsonResponse({ 'success': "Watershed group sucessfully added!" })
+
+    return JsonResponse({ 'error': "A problem with your request exists." })
+    
+@user_passes_test(user_permission_test)
+def watershed_group_delete(request):
+    """
+    Controller for deleting a watershed group.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        #get/check information from AJAX request
+        post_info = request.POST
+        watershed_group_id = post_info.get('watershed_group_id')
+    
+        
+        if watershed_group_id:
+            #initialize session
+            session = SettingsSessionMaker()
+            #get watershed group to delete
+            watershed_group  = session.query(WatershedGroup).get(watershed_group_id)
+            
+            #delete watershed group from database
+            session.delete(watershed_group)
+            session.commit()
+
+            return JsonResponse({ 'success': "Watershed group sucessfully deleted!" })
+        return JsonResponse({ 'error': "Cannot delete this watershed group." })
+    return JsonResponse({ 'error': "A problem with your request exists." })
+    
+@user_passes_test(user_permission_test)
+def watershed_group_update(request):
+    """
+    Controller for updating a watershed_group.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        #get/check information from AJAX request
+        post_info = request.POST
+        watershed_group_id = post_info.get('watershed_group_id')
+        watershed_group_name = post_info.get('watershed_group_name')
+        watershed_group_watershed_ids = post_info.getlist('watershed_group_watershed_ids[]')
+        print watershed_group_id
+        if watershed_group_id and watershed_group_name and watershed_group_watershed_ids:
+            #initialize session
+            session = SettingsSessionMaker()
+            #check to see if duplicate exists
+            num_similar_watershed_groups  = session.query(WatershedGroup) \
+                .filter(WatershedGroup.name == watershed_group_name) \
+                .filter(WatershedGroup.id != watershed_group_id) \
+                .count()
+            if(num_similar_watershed_groups > 0):
+                return JsonResponse({ 'error': "A watershed group with the same name exists." })
+
+            #get watershed group
+            watershed_group  = session.query(WatershedGroup).get(watershed_group_id)
+            
+            #find new watersheds
+            new_watersheds  = session.query(Watershed) \
+                    .filter(Watershed.id.in_(watershed_group_watershed_ids)) \
+                    .all()
+
+            #remove old watersheds
+            for watershed in watershed_group.watersheds:
+                if watershed not in new_watersheds:
+                    watershed_group.watersheds.remove(watershed)
+                
+            #add new watersheds        
+            for watershed in new_watersheds:
+                if watershed not in watershed_group.watersheds:
+                    watershed_group.watersheds.append(watershed)
+            
+            session.commit()
+            return JsonResponse({ 'success': "Watershed group successfully updated." })
+        return JsonResponse({ 'error': "Data missing for this watershed group." })
     return JsonResponse({ 'error': "A problem with your request exists." })

@@ -9,13 +9,14 @@ from tethys_datasets.engines import CkanDatasetEngine, HydroShareDatasetEngine
 #local imports
 from .model import SettingsSessionMaker, Watershed
 
-def delete_old_watershed_files(watershed_name, subbasin_name):
+def delete_old_watershed_files(watershed):
     """
     Removes old watershed files from system
     """
-    old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml',format_name(watershed_name))
-    old_geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
-    old_geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
+    old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                         'public','kml',watershed.folder_name)
+    old_geoserver_drainage_line_layer = format_name(watershed.subbasin_name) + "-drainage_line.kml"
+    old_geoserver_catchment_layer = format_name(watershed.subbasin_name) + "-catchment.kml"
     #remove old files if not on local server
     try:
         os.remove(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer))

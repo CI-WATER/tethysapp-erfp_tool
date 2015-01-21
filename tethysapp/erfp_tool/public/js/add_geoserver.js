@@ -6,13 +6,16 @@ $('#geoserver-url-input').parent().parent().append(help_html);
 
 //handle the submit event
 $('#submit-add-geoserver').click(function(){
-    var safe_to_submit = {val: true};
-
     //check data store input
+    var safe_to_submit = {val: true};
     var geoserver_name = checkInputWithError($('#geoserver-name-input'),safe_to_submit);
     var geoserver_url = checkInputWithError($('#geoserver-url-input'),safe_to_submit);
 
     if(safe_to_submit.val) {
+        var submit_button = $(this);
+        //give user information
+        addInfoMessage("Submitting Data. Please Wait.");
+        submit_button.text('Submitting ...');
         //update database
         data = {
                 geoserver_name: geoserver_name,
@@ -26,7 +29,11 @@ $('#submit-add-geoserver').click(function(){
                 $('#geoserver-name-input').val('');
                 $('#geoserver-url-input').val('');
             }
+        })
+        .always(function() {
+            submit_button.html('<span class="glyphicon glyphicon-plus"></span>Add Geoserver');
         });
+
     }
 
 });

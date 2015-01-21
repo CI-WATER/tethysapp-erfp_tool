@@ -76,14 +76,37 @@ function checkTableCellInputWithError(input, safe_to_submit) {
 }
 //add error message to #message div
 function addErrorMessage(error) {
-       $('#message').html(
-          '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
-          '<span class="sr-only">Error:</span> ' + error
-        )
-        .removeClass('hidden')
-        .removeClass('alert-success')
-        .addClass('alert-danger');
+   $('#message').html(
+      '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
+      '<span class="sr-only">Error:</span> ' + error
+    )
+    .removeClass('hidden')
+    .removeClass('alert-success')
+    .removeClass('alert-info')
+    .addClass('alert-danger');
  
+}
+//add information message to #message div
+function addInfoMessage(message) {
+   $('#message').html(
+      '<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>' +
+      '<span class="sr-only">Info:</span> ' + message
+    )
+    .removeClass('hidden')
+    .removeClass('alert-success')
+    .removeClass('alert-danger')
+    .addClass('alert-info');
+ 
+}
+//add success message to #message div
+function addSuccessMessage(message) {
+    $('#message').html(
+      '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>' +
+      '<span class="sr-only">Sucess:</span> ' + message
+    ).removeClass('hidden')
+    .removeClass('alert-danger')
+    .removeClass('alert-info')
+    .addClass('alert-success'); 
 }
 
 //send data to database with error messages
@@ -100,10 +123,7 @@ function ajax_update_database(ajax_url, ajax_data) {
         data: ajax_data,
         success: function(data) {
             if("success" in data) {
-                $('#message').html(
-                  '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>' +
-                  '<span class="sr-only">Sucess:</span> ' + data['success']
-                ).removeClass('hidden').removeClass('alert-danger').addClass('alert-success');
+                addSuccessMessage(data['success']);
             } else {
                 addErrorMessage(data['error']);
             }
@@ -133,10 +153,7 @@ function ajax_update_database_with_file(ajax_url, ajax_data) {
         contentType: false, // Set content type to false as jQuery will tell the server its a query string request
         success: function(data) {
             if("success" in data) {
-                $('#message').html(
-                  '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>' +
-                  '<span class="sr-only">Sucess:</span> ' + data['success']
-                ).removeClass('hidden').removeClass('alert-danger').addClass('alert-success');
+                addSuccessMessage(data['success']);
             } else {
                 addErrorMessage(data['error']);
             }
@@ -147,4 +164,36 @@ function ajax_update_database_with_file(ajax_url, ajax_data) {
         },
     });
     return xhr;
+}
+//submit row data
+function submitRowData(submit_button, data, safe_to_submit) {
+    if(safe_to_submit.val) {
+        //give user information
+        addInfoMessage("Submitting Data. Please Wait.");
+        submit_button.text('Submitting ...');
+        var xhr = ajax_update_database("submit",data);
+        xhr.always(function(){
+            submit_button.html('<span class="glyphicon glyphicon-floppy-disk"></span>Update');
+        });
+    } else {
+        addErrorMessage(safe_to_submit.error);
+    }
+}
+//delete row data
+function deleteRowData(submit_button, data) {
+    if (window.confirm("Are you sure?")) {
+        var parent_row = submit_button.parent().parent().parent();
+        //give user information
+        addInfoMessage("Deleting Data. Please Wait.");
+        submit_button.text('Deleting ...');
+    
+        var xhr = ajax_update_database("delete",data);
+        xhr.done(function(data) {
+            if ('success' in data) {
+                parent_row.remove();
+            }
+        }).always(function(){
+            submit_button.html('<span class="glyphicon glyphicon-remove"></span>Delete');
+        });
+    }
 }

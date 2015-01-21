@@ -6,7 +6,7 @@
     <h1>Select a Watershed</h1>
     {% if watersheds_length > 0 %}
         <form action="{% url 'erfp_tool:map' %}" method="get">
-            <p><em>Warning: Selecting too many watersheds can make the operation of the app slow.</em></p>
+            <p class="alert alert-warning" role="alert"><em>Warning: Selecting too many watersheds can make the operation of the app slow.</em></p>
             {% gizmo select_input watershed_select %}
             <div class="btn-group ">
                 <a name="submit-go-to-map" class="btn btn-success" role="button" onclick="document.forms[0].submit();" id="submit-go-to-map">
@@ -15,10 +15,28 @@
             </div>
         </form>
     {% else %}
-        <h2> No watersheds found ...</h2>
+        <h4> No watersheds found ...</h4>
     {% endif %}
     {% if user.is_superuser or user.is_staff %}
     <p class="help-block">Don't see the watershed you want? Add one 
+    <a href="{% url 'erfp_tool:add-watershed' %}">here</a>.</p>
+    {% endif %}
+    <h4>Or</h41>
+    <h1>Select a Watershed Group</h1>
+    {% if watershed_group_length > 0 %}
+        <form action="{% url 'erfp_tool:map' %}" method="get">
+            {% gizmo select_input watershed_group_select %}
+            <div class="btn-group ">
+                <a name="submit-go-to-map" class="btn btn-success" role="button" onclick="document.forms[1].submit();" id="submit-go-to-map">
+                <span class="glyphicon glyphicon-play"></span>View Watershed Group
+              </a>
+            </div>
+        </form>
+    {% else %}
+        <h4> No watersheds groups found ...</h4>
+    {% endif %}
+    {% if user.is_superuser or user.is_staff %}
+    <p class="help-block">Don't see the watershed group you want? Add one 
     <a href="{% url 'erfp_tool:add-watershed' %}">here</a>.</p>
     {% endif %}
 {% endblock %}

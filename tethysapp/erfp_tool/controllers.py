@@ -7,7 +7,7 @@ from django.shortcuts import redirect, render
 
 #local imports
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
-                    SettingsSessionMaker, Watershed)
+                    SettingsSessionMaker, Watershed, WatershedGroup)
 from .functions import (format_name, format_watershed_title, 
                         user_permission_test)
 
@@ -23,7 +23,11 @@ def home(request):
     watershed_list = []
     for watershed in watersheds:
         watershed_list.append((watershed.watershed_name + " (" + watershed.subbasin_name + ")", watershed.id))
-
+    watershed_groups = []
+    groups  = session.query(WatershedGroup).order_by(WatershedGroup.name).all()
+    for group in groups:
+        watershed_groups.append((group.name,group.id))
+ 
     watershed_select = {
                 'display_text': 'Select Watershed(s)',
                 'name': 'watershed_select',
@@ -31,9 +35,17 @@ def home(request):
                 'multiple': True,
                 'placeholder': 'Select Watershed(s)',
                 }          
+    watershed_group_select = {
+                'display_text': 'Select a Watershed Group',
+                'name': 'watershed_group_select',
+                'options': watershed_groups,
+                'placeholder': 'Select a Watershed Group',
+                }          
     context = {
                 'watershed_select' : watershed_select,
                 'watersheds_length': len(watersheds),
+                'watershed_group_select' : watershed_group_select,
+                'watershed_group_length': len(groups),
               }
 
     return render(request, 'erfp_tool/home.html', context)
@@ -46,15 +58,23 @@ def map(request):
         #get/check information from AJAX request
         post_info = request.GET
         watershed_ids = post_info.getlist('watershed_select')
-        if not watershed_ids:
+        group_id = post_info.get('watershed_group_select')
+        if not watershed_ids and not group_id:
             return redirect('/apps/erfp-tool/')
         #get the base layer information
         session = SettingsSessionMaker()
-        #Query DB for settings
-        watersheds  = session.query(Watershed) \
-                        .order_by(Watershed.watershed_name,Watershed.subbasin_name) \
-                        .filter(Watershed.id.in_(watershed_ids)) \
-                        .all()
+        if watershed_ids:
+            #Query DB for settings
+            watersheds  = session.query(Watershed) \
+                            .order_by(Watershed.watershed_name,Watershed.subbasin_name) \
+                            .filter(Watershed.id.in_(watershed_ids)) \
+                            .all()
+        elif group_id:
+            #Query DB for settings
+            watersheds  = session.query(Watershed) \
+                            .order_by(Watershed.watershed_name,Watershed.subbasin_name) \
+                            .filter(Watershed.watershed_groups.any(WatershedGroup.id == group_id)) \
+                            .all()
             
         ##find all kml files to add to page    
         kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml')
@@ -413,3 +433,67 @@ def manage_geoservers(request):
                 'geoservers': geoservers,
               }
     return render(request, 'erfp_tool/manage_geoservers.html', context)
+
+@user_passes_test(user_permission_test)
+def add_watershed_group(request):        
+    """
+    Controller for the app add_watershed_group page.
+    """
+    watershed_group_name_input = {
+        'display_text': 'Watershed Group Name',
+        'name': 'watershed-group-name-input',
+        'placeholder': 'e.g.: My Watershed Group',
+        'icon_append':'glyphicon glyphicon-tag',
+        }
+ 
+   #initialize session
+    session = SettingsSessionMaker()
+   #Query DB for settings
+    watersheds  = session.query(Watershed).order_by(Watershed.watershed_name,Watershed.subbasin_name).all()
+    watershed_list = []
+    for watershed in watersheds:
+        watershed_list.append((watershed.watershed_name + " (" + watershed.subbasin_name + ")", watershed.id))
+ 
+    watershed_select = {
+                'display_text': 'Select Watershed(s) to Add to Group',
+                'name': 'watershed_select',
+                'options': watershed_list,
+                'multiple': True,
+                'placeholder': 'Select Watershed(s)',
+                }
+ 
+    add_button = {'buttons': [
+                                 {'display_text': 'Add Watershed Group',
+                                  'icon': 'glyphicon glyphicon-plus',
+                                  'style': 'success',
+                                  'name': 'submit-add-watershed-group',
+                                  'attributes': 'id=submit-add-watershed-group',
+                                  'type': 'submit'
+                                  }
+                                ],
+                 }
+
+    context = {
+                'watershed_group_name_input': watershed_group_name_input,
+                'watershed_select': watershed_select,
+                'add_button': add_button,
+              }
+    return render(request, 'erfp_tool/add_watershed_group.html', context)
+ 
+@user_passes_test(user_permission_test)
+def manage_watershed_groups(request):        
+    """
+    Controller for the app manage_watershed_groups page.
+    """
+    #initialize session
+    session = SettingsSessionMaker()
+
+    # Query DB for data store types
+    watershed_groups = session.query(WatershedGroup).order_by(WatershedGroup.id).all()
+    watersheds = session.query(Watershed).order_by(Watershed.watershed_name,Watershed.subbasin_name).all()
+
+    context = {
+                'watershed_groups': watershed_groups,
+                'watersheds' : watersheds,
+              }
+    return render(request, 'erfp_tool/manage_watershed_groups.html', context)

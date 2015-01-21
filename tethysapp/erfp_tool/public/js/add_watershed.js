@@ -16,13 +16,11 @@ $('#geoserver-catchment-input').parent().parent().addClass('hidden');
 
 //handle the submit event
 $('#submit-add-watershed').click(function(){
-    var safe_to_submit = {val: true};
-
     //check data store input
+    var safe_to_submit = {val: true};
     var watershed_name = checkInputWithError($('#watershed-name-input'),safe_to_submit);
     var subbasin_name = checkInputWithError($('#subbasin-name-input'),safe_to_submit);
     var data_store_id = checkInputWithError($('#data-store-select'),safe_to_submit, true);
-    console.log(data_store_id);
     var geoserver_id = checkInputWithError($('#geoserver-select'),safe_to_submit, true);
     if(geoserver_id==1){
         //local upload
@@ -35,6 +33,10 @@ $('#submit-add-watershed').click(function(){
     }
 
     if(safe_to_submit.val) {
+        var submit_button = $(this);
+        //give user information
+        addInfoMessage("Submitting Data. Please Wait.");
+        submit_button.text('Submitting ...');
         //update database
         if(geoserver_id==1){
             //local upload
@@ -68,7 +70,12 @@ $('#submit-add-watershed').click(function(){
                 $('#data-store-select').select2('val','');
                 $('#geoserver-select').select2('val','');
                 $('#geoserver-layers-input').val('');
+                $('#drainage-line-kml-upload-input').val('');
+                $('#catchment-kml-upload-input').val('');
             }
+        })
+        .always(function() {
+            submit_button.html('<span class="glyphicon glyphicon-plus"></span>Add Watershed');
         });
     }
 

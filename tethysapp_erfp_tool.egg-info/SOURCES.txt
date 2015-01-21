@@ -3,6 +3,9 @@ tethysapp/__init__.py
 tethysapp/erfp_tool/__init__.py
 tethysapp/erfp_tool/app.py
 tethysapp/erfp_tool/controllers.py
+tethysapp/erfp_tool/controllers_ajax.py
+tethysapp/erfp_tool/forms.py
+tethysapp/erfp_tool/functions.py
 tethysapp/erfp_tool/init_stores.py
 tethysapp/erfp_tool/model.py
 tethysapp/erfp_tool/utilities.py

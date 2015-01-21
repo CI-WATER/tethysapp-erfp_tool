@@ -82,6 +82,21 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
                     UrlMap(name='delete-data-store-ajax',
                            url='erfp-tool/manage-data-stores/delete',
                            controller='erfp_tool.controllers_ajax.data_store_delete'),
+                    UrlMap(name='add-watershed-group',
+                           url='erfp-tool/add-watershed-group',
+                           controller='erfp_tool.controllers.add_watershed_group'),
+                    UrlMap(name='add-watershed-group-ajax',
+                           url='erfp-tool/add-watershed-group/submit',
+                           controller='erfp_tool.controllers_ajax.watershed_group_add'),
+                    UrlMap(name='manage-watershed-groups',
+                           url='erfp-tool/manage-watershed-groups',
+                           controller='erfp_tool.controllers.manage_watershed_groups'),
+                    UrlMap(name='update-watershed-group-ajax',
+                           url='erfp-tool/manage-watershed-groups/submit',
+                           controller='erfp_tool.controllers_ajax.watershed_group_update'),
+                    UrlMap(name='delete-watershed-group-ajax',
+                           url='erfp-tool/manage-watershed-groups/delete',
+                           controller='erfp_tool.controllers_ajax.watershed_group_delete'),
         )
         return url_maps
         

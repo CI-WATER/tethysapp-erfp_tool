@@ -1,6 +1,6 @@
 # Put your persistent store models in this file
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Table, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker
 
 from .utilities import get_persistent_store_engine
@@ -122,21 +122,51 @@ class Watershed(Base):
     id = Column(Integer, primary_key=True)
     watershed_name = Column(String)
     subbasin_name = Column(String)
+    folder_name = Column(String)
+    file_name = Column(String)
     data_store_id = Column(Integer,ForeignKey('data_store.id'))
     data_store = relationship("DataStore")
     geoserver_id = Column(Integer,ForeignKey('geoserver.id'))
     geoserver = relationship("Geoserver")
     geoserver_drainage_line_layer = Column(String)
     geoserver_catchment_layer = Column(String)
-
-    def __init__(self, watershed_name, subbasin_name, data_store_id, geoserver_id,
-                 geoserver_drainage_line_layer, geoserver_catchment_layer):
+    watershed_groups = relationship("WatershedGroup", 
+                              secondary='watershed_watershed_group_link')
+                              
+    def __init__(self, watershed_name, subbasin_name, folder_name, file_name,
+                 data_store_id, geoserver_id, geoserver_drainage_line_layer, 
+                 geoserver_catchment_layer):
         """
         Constructor for settings
         """
         self.watershed_name = watershed_name
         self.subbasin_name = subbasin_name
+        self.folder_name = folder_name
+        self.file_name = folder_name
         self.data_store_id = data_store_id
         self.geoserver_id = geoserver_id
         self.geoserver_drainage_line_layer = geoserver_drainage_line_layer
         self.geoserver_catchment_layer = geoserver_catchment_layer
+
+class WatershedWatershedGroupLink(Base):
+    __tablename__ = 'watershed_watershed_group_link'
+    watershed_group_id = Column(Integer, ForeignKey('watershed_group.id'), primary_key=True)
+    watershed_id = Column(Integer, ForeignKey('watershed.id'), primary_key=True)
+
+class WatershedGroup(Base):
+    '''
+    DataStore DB Model
+    '''
+    __tablename__ = 'watershed_group'
+
+    # Columns
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    watersheds = relationship("Watershed", 
+                              secondary='watershed_watershed_group_link')
+
+    def __init__(self, name):
+        """
+        Constructor for settings
+        """
+        self.name = name

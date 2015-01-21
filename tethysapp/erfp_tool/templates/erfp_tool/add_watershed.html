@@ -4,11 +4,6 @@
 
 {% load tethys_gizmos %}
 
-{% block styles %}
-  {{ block.super }}
-  <link href="{% static 'erfp_tool/css/main.css' %}" rel="stylesheet"/>
-{% endblock %}
-
 {% block app_content %}
     <div id="message" class="alert alert-danger hidden" role="alert"></div>
     <h1>Add a Watershed</h1>

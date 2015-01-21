@@ -123,18 +123,10 @@ $('.submit-update-watershed').click(function(){
 
 //handle the submit update event
 $('.submit-delete-watershed').click(function(){
-    if (window.confirm("Are you sure?")) {
-        var parent_row = $(this).parent().parent().parent();
-        //update database
-        data = {
-                watershed_id: parent_row.find('.watershed-id').text(),
-                };
-    
-        var xhr = ajax_update_database("delete",data);
-        xhr.done(function(data) {
-            if ('success' in data) {
-                parent_row.remove();
-            }
-        });
-    }
+    data = {
+            watershed_id: $(this).parent().parent().parent()
+                            .find('.watershed-id').text(),
+            };
+    //update database
+    deleteRowData($(this),data);
 });
