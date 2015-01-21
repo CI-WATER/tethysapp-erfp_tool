@@ -19,10 +19,14 @@ def home(request):
     #get the base layer information
     session = SettingsSessionMaker()
     #Query DB for settings
-    watersheds  = session.query(Watershed).order_by(Watershed.watershed_name,Watershed.subbasin_name).all()
+    watersheds  = session.query(Watershed) \
+                            .order_by(Watershed.watershed_name,
+                                      Watershed.subbasin_name) \
+                             .all()
     watershed_list = []
     for watershed in watersheds:
-        watershed_list.append((watershed.watershed_name + " (" + watershed.subbasin_name + ")", watershed.id))
+        watershed_list.append(("%s (%s)" % (watershed.watershed_name, watershed.subbasin_name),
+                               watershed.id))
     watershed_groups = []
     groups  = session.query(WatershedGroup).order_by(WatershedGroup.name).all()
     for group in groups:
@@ -66,18 +70,22 @@ def map(request):
         if watershed_ids:
             #Query DB for settings
             watersheds  = session.query(Watershed) \
-                            .order_by(Watershed.watershed_name,Watershed.subbasin_name) \
+                            .order_by(Watershed.watershed_name,
+                                      Watershed.subbasin_name) \
                             .filter(Watershed.id.in_(watershed_ids)) \
                             .all()
         elif group_id:
             #Query DB for settings
             watersheds  = session.query(Watershed) \
-                            .order_by(Watershed.watershed_name,Watershed.subbasin_name) \
-                            .filter(Watershed.watershed_groups.any(WatershedGroup.id == group_id)) \
+                            .order_by(Watershed.watershed_name,
+                                      Watershed.subbasin_name) \
+                            .filter(Watershed.watershed_groups.any( \
+                                    WatershedGroup.id == group_id)) \
                             .all()
             
         ##find all kml files to add to page    
-        kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'public','kml')
+        kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                         'public','kml')
         layer_info = []
         #add kml urls to list and add their navigation items as well
         group_id = 0
@@ -91,13 +99,18 @@ def map(request):
                 drainage_line_kml = os.path.join(file_path, watershed.geoserver_drainage_line_layer)
                 if os.path.exists(drainage_line_kml):
                     drainage_line_kml = os.path.basename(drainage_line_kml)
-                    kml_urls['drainage_line'] = '/static/erfp_tool/kml/%s/%s' % (format_name(watershed.watershed_name), watershed.geoserver_drainage_line_layer)
+                    kml_urls['drainage_line'] = '/static/erfp_tool/kml/%s/%s' \
+                                % (format_name(watershed.watershed_name), 
+                                   watershed.geoserver_drainage_line_layer)
                 catchment_kml = os.path.join(file_path, watershed.geoserver_catchment_layer)
                 if os.path.exists(catchment_kml):
                     catchment_kml = os.path.basename(catchment_kml)
-                    kml_urls['catchment'] = '/static/erfp_tool/kml/%s/%s' % (format_name(watershed.watershed_name), watershed.geoserver_catchment_layer)
+                    kml_urls['catchment'] = '/static/erfp_tool/kml/%s/%s' \
+                                            % (format_name(watershed.watershed_name),
+                                               watershed.geoserver_catchment_layer)
         
-                kml_urls['title'] = format_watershed_title(watershed.watershed_name,watershed.subbasin_name)
+                kml_urls['title'] = format_watershed_title(watershed.watershed_name,
+                                                            watershed.subbasin_name)
                 layer_info.append(kml_urls)
             #else (get geoserver info)    
             group_id += 1
@@ -107,7 +120,6 @@ def map(request):
         #Query DB for settings
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         base_layer = main_settings.base_layer
-        #Bing_apiKey = "AiW41aALyX4pDfE0jQG93WywSHLih1ihycHtwbaIPmtpZEOuw1iloQuuBmwJm5UA";
      
         base_layer_info = {
                             'name': base_layer.name,
@@ -214,7 +226,8 @@ def add_watershed(request):
     data_stores = session.query(DataStore).all()
     data_store_list = []
     for data_store in data_stores:
-        data_store_list.append((data_store.name + " (" + data_store.api_endpoint + ")", data_store.id))
+        data_store_list.append(("%s (%s)" % (data_store.name, data_store.api_endpoint),
+                                 data_store.id))
 
     data_store_select = {
                 'display_text': 'Select a Data Store',
@@ -227,7 +240,8 @@ def add_watershed(request):
     geoservers = session.query(Geoserver).all()
     geoserver_list = []
     for geoserver in geoservers:
-        geoserver_list.append(( "%s (%s)" % (geoserver.name, geoserver.url), geoserver.id))
+        geoserver_list.append(( "%s (%s)" % (geoserver.name, geoserver.url), 
+                               geoserver.id))
 
     geoserver_select= {
                 'display_text': 'Select a Geoserver',
@@ -286,7 +300,10 @@ def manage_watersheds(request):
     session = SettingsSessionMaker()
 
     # Query DB for watersheds
-    watersheds = session.query(Watershed).all()
+    watersheds = session.query(Watershed) \
+                        .order_by(Watershed.watershed_name,
+                                  Watershed.subbasin_name) \
+                        .all()
 
     # Query DB for data stores
     data_stores = session.query(DataStore).all()
@@ -320,7 +337,8 @@ def add_data_store(request):
     data_store_types = session.query(DataStoreType).all()
     data_store_type_list = []
     for data_store_type in data_store_types:
-        data_store_type_list.append((data_store_type.human_readable_name, data_store_type.id))
+        data_store_type_list.append((data_store_type.human_readable_name, 
+                                     data_store_type.id))
 
     data_store_type_select_input = {
                 'display_text': 'Data Store Type',
@@ -372,7 +390,10 @@ def manage_data_stores(request):
     session = SettingsSessionMaker()
 
     # Query DB for data store types
-    data_stores = session.query(DataStore).filter(DataStore.id>1).all()
+    data_stores = session.query(DataStore) \
+                        .filter(DataStore.id>1) \
+                        .order_by(DataStore.name) \
+                        .all()
 
     context = {
                 'data_stores': data_stores,
@@ -427,7 +448,10 @@ def manage_geoservers(request):
     session = SettingsSessionMaker()
 
     # Query DB for data store types
-    geoservers = session.query(Geoserver).filter(Geoserver.id>1).all()
+    geoservers = session.query(Geoserver)\
+                        .filter(Geoserver.id>1) \
+                        .order_by(Geoserver.name, Geoserver.url) \
+                        .all()
 
     context = {
                 'geoservers': geoservers,
@@ -449,10 +473,15 @@ def add_watershed_group(request):
    #initialize session
     session = SettingsSessionMaker()
    #Query DB for settings
-    watersheds  = session.query(Watershed).order_by(Watershed.watershed_name,Watershed.subbasin_name).all()
+    watersheds  = session.query(Watershed) \
+                        .order_by(Watershed.watershed_name,
+                                  Watershed.subbasin_name) \
+                        .all()
     watershed_list = []
     for watershed in watersheds:
-        watershed_list.append((watershed.watershed_name + " (" + watershed.subbasin_name + ")", watershed.id))
+        watershed_list.append(("%s (%s)" % \
+                              (watershed.watershed_name, watershed.subbasin_name),
+                              watershed.id))
  
     watershed_select = {
                 'display_text': 'Select Watershed(s) to Add to Group',
@@ -489,8 +518,13 @@ def manage_watershed_groups(request):
     session = SettingsSessionMaker()
 
     # Query DB for data store types
-    watershed_groups = session.query(WatershedGroup).order_by(WatershedGroup.id).all()
-    watersheds = session.query(Watershed).order_by(Watershed.watershed_name,Watershed.subbasin_name).all()
+    watershed_groups = session.query(WatershedGroup)\
+                                .order_by(WatershedGroup.name) \
+                                .all()
+    watersheds = session.query(Watershed) \
+                        .order_by(Watershed.watershed_name,
+                                  Watershed.subbasin_name)\
+                        .all()
 
     context = {
                 'watershed_groups': watershed_groups,
