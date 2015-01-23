@@ -33,16 +33,20 @@ def find_most_current_files(path_to_watershed_files, basin_name, start_folder):
         directories = sorted(os.listdir(path_to_watershed_files), reverse=True)
     else:
         directories = [start_folder]
-    for directory in directories:    
-        date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
-        time = directory.split(".")[-1]
-        path_to_files = os.path.join(path_to_watershed_files, directory)
-        if os.path.exists(path_to_files):
-            basin_files = glob(os.path.join(path_to_files,
-                                            "*"+basin_name+"*.nc"))
-            if len(basin_files) >0:
-                hour = int(time)/100
-                return basin_files, date + datetime.timedelta(0,int(hour)*60*60)
+    for directory in directories:
+        try:
+            date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
+            time = directory.split(".")[-1]
+            path_to_files = os.path.join(path_to_watershed_files, directory)
+            if os.path.exists(path_to_files):
+                basin_files = glob(os.path.join(path_to_files,
+                                                "*"+basin_name+"*.nc"))
+                if len(basin_files)>0:
+                    hour = int(time)/100
+                    return basin_files, date + datetime.timedelta(0,int(hour)*60*60)
+        except Exception as ex:
+            print ex
+            pass
     #there are no files found
     return None, None
 

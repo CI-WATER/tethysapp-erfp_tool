@@ -211,7 +211,7 @@ def get_avaialable_dates(request):
         directories = sorted(os.listdir(path_to_watershed_files), reverse=True)
         output_directories = []
         directory_count = 0
-        for directory in directories:    
+        for directory in directories:
             date = datetime.datetime.strptime(directory.split(".")[0],"%Y%m%d")
             time = directory.split(".")[-1]
             path_to_files = os.path.join(path_to_watershed_files, directory)
@@ -269,18 +269,17 @@ def get_hydrograph(request):
         reach_index = get_reach_index(reach_id, basin_files)
         if not reach_index:
             return JsonResponse({'error' : 'Reach with id: ' + str(reach_id) + ' not found.'})    
-    
         #get information from datasets
         all_data_first_half = []
         all_data_second_half = []
-        high_res_data = []
+        high_res_data = np.zeros([1,1])
         time = []
         for in_nc in basin_files:
             index = int(os.path.basename(in_nc)[:-3].split("_")[-1])
             data_nc = NET.Dataset(in_nc)
             qout = data_nc.variables['Qout']
             dataValues = qout[:,reach_index]
-            
+            print index
             if (len(dataValues)>len(time)):
                 time = []
                 for i in range(0,len(dataValues)):
@@ -292,7 +291,6 @@ def get_hydrograph(request):
             if(index == 52):
                 high_res_data = dataValues
             data_nc.close()
-    
         #perform analysis on datasets
         all_data_first = np.array(all_data_first_half)
         all_data_second = np.array(all_data_second_half)
@@ -521,6 +519,7 @@ def watershed_update(request):
         watershed.watershed_name = watershed_name
         watershed.subbasin_name = subbasin_name
         watershed.folder_name = folder_name
+        watershed.file_name = file_name
         watershed.data_store_id = data_store_id
         watershed.geoserver_id = geoserver_id
         watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer
