@@ -295,7 +295,6 @@ def manage_watersheds(request):
     """
     Controller for the app manage_watersheds page.
     """
-    print request.user.is_staff
     #initialize session
     session = SettingsSessionMaker()
 

@@ -343,6 +343,7 @@ var ERFP_MAP = (function() {
         m_selected_watershed = null;
         m_selected_subbasin = null;
         m_selected_reach_id = null;
+        m_selected_guess_index = null;
         m_downloading_hydrograph = false;
         m_downloading_select = false;
         m_chart_data_ajax_handle = null;
