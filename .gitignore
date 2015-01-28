@@ -55,3 +55,4 @@ target/
 
 # Other backup files
 *~
+*.kml
