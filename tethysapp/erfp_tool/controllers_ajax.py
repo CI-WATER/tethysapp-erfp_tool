@@ -219,7 +219,7 @@ def get_avaialable_dates(request):
                 basin_files = glob(os.path.join(path_to_files,
                                                 "*"+subbasin_name+"*.nc"))
                 #only add directory to the list if valid                                    
-                if len(basin_files) >0 and get_reach_index(reach_id, basin_files):
+                if len(basin_files) >0: # and get_reach_index(reach_id, basin_files):
                     hour = int(time)/100
                     output_directories.append({
                         'id' : directory, 
@@ -279,7 +279,6 @@ def get_hydrograph(request):
             data_nc = NET.Dataset(in_nc)
             qout = data_nc.variables['Qout']
             dataValues = qout[:,reach_index]
-            print index
             if (len(dataValues)>len(time)):
                 time = []
                 for i in range(0,len(dataValues)):
@@ -292,8 +291,8 @@ def get_hydrograph(request):
                 high_res_data = dataValues
             data_nc.close()
         #perform analysis on datasets
-        all_data_first = np.array(all_data_first_half)
-        all_data_second = np.array(all_data_second_half)
+        all_data_first = np.array(all_data_first_half, dtype=np.float64)
+        all_data_second = np.array(all_data_second_half, dtype=np.float64)
         #get mean
         mean_data_first = np.mean(all_data_first, axis=0)
         mean_data_second = np.mean(all_data_second, axis=0)
@@ -606,7 +605,6 @@ def watershed_group_update(request):
         watershed_group_id = post_info.get('watershed_group_id')
         watershed_group_name = post_info.get('watershed_group_name')
         watershed_group_watershed_ids = post_info.getlist('watershed_group_watershed_ids[]')
-        print watershed_group_id
         if watershed_group_id and watershed_group_name and watershed_group_watershed_ids:
             #initialize session
             session = SettingsSessionMaker()
