@@ -75,12 +75,20 @@ def format_watershed_title(watershed, subbasin):
         return (watershed + " (" + subbasin[:max_length-3].strip() + " ...)")
     return (watershed + " (" + subbasin + ")")
 
-def get_reach_index(reach_id, basin_files):
+def get_reach_index(reach_id, guess_index, basin_files):
     """
     Gets the index of the reach from the COMID 
     """
     data_nc = NET.Dataset(basin_files[0])
     com_ids = data_nc.variables['COMID'][:]
+    try:
+        if guess_index:
+            if int(reach_id) == int(com_ids[int(guess_index)]):
+                return int(guess_index)
+    except Exception as ex:
+        print ex
+        pass
+    
     try:
         reach_index = np.where(com_ids==int(reach_id))[0][0]
     except Exception as ex:

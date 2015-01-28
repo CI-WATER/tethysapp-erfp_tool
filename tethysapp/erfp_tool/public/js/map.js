@@ -25,6 +25,7 @@ var ERFP_MAP = (function() {
        m_selected_watershed,
        m_selected_subbasin,
        m_selected_reach_id,
+       m_selected_guess_index,
        m_downloading_hydrograph,
        m_downloading_select,
        m_chart_data_ajax_handle,
@@ -159,6 +160,7 @@ var ERFP_MAP = (function() {
                     watershed_name: m_selected_watershed,
                     subbasin_name: m_selected_subbasin,
                     reach_id: m_selected_reach_id,
+                    guess_index:  m_selected_guess_index, 
                     start_folder: start_folder,                    
                 },
                 success: function(data) {
@@ -251,6 +253,7 @@ var ERFP_MAP = (function() {
             m_selected_reach_id = feature.get('name');
             m_selected_watershed = feature.get("watershed_name");
             m_selected_subbasin = feature.get("subbasin_name");
+            m_selected_guess_index = feature.get("guess_index");
             $('#erfp-select').addClass('hidden');
             getChartData("most_recent");
             //get the select data
@@ -262,7 +265,7 @@ var ERFP_MAP = (function() {
                 data: {
                     watershed_name: m_selected_watershed,
                     subbasin_name: m_selected_subbasin,
-                    reach_id: m_selected_reach_id                    
+                    reach_id: m_selected_reach_id,                   
                 },
                 success: function(data) {
                     if("success" in data) {

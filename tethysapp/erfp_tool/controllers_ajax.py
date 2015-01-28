@@ -254,9 +254,11 @@ def get_hydrograph(request):
         watershed_name = format_name(get_info['watershed_name']) if 'watershed_name' in get_info else None
         subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
         reach_id = get_info.get('reach_id')
+        guess_index = get_info.get('guess_index')
         start_folder = get_info.get('start_folder')
-        
-        if not reach_id or not watershed_name or not subbasin_name:
+        print "reach_id"
+        print reach_id
+        if not reach_id or not watershed_name or not subbasin_name or not start_folder:
             return JsonResponse({'error' : 'AJAX request input faulty.'})
     
         #find/check current output datasets    
@@ -266,7 +268,9 @@ def get_hydrograph(request):
             return JsonResponse({'error' : 'Recent forecast not found.'})
     
         #get/check the index of the reach
-        reach_index = get_reach_index(reach_id, basin_files)
+        reach_index = get_reach_index(reach_id, guess_index, basin_files)
+        print "index"
+        print reach_index
         if not reach_index:
             return JsonResponse({'error' : 'Reach with id: ' + str(reach_id) + ' not found.'})    
         #get information from datasets
@@ -279,6 +283,7 @@ def get_hydrograph(request):
             data_nc = NET.Dataset(in_nc)
             qout = data_nc.variables['Qout']
             dataValues = qout[:,reach_index]
+            print dataValues
             if (len(dataValues)>len(time)):
                 time = []
                 for i in range(0,len(dataValues)):
@@ -290,6 +295,7 @@ def get_hydrograph(request):
             if(index == 52):
                 high_res_data = dataValues
             data_nc.close()
+        print "DATA"
         #perform analysis on datasets
         all_data_first = np.array(all_data_first_half, dtype=np.float64)
         all_data_second = np.array(all_data_second_half, dtype=np.float64)
