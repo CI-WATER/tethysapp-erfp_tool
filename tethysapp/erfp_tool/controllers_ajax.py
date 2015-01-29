@@ -275,21 +275,25 @@ def get_hydrograph(request):
         high_res_data = np.zeros([1,1])
         time = []
         for in_nc in basin_files:
-            index = int(os.path.basename(in_nc)[:-3].split("_")[-1])
-            data_nc = NET.Dataset(in_nc)
-            qout = data_nc.variables['Qout']
-            dataValues = qout[:,reach_index]
-            if (len(dataValues)>len(time)):
-                time = []
-                for i in range(0,len(dataValues)):
-                    next_time = int((start_date+datetime.timedelta(0,i*6*60*60)).strftime('%s'))*1000
-                    time.append(next_time)
-            all_data_first_half.append(dataValues[:40].clip(min=0))
-            if(index < 52):
-                all_data_second_half.append(dataValues[40:].clip(min=0))
-            if(index == 52):
-                high_res_data = dataValues
-            data_nc.close()
+            try:
+                index = int(os.path.basename(in_nc)[:-3].split("_")[-1])
+                data_nc = NET.Dataset(in_nc)
+                qout = data_nc.variables['Qout']
+                dataValues = qout[:,reach_index]
+                if (len(dataValues)>len(time)):
+                    time = []
+                    for i in range(0,len(dataValues)):
+                        next_time = int((start_date+datetime.timedelta(0,i*6*60*60)).strftime('%s'))*1000
+                        time.append(next_time)
+                all_data_first_half.append(dataValues[:40].clip(min=0))
+                if(index < 52):
+                    all_data_second_half.append(dataValues[40:].clip(min=0))
+                if(index == 52):
+                    high_res_data = dataValues
+                data_nc.close()
+            except Exception, e:
+                print e
+                pass
         #perform analysis on datasets
         all_data_first = np.array(all_data_first_half, dtype=np.float64)
         all_data_second = np.array(all_data_second_half, dtype=np.float64)
