@@ -208,7 +208,11 @@ def get_avaialable_dates(request):
     
         #find/check current output datasets    
         path_to_watershed_files = os.path.join(path_to_rapid_output, watershed_name)
-        directories = sorted(os.listdir(path_to_watershed_files), reverse=True)
+        
+       
+        directories = sorted([d for d in os.listdir(path_to_watershed_files) \
+                            if os.path.isdir(os.path.join(path_to_watershed_files, d))],
+                             reverse=True)
         output_directories = []
         directory_count = 0
         for directory in directories:

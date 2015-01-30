@@ -30,7 +30,9 @@ def find_most_current_files(path_to_watershed_files, basin_name, start_folder):
     Finds the current output from downscaled ECMWF forecasts
     """""
     if(start_folder=="most_recent"):
-        directories = sorted(os.listdir(path_to_watershed_files), reverse=True)
+        directories = sorted([d for d in os.listdir(path_to_watershed_files) \
+                            if os.path.isdir(os.path.join(path_to_watershed_files, d))],
+                             reverse=True)
     else:
         directories = [start_folder]
     for directory in directories:
