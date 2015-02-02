@@ -81,8 +81,9 @@ def get_reach_index(reach_id, guess_index, basin_files):
     """
     Gets the index of the reach from the COMID 
     """
-    data_nc = NET.Dataset(basin_files[0])
+    data_nc = NET.Dataset(basin_files[0], mode="r")
     com_ids = data_nc.variables['COMID'][:]
+    data_nc.close()
     try:
         if guess_index:
             if int(reach_id) == int(com_ids[int(guess_index)]):

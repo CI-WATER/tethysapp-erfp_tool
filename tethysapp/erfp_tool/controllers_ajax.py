@@ -281,9 +281,10 @@ def get_hydrograph(request):
         for in_nc in basin_files:
             try:
                 index = int(os.path.basename(in_nc)[:-3].split("_")[-1])
-                data_nc = NET.Dataset(in_nc)
+                data_nc = NET.Dataset(in_nc, mode="r")
                 qout = data_nc.variables['Qout']
                 dataValues = qout[:,reach_index]
+                data_nc.close()
                 if (len(dataValues)>len(time)):
                     time = []
                     for i in range(0,len(dataValues)):
@@ -294,7 +295,6 @@ def get_hydrograph(request):
                     all_data_second_half.append(dataValues[40:].clip(min=0))
                 if(index == 52):
                     high_res_data = dataValues
-                data_nc.close()
             except Exception, e:
                 print e
                 pass
