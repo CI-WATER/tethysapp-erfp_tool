@@ -115,8 +115,6 @@ def map(request):
             #else (get geoserver info)    
             group_id += 1
             
-        #get the base layer information
-        session = SettingsSessionMaker()
         #Query DB for settings
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         base_layer = main_settings.base_layer

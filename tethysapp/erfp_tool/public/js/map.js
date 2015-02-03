@@ -165,6 +165,58 @@ var ERFP_MAP = (function() {
                 },
                 success: function(data) {
                     if("success" in data) {
+
+                        var data_series = [];
+                        if("max" in data) {
+                            data_series.push({
+                                                name: "Maximum",
+                                                data: data['max'],
+                                                color: '#BE2625',
+                                            });
+                        }
+                        if("mean_plus_std" in data) {
+                            data_series.push({
+                                                name: "Mean Plus Std. Dev.",
+                                                data: data['mean_plus_std'],
+                                                color: '#61B329',
+                                            });
+                        }                        
+                        if("mean" in data) {
+                            data_series.push({
+                                                name: "Mean",
+                                                data: data['mean'],
+                                                color: '#00688B',
+                                            });
+                        }
+                        if("mean_minus_std" in data) {
+                            data_series.push({
+                                                name: "Mean Minus Std. Dev.",
+                                                data: data['mean_minus_std'],
+                                                color: '#61B329',
+                                            });
+                        }
+                        if("min" in data) {
+                            data_series.push({
+                                                name: "Minimum",
+                                                data: data['min'],
+                                                color: '#BE2625',
+                                            });
+                        }
+                        if("high_res" in data) {
+                            data_series.push({
+                                                name: "High Res.",
+                                                data: data['high_res'],
+                                                dashStyle: 'longdash',
+                                                color: '#ffa500'
+                                            });
+                        }
+                        if("hrrr_data" in data) {
+                            data_series.push({
+                                                name: "WRF-Hydro",
+                                                data: data['hrrr_data'],
+                                                dashStyle: 'longdash',
+                                            });
+                        }
                         $("#erfp-chart").highcharts({
                             title: { text: toTitleCase(m_selected_watershed)},
                             subtitle: {text: toTitleCase(m_selected_subbasin) + ": " + m_selected_reach_id},
@@ -189,39 +241,7 @@ var ERFP_MAP = (function() {
                                 },
                                 min: 0
                             },
-                            series: [
-                                {
-                                    name: "Maximum",
-                                    data: data['max'],
-                                    color: '#BE2625',
-                                },
-                                {
-                                    name: "Mean Plus Std. Dev.",
-                                    data: data['mean_plus_std'],
-                                    color: '#61B329',
-                                },
-                                {
-                                    name: "Mean",
-                                    data: data['mean'],
-                                    color: '#00688B',
-                                },
-                                {
-                                    name: "Mean Minus Std. Dev.",
-                                    data: data['mean_minus_std'],
-                                    color: '#61B329',
-                                },
-                                {
-                                    name: "Minimum",
-                                    data: data['min'],
-                                    color: '#BE2625',
-                                },
-                                {
-                                    name: "High Res.",
-                                    data: data['high_res'],
-                                    dashStyle: 'longdash',
-                                    color: '#ffa500'
-                                },
-                            ]
+                            series: data_series,
                         });
                         $('#erfp-select').removeClass('hidden');
                         clearMessages();

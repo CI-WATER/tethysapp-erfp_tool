@@ -41,3 +41,7 @@
 .table-button {
     width: 60px;
 }
+
+#app-navigation li {
+    list-style-type: none;
+}

@@ -208,7 +208,9 @@ def get_avaialable_dates(request):
     
         #find/check current output datasets    
         path_to_watershed_files = os.path.join(path_to_rapid_output, watershed_name)
-        
+
+        if not os.path.exists(path_to_watershed_files):
+            return JsonResponse({'error' : 'Forecast for %s (%s) not found.' % (watershed_name, subbasin_name) })    
        
         directories = sorted([d for d in os.listdir(path_to_watershed_files) \
                             if os.path.isdir(os.path.join(path_to_watershed_files, d))],
@@ -239,7 +241,7 @@ def get_avaialable_dates(request):
                         "output_directories" : output_directories,                   
                     })
         else:
-            return JsonResponse({'error' : 'Recent forecasts for reach with id: ' + str(reach_id) + ' not found.'})    
+            return JsonResponse({'error' : 'Recent forecasts for reach with id: %s not found.' % reach_id})    
      
 def get_hydrograph(request):
     """""
@@ -267,70 +269,93 @@ def get_hydrograph(request):
         path_to_output_files = os.path.join(path_to_rapid_output, watershed_name)
         basin_files, start_date = find_most_current_files(path_to_output_files,subbasin_name,start_folder)
         if not basin_files or not start_date:
-            return JsonResponse({'error' : 'Recent forecast not found.'})
+            return JsonResponse({'error' : 'Forecast for %s (%s) not found.' % (watershed_name, subbasin_name)})
     
         #get/check the index of the reach
         reach_index = get_reach_index(reach_id, guess_index, basin_files)
         if not reach_index:
-            return JsonResponse({'error' : 'Reach with id: ' + str(reach_id) + ' not found.'})    
+            return JsonResponse({'error' : 'Reach with id: ' + str(reach_id) + ' not found.'})
+        print reach_index
         #get information from datasets
         all_data_first_half = []
         all_data_second_half = []
-        high_res_data = np.zeros([1,1])
-        time = []
+        high_res_data = []
+        hrrr_data = []
+        erfp_time = []
+        hrrr_time = []
         for in_nc in basin_files:
             try:
-                index = int(os.path.basename(in_nc)[:-3].split("_")[-1])
-                data_nc = NET.Dataset(in_nc, mode="r")
-                qout = data_nc.variables['Qout']
-                dataValues = qout[:,reach_index]
-                data_nc.close()
-                if (len(dataValues)>len(time)):
-                    time = []
-                    for i in range(0,len(dataValues)):
-                        next_time = int((start_date+datetime.timedelta(0,i*6*60*60)).strftime('%s'))*1000
-                        time.append(next_time)
-                all_data_first_half.append(dataValues[:40].clip(min=0))
-                if(index < 52):
-                    all_data_second_half.append(dataValues[40:].clip(min=0))
-                if(index == 52):
-                    high_res_data = dataValues
+                index_str = os.path.basename(in_nc)[:-3].split("_")[-1]
+                try:
+                    #ECMWF Ensembles
+                    index = int(index_str)
+                    data_nc = NET.Dataset(in_nc, mode="r")
+                    dataValues = data_nc.variables['Qout'][:,reach_index]
+                    data_nc.close()
+                    if (len(dataValues)>len(erfp_time)):
+                        erfp_time = []
+                        for i in range(0,len(dataValues)):
+                            next_time = int((start_date+datetime.timedelta(0,i*6*60*60)) \
+                                            .strftime('%s'))*1000
+                            erfp_time.append(next_time)
+                    all_data_first_half.append(dataValues[:40].clip(min=0))
+                    if(index < 52):
+                        all_data_second_half.append(dataValues[40:].clip(min=0))
+                    if(index == 52):
+                        high_res_data = dataValues
+                except ValueError:
+                    if index_str.lower() == "hrrr":
+                        #WRF-Hydro Ensemble
+                        data_nc = NET.Dataset(in_nc, mode="r")
+                        #convert data from cfs to cms
+                        hrrr_data = data_nc.variables['Qout'][:,reach_index] * 0.0283168 
+                        data_nc.close()
+                        if not hrrr_time:
+                            for i in range(0,len(hrrr_data)):
+                                next_time = int((start_date+datetime.timedelta(0,i*1*60*60)) \
+                                                .strftime('%s'))*1000
+                                hrrr_time.append(next_time)
+                    pass
             except Exception, e:
                 print e
                 pass
-        #perform analysis on datasets
-        all_data_first = np.array(all_data_first_half, dtype=np.float64)
-        all_data_second = np.array(all_data_second_half, dtype=np.float64)
-        #get mean
-        mean_data_first = np.mean(all_data_first, axis=0)
-        mean_data_second = np.mean(all_data_second, axis=0)
-        mean_series = np.concatenate([mean_data_first,mean_data_second])
-        #get std dev
-        std_dev_first = np.std(all_data_first, axis=0)
-        std_dev_second = np.std(all_data_second, axis=0)
-        std_dev = np.concatenate([std_dev_first,std_dev_second])
-        #get max
-        max_data_first = np.amax(all_data_first, axis=0)
-        max_data_second = np.amax(all_data_second, axis=0)
-        max_series = np.concatenate([max_data_first,max_data_second])
-        #get min
-        min_data_first = np.amin(all_data_first, axis=0)
-        min_data_second = np.amin(all_data_second, axis=0)
-        min_series = np.concatenate([min_data_first,min_data_second])
-        #mean plus std
-        mean_plus_std = mean_series + std_dev
-        #mean minus std
-        mean_mins_std = (mean_series - std_dev).clip(min=0)
-        #return results of analysis
-        return JsonResponse({     
-                        "success" : "Data analysis complete!",
-                        "max" : zip(time, max_series.tolist()),
-                        "min" : zip(time, min_series.tolist()),
-                        "mean" : zip(time, mean_series.tolist()),
-                        "mean_plus_std" : zip(time, mean_plus_std.tolist()),
-                        "mean_minus_std" : zip(time, mean_mins_std.tolist()),
-                        "high_res" : zip(time,high_res_data.tolist()),
-                    })
+        return_data = {}
+        if erfp_time:
+            #perform analysis on datasets
+            all_data_first = np.array(all_data_first_half, dtype=np.float64)
+            all_data_second = np.array(all_data_second_half, dtype=np.float64)
+            #get mean
+            mean_data_first = np.mean(all_data_first, axis=0)
+            mean_data_second = np.mean(all_data_second, axis=0)
+            mean_series = np.concatenate([mean_data_first,mean_data_second])
+            #get std dev
+            std_dev_first = np.std(all_data_first, axis=0)
+            std_dev_second = np.std(all_data_second, axis=0)
+            std_dev = np.concatenate([std_dev_first,std_dev_second])
+            #get max
+            max_data_first = np.amax(all_data_first, axis=0)
+            max_data_second = np.amax(all_data_second, axis=0)
+            max_series = np.concatenate([max_data_first,max_data_second])
+            #get min
+            min_data_first = np.amin(all_data_first, axis=0)
+            min_data_second = np.amin(all_data_second, axis=0)
+            min_series = np.concatenate([min_data_first,min_data_second])
+            #mean plus std
+            mean_plus_std = mean_series + std_dev
+            #mean minus std
+            mean_mins_std = (mean_series - std_dev).clip(min=0)
+            #return results of analysis
+            return_data["max"] = zip(erfp_time, max_series.tolist())
+            return_data["min"] = zip(erfp_time, min_series.tolist())
+            return_data["mean"] = zip(erfp_time, mean_series.tolist())
+            return_data["mean_plus_std"] = zip(erfp_time, mean_plus_std.tolist())
+            return_data["mean_minus_std"] = zip(erfp_time, mean_mins_std.tolist())
+            if len(high_res_data) > 0:
+                return_data["high_res"] = zip(erfp_time,high_res_data.tolist())
+        if hrrr_time:
+            return_data["hrrr_data"] = zip(hrrr_time,hrrr_data.tolist())
+        return_data["success"] = "Data analysis complete!"
+        return JsonResponse(return_data)
                     
 @user_passes_test(user_permission_test)
 def settings_update(request):

@@ -4,10 +4,7 @@ import netCDF4 as NET
 import numpy as np
 import os
 from re import sub
-#tethys imports
-from tethys_datasets.engines import CkanDatasetEngine, HydroShareDatasetEngine
-#local imports
-from .model import SettingsSessionMaker, Watershed
+
 
 def delete_old_watershed_files(watershed):
     """
@@ -30,6 +27,8 @@ def find_most_current_files(path_to_watershed_files, basin_name, start_folder):
     Finds the current output from downscaled ECMWF forecasts
     """""
     if(start_folder=="most_recent"):
+        if not os.path.exists(path_to_watershed_files):
+            return None, None
         directories = sorted([d for d in os.listdir(path_to_watershed_files) \
                             if os.path.isdir(os.path.join(path_to_watershed_files, d))],
                              reverse=True)
@@ -98,33 +97,7 @@ def get_reach_index(reach_id, guess_index, basin_files):
         print ex
         reach_index = None
         pass
-    return reach_index
-
-def load_prediction_datasets():
-    """
-    Loads prediction datasets from data store
-    """
-    session = SettingsSessionMaker()
-    for watershed in session.query(Watershed).all():
-        #get data engine
-        data_store = watershed.data_store
-        data_engine = None
-        if 'ckan' == data_store.data_store_type.code_name:
-            data_engine = CkanDatasetEngine(endpoint=data_store.api_endpoint, apikey=data_store.api_key)
-        elif 'hydroshare' == data_store.data_store_type.code_name:
-            data_engine = HydroShareDatasetEngine(endpoint=data_store.api_endpoint, apikey=data_store.api_key)
-        #load current datasets
-        if data_engine:
-            query = {
-                "app": "erfp_tool", 
-                "watershed":watershed.watershed_name, 
-                "subbasin":watershed.subbasin_name,
-                }
-            dataset_id = data_engine.search_datasets(query)  
-            dataset_url = data_engine.get_dataset(dataset_id)
-            #download dataset with urllib2?
-            #extract datasets
-            #remove old datasets                  
+    return reach_index                
 
 def get_subbasin_list(file_path):
     """

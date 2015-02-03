@@ -1,6 +1,6 @@
 # Put your persistent store models in this file
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker
 
 from .utilities import get_persistent_store_engine
