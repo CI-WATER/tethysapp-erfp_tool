@@ -1,5 +1,6 @@
 from crontab import CronTab
 import datetime
+from getpass import getuser
 from glob import glob
 import netCDF4 as NET
 import numpy as np
@@ -374,25 +375,17 @@ def settings_update(request):
         try:
             morning_hour = int(post_info.get('morning_hour'))
             evening_hour = int(post_info.get('evening_hour'))
-            cron_manager = None
-            try:
-                cron_manager = CronTab(user='www-data')
-            except Exception:
-                pass
-            if not cron_manager:
-                cron_manager = CronTab(user='apache')
+            cron_manager = CronTab(user=getuser())
             cron_manager.remove_all(comment="erfp-dataset-download")
             cron_command = get_cron_command()
             if cron_command:
                 #add new times   
                 cron_job_morning = cron_manager.new(command=cron_command, 
-                                           comment="erfp-dataset-download", 
-                                           user='root')
+                                           comment="erfp-dataset-download")
                 cron_job_morning.minute.on(0)
                 cron_job_morning.hour.on(morning_hour)
                 cron_job_evening = cron_manager.new(command=cron_command, 
-                                           comment="erfp-dataset-download",
-                                           user='root')
+                                           comment="erfp-dataset-download")
                 cron_job_evening.minute.on(0)
                 cron_job_evening.hour.on(evening_hour)
             else:
