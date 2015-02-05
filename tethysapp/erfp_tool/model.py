@@ -1,10 +1,11 @@
 # Put your persistent store models in this file
+from crontab import CronTab
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker
 
 from .utilities import get_persistent_store_engine
-
+from .functions import get_cron_command
 # DB Engine, sessionmaker and base
 settingsEngine = get_persistent_store_engine('settings_db')
 SettingsSessionMaker = sessionmaker(bind=settingsEngine)
@@ -34,6 +35,22 @@ class MainSettings(Base):
         self.local_prediction_files = local_prediction_files
         self.morning_hour = morning_hour
         self.evening_hour = evening_hour
+        
+        try:
+            cron_manager = CronTab(user='www-data')
+        except Exception:
+            pass
+        if not cron_manager:
+            cron_manager = CronTab(user='apache')
+        cron_command = get_cron_command()
+        cron_job_morning = cron_manager.new(command = cron_command, comment="erfp-dataset-download")
+        cron_job_morning.minute.on(0)
+        cron_job_morning.hour.on(morning_hour)
+        cron_job_evening = cron_manager.new(command = cron_command, comment="erfp-dataset-download")
+        cron_job_evening.minute.on(0)
+        cron_job_evening.hour.on(evening_hour)
+        #writes content to crontab
+        cron_manager.write()
         
 # SQLAlchemy ORM definition for the data_store_type table
 class BaseLayer(Base):

@@ -76,6 +76,24 @@ def format_watershed_title(watershed, subbasin):
         return (watershed + " (" + subbasin[:max_length-3].strip() + " ...)")
     return (watershed + " (" + subbasin + ")")
 
+def get_cron_command():
+    local_directory = os.path.dirname(os.path.abspath(__file__))
+    delimiter = ""
+    if "/" in local_directory:
+        delimiter = "/"
+    elif "\\" in local_directory:
+        delimiter = "\\"
+    virtual_env_path = ""
+    if delimiter and local_directory:
+        virtual_env_path = delimiter.join(local_directory.split(delimiter)[:-7])
+        command = '%s %s' % (os.path.join(virtual_env_path,'bin','python'), 
+                              os.path.join(local_directory, 
+                              'cron', 
+                              'load_datasets.py'))
+        return command
+    else:
+        return None
+
 def get_reach_index(reach_id, guess_index, basin_files):
     """
     Gets the index of the reach from the COMID 
@@ -116,7 +134,7 @@ def get_subbasin_list(file_path):
             subbasin_list.append(subbasin_name)
     subbasin_list.sort()
     return subbasin_list
-
+   
 def handle_uploaded_file(f, file_path, file_name):
     """
     Uploads file to specifies path

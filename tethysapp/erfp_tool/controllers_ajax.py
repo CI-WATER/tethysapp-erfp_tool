@@ -17,8 +17,8 @@ from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
 
 from .functions import (delete_old_watershed_files, find_most_current_files, 
-                        format_name, get_reach_index, handle_uploaded_file,
-                        user_permission_test)
+                        format_name, get_cron_command, get_reach_index, 
+                        handle_uploaded_file, user_permission_test)
                         
 @user_passes_test(user_permission_test)
 def data_store_add(request):
@@ -373,29 +373,37 @@ def settings_update(request):
         #update cron jobs
         try:
             morning_hour = int(post_info.get('morning_hour'))
-            print "morning %s" % morning_hour
             evening_hour = int(post_info.get('evening_hour'))
-            print "evening %s" % evening_hour
-            command = '%s %s' % ('/usr/lib/tethys/bin/python', 
-                                  os.path.join(os.path.dirname(os.path.abspath(__file__)), 
-                                  'cron', 
-                                  'load_datasets.py'))
-            tab = CronTab()
-            job_iter = tab.find_command(command)
-            for job in job_iter:
-                tab.remove(job)
-            #add new times   
-            cron_job_morning = tab.new(command)
-            cron_job_morning.minute.on(0)
-            cron_job_morning.hour.on(morning_hour)
-            cron_job_evening = tab.new(command)
-            cron_job_evening.minute.on(0)
-            cron_job_evening.hour.on(evening_hour)
+            cron_manager = None
+            try:
+                cron_manager = CronTab(user='www-data')
+            except Exception:
+                pass
+            if not cron_manager:
+                cron_manager = CronTab(user='apache')
+            cron_manager.remove_all(comment="erfp-dataset-download")
+            cron_command = get_cron_command()
+            if cron_command:
+                #add new times   
+                cron_job_morning = cron_manager.new(command=cron_command, 
+                                           comment="erfp-dataset-download", 
+                                           user='root')
+                cron_job_morning.minute.on(0)
+                cron_job_morning.hour.on(morning_hour)
+                cron_job_evening = cron_manager.new(command=cron_command, 
+                                           comment="erfp-dataset-download",
+                                           user='root')
+                cron_job_evening.minute.on(0)
+                cron_job_evening.hour.on(evening_hour)
+            else:
+               JsonResponse({ 'error': "Location of virtual environment not found. No changes made." }) 
        
             #writes content to crontab
-            tab.write()
+            cron_manager.write()
         except (TypeError, ValueError):
-            return JsonResponse({ 'error': "Time input incorrect" })
+            return JsonResponse({ 'error': "Error with unput for time." })
+        except Exception:
+            return JsonResponse({ 'error': "CRON setup error." })
 
         #initialize session
         session = SettingsSessionMaker()
