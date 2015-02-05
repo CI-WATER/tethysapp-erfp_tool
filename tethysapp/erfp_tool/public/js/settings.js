@@ -8,17 +8,18 @@ $('#api-key-input').parent().parent().append(help_html);
 $('#submit-changes-settings').click(function(){
     var safe_to_submit = {val: true};
 
-    var base_layer_id = $('#base-layer-input').val();
+    var base_layer_id = checkInputWithError($('#base-layer-select'),safe_to_submit, true, true);
 
     //check API Key Input
     var api_key = checkInputWithError($('#api-key-input'),safe_to_submit);
     //check output rapid-ecmwf files location
     var ecmwf_rapid_location = checkInputWithError($('#ecmwf-rapid-location-input'),safe_to_submit);
+    var morning_hour = checkInputWithError($('#morning-hour-select'),safe_to_submit, true, true);
+    var evening_hour = checkInputWithError($('#evening-hour-select'),safe_to_submit, true, true);
 
     //submit if inputs are ok
     if(safe_to_submit.val) {
         //update attribute
-        var base_layer_id = $('#base-layer-input').select2('data').id;
         var api_keys = JSON.parse($('#base-layer-api-keys').attr('base-layer-api-keys'));
         if(api_keys[base_layer_id]) {
             api_keys[base_layer_id] = api_key;
@@ -29,7 +30,9 @@ $('#submit-changes-settings').click(function(){
         data = {
                 base_layer_id: base_layer_id,
                 api_key: api_key,
-                ecmwf_rapid_location: ecmwf_rapid_location                    
+                ecmwf_rapid_location: ecmwf_rapid_location,                    
+                morning_hour: morning_hour,                    
+                evening_hour: evening_hour,                    
                 };
 
         ajax_update_database("update",data)
@@ -38,7 +41,7 @@ $('#submit-changes-settings').click(function(){
 });
 
 //change api key based on the input
-$('#base-layer-input').change(function() {
+$('#base-layer-select').change(function() {
     var base_layer_id = $(this).select2('data').id;
     var api_keys = JSON.parse($('#base-layer-api-keys').attr('base-layer-api-keys'));
     if(api_keys[base_layer_id]) {

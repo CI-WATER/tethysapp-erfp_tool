@@ -22,13 +22,18 @@ class MainSettings(Base):
     base_layer_id = Column(Integer,ForeignKey('base_layer.id'))
     base_layer = relationship("BaseLayer")
     local_prediction_files = Column(String)
+    morning_hour = Column(Integer)
+    evening_hour = Column(Integer)
 
-    def __init__(self, base_layer_id, local_prediction_files):
+    def __init__(self, base_layer_id, local_prediction_files, morning_hour,
+                 evening_hour):
         """
         Constructor for settings
         """
         self.base_layer_id = base_layer_id
         self.local_prediction_files = local_prediction_files
+        self.morning_hour = morning_hour
+        self.evening_hour = evening_hour
         
 # SQLAlchemy ORM definition for the data_store_type table
 class BaseLayer(Base):

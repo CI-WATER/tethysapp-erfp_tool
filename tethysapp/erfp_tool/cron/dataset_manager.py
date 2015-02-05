@@ -178,11 +178,20 @@ class ERFPDatasetManager():
                 pass
         return None
     
-    def download_resource(self, watershed, subbasin, year, month, date_string):
-
-        resource_info = self.get_resource_info(watershed, subbasin, year, 
-                                               month, date_string)
-        if resource_info:
+    def download_resource(self, watershed, subbasin, today_datetime):
+        resource_info = None
+        iteration = 0
+        while not resource_info and iteration < 3:
+            days_back = 1 if iteration >= 2 else 0
+            hours_back = 12 if iteration == 1 else 0
+            today =  today_datetime - datetime.timedelta(days_back,hours_back)
+            hour = '1200' if today.hour > 11 else '0'
+            date_string = '%s.%s' % (today.strftime("%Y%m%d"), hour)
+            resource_info = self.get_resource_info(watershed, subbasin, today.year, 
+                                                   today.month, date_string)
+            iteration += 1
+        
+        if resource_info and self.output_files_location and os.path.exists(self.output_files_location):
             extract_dir = os.path.join(self.output_files_location, watershed, date_string)
             #only download if it does not exist already
             download_file = False

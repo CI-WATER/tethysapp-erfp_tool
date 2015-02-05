@@ -1,3 +1,4 @@
+from crontab import CronTab
 import datetime
 from glob import glob
 import netCDF4 as NET
@@ -368,9 +369,36 @@ def settings_update(request):
         base_layer_id = post_info.get('base_layer_id')
         api_key = post_info.get('api_key')
         local_prediction_files = post_info.get('ecmwf_rapid_location')
+
+        #update cron jobs
+        try:
+            morning_hour = int(post_info.get('morning_hour'))
+            print "morning %s" % morning_hour
+            evening_hour = int(post_info.get('evening_hour'))
+            print "evening %s" % evening_hour
+            command = '%s %s' % ('/usr/lib/tethys/bin/python', 
+                                  os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+                                  'cron', 
+                                  'load_datasets.py'))
+            tab = CronTab()
+            job_iter = tab.find_command(command)
+            for job in job_iter:
+                tab.remove(job)
+            #add new times   
+            cron_job_morning = tab.new(command)
+            cron_job_morning.minute.on(0)
+            cron_job_morning.hour.on(morning_hour)
+            cron_job_evening = tab.new(command)
+            cron_job_evening.minute.on(0)
+            cron_job_evening.hour.on(evening_hour)
+       
+            #writes content to crontab
+            tab.write()
+        except (TypeError, ValueError):
+            return JsonResponse({ 'error': "Time input incorrect" })
+
         #initialize session
         session = SettingsSessionMaker()
-        
         #update main settings
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         main_settings.base_layer_id = base_layer_id

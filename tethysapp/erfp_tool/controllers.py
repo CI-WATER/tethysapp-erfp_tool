@@ -154,9 +154,9 @@ def settings(request):
     main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
     
     
-    base_layer_input = {
+    base_layer_select_input = {
                 'display_text': 'Select a Base Layer',
-                'name': 'base-layer-input',
+                'name': 'base-layer-select',
                 'multiple': False,
                 'options': base_layer_list,
                 'initial': main_settings.base_layer.name
@@ -177,7 +177,24 @@ def settings(request):
                 'icon_append':'glyphicon glyphicon-folder-open',
                 'initial': main_settings.local_prediction_files
               }
-              
+    morning_hour_select_input = {
+                'display_text': 'Select Morning Data Download Hour',
+                'name': 'morning-hour-select',
+                'options': [(0,0),(1,1),(2,2),(3,3),(4,4),
+                            (5,5),(6,6),(7,7),(8,8),(9,9),
+                            (10,10),(11,11)],
+                'initial': [main_settings.morning_hour],
+                }          
+
+    evening_hour_select_input = {
+                'display_text': 'Select Evening  Data Download Hour',
+                'name': 'evening-hour-select',
+                'options': [(12,12),(13,13),(14,14),(15,15),(16,16),
+                            (17,17),(18,18),(19,19),(20,20),(21,21),
+                            (22,22),(23,23),],
+                'initial': [main_settings.evening_hour],
+                }          
+             
     submit_button = {'buttons': [
                                  {'display_text': 'Submit',
                                   'name': 'submit-changes-settings',
@@ -188,9 +205,11 @@ def settings(request):
                  }
               
     context = {
-                'base_layer_input': base_layer_input,
+                'base_layer_select_input': base_layer_select_input,
                 'base_layer_api_key_input': base_layer_api_key_input,
                 'ecmwf_rapid_input': ecmwf_rapid_input,
+                'morning_hour_select_input': morning_hour_select_input,
+                'evening_hour_select_input': evening_hour_select_input,
                 'submit_button': submit_button,
                 'base_layer_api_keys': json.dumps(base_layer_api_keys),
               }

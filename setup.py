@@ -1,5 +1,4 @@
 import os
-import sys
 from setuptools import setup, find_packages
 from tethys_apps.app_installation import custom_develop_command, custom_install_command
 
@@ -8,9 +7,9 @@ app_package = 'erfp_tool'
 release_package = 'tethysapp-' + app_package
 app_class = 'erfp_tool.app:ECMWFRAPIDFloodPredictionTool'
 app_package_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tethysapp', app_package)
-
+virtual_env_path = '/usr/lib/tethys/'
 ### Python Dependencies ###
-dependencies = []
+dependencies = ['netCDF4', 'numpy', 'python-crontab', 'requests','sqlalchemy']
 
 setup(
     name=release_package,
@@ -32,3 +31,18 @@ setup(
         'develop': custom_develop_command(app_package, app_package_dir, dependencies)
     }
 )
+
+from crontab import CronTab
+tab = CronTab()
+command = '%s %s' % (os.path.join(virtual_env_path,'/bin/python'), 
+                              os.path.join(app_package_dir, 
+                              'cron', 
+                              'load_datasets.py'))
+cron_job_morning = tab.new(command)
+cron_job_morning.minute.on(0)
+cron_job_morning.hour.on(3)
+cron_job_evening = tab.new(command)
+cron_job_evening.minute.on(0)
+cron_job_evening.hour.on(15)
+#writes content to crontab
+tab.write()
