@@ -277,7 +277,7 @@ def get_hydrograph(request):
         reach_index = get_reach_index(reach_id, guess_index, basin_files)
         if not reach_index:
             return JsonResponse({'error' : 'Reach with id: ' + str(reach_id) + ' not found.'})
-        print reach_index
+
         #get information from datasets
         all_data_first_half = []
         all_data_second_half = []
