@@ -4,9 +4,19 @@ import netCDF4 as NET
 import numpy as np
 import os
 from re import sub
+from shutil import rmtree
 
+def delete_old_watershed_prediction_files(watershed_name, local_prediction_files_location):
+    """
+    Removes old watershed prediction files from system
+    """
+    try:
+        rmtree(os.path.join(local_prediction_files_location,
+                                           watershed_name))
+    except OSError:
+        pass
 
-def delete_old_watershed_files(watershed):
+def delete_old_watershed_files(watershed, local_prediction_files_location):
     """
     Removes old watershed files from system
     """
@@ -14,14 +24,17 @@ def delete_old_watershed_files(watershed):
                                          'public','kml',watershed.folder_name)
     old_geoserver_drainage_line_layer = format_name(watershed.subbasin_name) + "-drainage_line.kml"
     old_geoserver_catchment_layer = format_name(watershed.subbasin_name) + "-catchment.kml"
-    #remove old files if not on local server
+    #remove old kml files on local server
     try:
         os.remove(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer))
         os.remove(os.path.join(old_kml_file_location, old_geoserver_catchment_layer))
         os.rmdir(old_kml_file_location)
     except OSError:
         pass
-
+    #remove old prediction files
+    delete_old_watershed_prediction_files(watershed.folder_name, 
+                                          local_prediction_files_location)
+   
 def find_most_current_files(path_to_watershed_files, basin_name, start_folder):
     """""
     Finds the current output from downscaled ECMWF forecasts

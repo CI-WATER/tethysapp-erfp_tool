@@ -179,9 +179,9 @@ class ERFPDatasetManager():
         return None
     
     def download_resource(self, watershed, subbasin, today_datetime):
-        resource_info = None
         iteration = 0
-        while not resource_info and iteration < 3:
+        download_file = False
+        while not download_file and iteration < 3:
             days_back = 1 if iteration >= 2 else 0
             hours_back = 12 if iteration == 1 else 0
             today =  today_datetime - datetime.timedelta(days_back,hours_back*60*60)
@@ -189,36 +189,35 @@ class ERFPDatasetManager():
             date_string = '%s.%s' % (today.strftime("%Y%m%d"), hour)
             resource_info = self.get_resource_info(watershed, subbasin, today.year, 
                                                    today.month, date_string)
-            iteration += 1
-        if resource_info and self.output_files_location and os.path.exists(self.output_files_location):
-            extract_dir = os.path.join(self.output_files_location, watershed, date_string)
-            #only download if it does not exist already
-            download_file = False
-            if os.path.exists(extract_dir):
-                basin_files = glob(os.path.join(extract_dir,'Qout_%s*.nc' % subbasin))
-                if basin_files:
+            if resource_info and self.output_files_location and os.path.exists(self.output_files_location):
+                extract_dir = os.path.join(self.output_files_location, watershed, date_string)
+                #only download if it does not exist already
+                if os.path.exists(extract_dir):
+                    basin_files = glob(os.path.join(extract_dir,'Qout_%s*.nc' % subbasin))
+                    if not basin_files:
+                        download_file = True
+                else:
                     download_file = True
-            else:
-                download_file = True
-                try:
-                    os.makedirs(extract_dir)
-                except OSError:
-                    pass
-                
-            if download_file:
-                local_tar_file = "%s.tar.gz" % date_string
-                local_tar_file_path = os.path.join(self.output_files_location, watershed,
-                                              local_tar_file)
-                r = requests.get(resource_info['url'], stream=True)
-                with open(local_tar_file_path, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=1024): 
-                        if chunk: # filter out keep-alive new chunks
-                            f.write(chunk)
-                            f.flush()
-                tar = tarfile.open(local_tar_file_path)
-                tar.extractall(extract_dir)
-                tar.close()
-                os.remove(local_tar_file_path)
+                    try:
+                        os.makedirs(extract_dir)
+                    except OSError:
+                        pass
+            iteration += 1
+                    
+        if download_file:
+            local_tar_file = "%s.tar.gz" % date_string
+            local_tar_file_path = os.path.join(self.output_files_location, watershed,
+                                          local_tar_file)
+            r = requests.get(resource_info['url'], stream=True)
+            with open(local_tar_file_path, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=1024): 
+                    if chunk: # filter out keep-alive new chunks
+                        f.write(chunk)
+                        f.flush()
+            tar = tarfile.open(local_tar_file_path)
+            tar.extractall(extract_dir)
+            tar.close()
+            os.remove(local_tar_file_path)
 if __name__ == "__main__":
     data_manager = ERFPDatasetManager('http://ciwckan.chpc.utah.edu',
                                        '8dcc1b34-0e09-4ddc-8356-df4a24e5be87',

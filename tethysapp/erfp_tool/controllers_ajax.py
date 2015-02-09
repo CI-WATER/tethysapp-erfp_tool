@@ -17,7 +17,8 @@ from django.contrib.auth.decorators import user_passes_test
 from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
 
-from .functions import (delete_old_watershed_files, find_most_current_files, 
+from .functions import (delete_old_watershed_prediction_files,
+                        delete_old_watershed_files, find_most_current_files, 
                         format_name, get_cron_command, get_reach_index, 
                         handle_uploaded_file, user_permission_test)
                         
@@ -480,9 +481,9 @@ def watershed_delete(request):
             session = SettingsSessionMaker()
             #get watershed to delete
             watershed  = session.query(Watershed).get(watershed_id)
-            
-            #remove watershed kml files
-            delete_old_watershed_files(watershed)
+            main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+            #remove watershed kml and prediction files
+            delete_old_watershed_files(watershed, main_settings.local_prediction_files)
                 
             #delete watershed from database
             session.delete(watershed)
@@ -558,6 +559,10 @@ def watershed_update(request):
                     os.rmdir(old_kml_file_location)
                 except OSError:
                     pass
+                #remove local prediction files
+                main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+                delete_old_watershed_prediction_files(watershed.watershed_name, 
+                                                      main_settings.local_prediction_files)
             #upload new files if they exist
             if('drainage_line_kml_file' in request.FILES):
                 try:

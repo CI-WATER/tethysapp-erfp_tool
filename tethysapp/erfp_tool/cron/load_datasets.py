@@ -4,7 +4,7 @@ import os
 from shutil import rmtree
 import sys
 
-sys.path.append('/usr/lib/tethys/src')
+sys.path.append('/usr/lib/tethys/tethys-src')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tethys_portal.settings")
 #local imports
 from tethys_apps.tethysapp.erfp_tool.model import MainSettings, SettingsSessionMaker, Watershed
@@ -33,10 +33,13 @@ def load_datasets():
         #remove oldest datasets if more than 14 exist
         path_to_watershed_files = os.path.join(ecmwf_rapid_prediction_location,
                                                watershed.folder_name)
-        prediction_directories = sorted(os.listdir(path_to_watershed_files), 
-                                        reverse=True)[14:]
-        for prediction_directory in prediction_directories:
-            rmtree(os.path.join(path_to_watershed_files, prediction_directory))
+        try:
+            prediction_directories = sorted(os.listdir(path_to_watershed_files), 
+                                            reverse=True)[14:]
+            for prediction_directory in prediction_directories:
+                rmtree(os.path.join(path_to_watershed_files, prediction_directory))
+        except OSError:
+            pass
         
 if __name__ == "__main__":
     load_datasets()
