@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
 import datetime
 import os
 from shutil import rmtree
-import sys
 
-sys.path.append('/usr/lib/tethys/src')
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tethys_portal.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tethys_apps.settings")
 #local imports
 from tethys_apps.tethysapp.erfp_tool.model import MainSettings, SettingsSessionMaker, Watershed
 from dataset_manager import ERFPDatasetManager
