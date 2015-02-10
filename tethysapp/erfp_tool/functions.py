@@ -90,6 +90,8 @@ def format_watershed_title(watershed, subbasin):
     return (watershed + " (" + subbasin + ")")
 
 def get_cron_command():
+    #/usr/lib/tethys/src/tethys_apps/tethysapp/erfp_tool/cron/load_datasets.py
+    #/usr/lib/tethys/local/lib/python2.7/site-packages/tethys_apps/tethysapp/erfp_tool/cron/load_datasets.py
     local_directory = os.path.dirname(os.path.abspath(__file__))
     delimiter = ""
     if "/" in local_directory:
@@ -98,7 +100,7 @@ def get_cron_command():
         delimiter = "\\"
     virtual_env_path = ""
     if delimiter and local_directory:
-        virtual_env_path = delimiter.join(local_directory.split(delimiter)[:-7])
+        virtual_env_path = delimiter.join(local_directory.split(delimiter)[:-4])
         command = '%s %s' % (os.path.join(virtual_env_path,'bin','python'), 
                               os.path.join(local_directory, 
                               'cron', 
