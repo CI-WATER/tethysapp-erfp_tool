@@ -406,6 +406,8 @@ def settings_update(request):
         main_settings.base_layer_id = base_layer_id
         main_settings.local_prediction_files = local_prediction_files    
         main_settings.base_layer.api_key = api_key
+        main_settings.morning_hour = morning_hour
+        main_settings.evening_hour = evening_hour
         session.commit()
         
         return JsonResponse({ 'success': "Settings Sucessfully Updated!" })
