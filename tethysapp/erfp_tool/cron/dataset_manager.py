@@ -5,7 +5,7 @@ import os
 import re
 import requests
 import tarfile
-from tethys_datasets.engines import CkanDatasetEngine
+from tethys_dataset_services.engines import CkanDatasetEngine
 
 class ERFPDatasetManager():
     """
