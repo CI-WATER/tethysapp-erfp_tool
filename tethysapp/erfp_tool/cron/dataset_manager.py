@@ -4,6 +4,7 @@ from glob import glob
 import os
 import re
 import requests
+from shutil import rmtree
 import tarfile
 from tethys_dataset_services.engines import CkanDatasetEngine
 
@@ -198,32 +199,37 @@ class ERFPDatasetManager():
                         download_file = True
                 else:
                     download_file = True
-                    try:
-                        os.makedirs(extract_dir)
-                    except OSError:
-                        pass
             iteration += 1
                     
         if download_file:
+            #create directory
+            try:
+                os.makedirs(extract_dir)
+            except OSError:
+                pass
             local_tar_file = "%s.tar.gz" % date_string
             local_tar_file_path = os.path.join(self.output_files_location, watershed,
                                           local_tar_file)
-            r = requests.get(resource_info['url'], stream=True)
-            with open(local_tar_file_path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=1024): 
-                    if chunk: # filter out keep-alive new chunks
-                        f.write(chunk)
-                        f.flush()
-            tar = tarfile.open(local_tar_file_path)
-            tar.extractall(extract_dir)
-            tar.close()
-            os.remove(local_tar_file_path)
-if __name__ == "__main__":
-    data_manager = ERFPDatasetManager('http://ciwckan.chpc.utah.edu',
-                                       '8dcc1b34-0e09-4ddc-8356-df4a24e5be87',
-                                       '/home/alan/work/rapid/output/')
-    data_manager.zip_upload_packages()
-    """    
-    #note: this does not delete the old files
-    #data_manager.download_resource('huc_region_1209', 'huc_4_1209', 2015,1, '20150129.0')
-    """
+            try: 
+                #download file
+                r = requests.get(resource_info['url'], stream=True)
+                with open(local_tar_file_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024): 
+                        if chunk: # filter out keep-alive new chunks
+                            f.write(chunk)
+                            f.flush()
+                tar = tarfile.open(local_tar_file_path)
+                tar.extractall(extract_dir)
+                tar.close()
+            except IOError:
+                #remove directory
+                try:
+                    rmtree(extract_dir)
+                except OSError:
+                    pass                
+                pass
+            #clean up downloaded tar.gz file
+            try:
+                os.remove(local_tar_file_path)
+            except OSError:
+                pass

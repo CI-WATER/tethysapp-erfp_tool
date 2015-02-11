@@ -8,7 +8,7 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
 
     name = 'ECMWF-RAPID Flood Prediction Tool'
     index = 'erfp_tool:home'
-    icon = 'erfp_tool/images/icon.gif'
+    icon = 'erfp_tool/images/logo.png'
     package = 'erfp_tool'
     root_url = 'erfp-tool'
     color = '#34495e'
