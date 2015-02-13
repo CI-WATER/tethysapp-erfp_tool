@@ -53,6 +53,7 @@ def data_store_add(request):
         #add Data Store
         session.add(DataStore(data_store_name, data_store_type_id, data_store_endpoint, data_store_api_key))
         session.commit()
+        session.close()
         
         return JsonResponse({ 'success': "Data Store Sucessfully Added!" })
 
@@ -76,6 +77,7 @@ def data_store_delete(request):
                 data_store  = session.query(DataStore).get(data_store_id)
                 session.delete(data_store)
                 session.commit()
+                session.close()
             except IntegrityError:
                 return JsonResponse({ 'error': "This data store is connected with a watershed! Must remove connection to delete." })
             return JsonResponse({ 'success': "Data Store Sucessfully Deleted!" })
@@ -104,6 +106,7 @@ def data_store_update(request):
             data_store.api_endpoint= data_store_api_endpoint    
             data_store.api_key = data_store_api_key
             session.commit()
+            session.close()
             return JsonResponse({ 'success': "Data Store Sucessfully Updated!" })
         return JsonResponse({ 'error': "Cannot change this data store." })
     return JsonResponse({ 'error': "A problem with your request exists." })
@@ -137,6 +140,7 @@ def geoserver_add(request):
         #add Data Store
         session.add(Geoserver(geoserver_name, geoserver_url))
         session.commit()
+        session.close()
         return JsonResponse({ 'success': "Geoserver Sucessfully Added!" })
 
     return JsonResponse({ 'error': "A problem with your request exists." })
@@ -159,6 +163,7 @@ def geoserver_delete(request):
                 geoserver  = session.query(Geoserver).get(geoserver_id)
                 session.delete(geoserver)
                 session.commit()
+                session.close()
             except IntegrityError:
                 return JsonResponse({ 'error': "This geoserver is connected with a watershed! Must remove connection to delete." })
             return JsonResponse({ 'success': "Geoserver sucessfully deleted!" })
@@ -185,6 +190,7 @@ def geoserver_update(request):
             geoserver.name = geoserver_name
             geoserver.url= geoserver_url    
             session.commit()
+            session.close()
             return JsonResponse({ 'success': "Geoserver sucessfully updated!" })
         return JsonResponse({ 'error': "Cannot change this geoserver." })
     return JsonResponse({ 'error': "A problem with your request exists." })
@@ -197,6 +203,8 @@ def get_avaialable_dates(request):
         #Query DB for path to rapid output
         session = SettingsSessionMaker()
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+        session.close()
+
         path_to_rapid_output = main_settings.local_prediction_files
         if not os.path.exists(path_to_rapid_output):
             return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})    
@@ -254,6 +262,7 @@ def get_hydrograph(request):
         #Query DB for path to rapid output
         session = SettingsSessionMaker()
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+        session.close()
         path_to_rapid_output = main_settings.local_prediction_files
         if not os.path.exists(path_to_rapid_output):
             return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})    
@@ -409,7 +418,8 @@ def settings_update(request):
         main_settings.morning_hour = morning_hour
         main_settings.evening_hour = evening_hour
         session.commit()
-        
+        session.close()
+
         return JsonResponse({ 'success': "Settings Sucessfully Updated!" })
 
 @user_passes_test(user_permission_test)    
@@ -462,7 +472,8 @@ def watershed_add(request):
                               geoserver_drainage_line_layer,
                               geoserver_catchment_layer))
         session.commit()
-        
+        session.close()
+
         return JsonResponse({ 'success': "Watershed Sucessfully Added!" })
 
     return JsonResponse({ 'error': "A problem with your request exists." })
@@ -490,6 +501,7 @@ def watershed_delete(request):
             #delete watershed from database
             session.delete(watershed)
             session.commit()
+            session.close()
 
             return JsonResponse({ 'success': "Watershed sucessfully deleted!" })
         return JsonResponse({ 'error': "Cannot delete this watershed." })
@@ -595,7 +607,8 @@ def watershed_update(request):
         
         #update database
         session.commit()
-        
+        session.close()
+
         return JsonResponse({ 'success': "Watershed sucessfully updated!" })
 
     return JsonResponse({ 'error': "A problem with your request exists." })
@@ -633,6 +646,7 @@ def watershed_group_add(request):
             group.watersheds.append(watershed)
         session.add(group)
         session.commit()
+        session.close()
 
         return JsonResponse({ 'success': "Watershed group sucessfully added!" })
 
@@ -658,6 +672,7 @@ def watershed_group_delete(request):
             #delete watershed group from database
             session.delete(watershed_group)
             session.commit()
+            session.close()
 
             return JsonResponse({ 'success': "Watershed group sucessfully deleted!" })
         return JsonResponse({ 'error': "Cannot delete this watershed group." })
@@ -704,6 +719,7 @@ def watershed_group_update(request):
                     watershed_group.watersheds.append(watershed)
             
             session.commit()
+            session.close()
             return JsonResponse({ 'success': "Watershed group successfully updated." })
         return JsonResponse({ 'error': "Data missing for this watershed group." })
     return JsonResponse({ 'error': "A problem with your request exists." })

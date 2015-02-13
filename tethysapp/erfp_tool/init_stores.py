@@ -31,3 +31,4 @@ def init_erfp_settings_db(first_time):
         session.add(MainSettings(1, "", 3, 15))
         
         session.commit()
+        session.close()
