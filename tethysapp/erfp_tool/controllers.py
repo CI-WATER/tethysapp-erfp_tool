@@ -5,6 +5,9 @@ import os
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import redirect, render 
 
+#tethys imports
+from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
+
 #local imports
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
                     SettingsSessionMaker, Watershed, WatershedGroup)
@@ -94,7 +97,7 @@ def map(request):
                 file_path = os.path.join(kml_file_location, format_name(watershed.watershed_name))
                 kml_urls = {'watershed':watershed.folder_name, 
                             'subbasin':watershed.file_name,
-                            'file_type': 'kml'}
+                            }
                 #prepare kml files
                 drainage_line_kml = os.path.join(file_path, watershed.geoserver_drainage_line_layer)
                 if os.path.exists(drainage_line_kml):
@@ -112,7 +115,38 @@ def map(request):
                 kml_urls['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
                 layer_info.append(kml_urls)
-            #else (get geoserver info)    
+            else: # (get geoserver info)
+                kml_urls = {'watershed':watershed.folder_name, 
+                            'subbasin':watershed.file_name,
+                            'geoserver_url': "%s/wms" % watershed.geoserver.url,
+                            }
+                engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
+                                                       username='admin',
+                                                       password='geoserver')
+                drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer)
+                if drainage_line_info['success']: 
+                    native_bbox = drainage_line_info['result']['native_bbox'][:4]
+                    latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
+                    kml_urls['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
+                                                 'native_bbox': [native_bbox[0],native_bbox[2],native_bbox[1],native_bbox[3]],
+                                                 'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                                 'projection': drainage_line_info['result']['projection'],
+                                                }
+                catchment_info = engine.get_resource(resource_id=watershed.geoserver_catchment_layer)
+                if catchment_info['success']: 
+                    native_bbox = catchment_info['result']['native_bbox'][:4]
+                    latlon_bbox = catchment_info['result']['latlon_bbox'][:4]
+                    kml_urls['catchment'] = {'name': watershed.geoserver_drainage_line_layer,
+                                             'native_bbox': [native_bbox[0],native_bbox[2],native_bbox[1],native_bbox[3]],
+                                             'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                             'projection': catchment_info['result']['projection'],
+                                            }
+        
+                kml_urls['title'] = format_watershed_title(watershed.watershed_name,
+                                                            watershed.subbasin_name)
+                layer_info.append(kml_urls)
+
+
             group_id += 1
             
         #Query DB for settings

@@ -258,7 +258,7 @@ def get_hydrograph(request):
     """""
     Plots all 52 ensembles with min, max, avg
     """""
-    if request.is_ajax() and request.method == 'GET':
+    if request.method == 'GET':
         #Query DB for path to rapid output
         session = SettingsSessionMaker()
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
@@ -543,6 +543,7 @@ def watershed_update(request):
         
         #get desired watershed
         watershed  = session.query(Watershed).get(watershed_id)
+        main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
 
         #upload files to local server if ready
         if(int(geoserver_id) == 1):
@@ -574,7 +575,6 @@ def watershed_update(request):
                 except OSError:
                     pass
                 #remove local prediction files
-                main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
                 delete_old_watershed_prediction_files(watershed.watershed_name, 
                                                       main_settings.local_prediction_files)
             #upload new files if they exist
@@ -592,9 +592,8 @@ def watershed_update(request):
                 handle_uploaded_file(request.FILES.get('catchment_kml_file'),new_kml_file_location, geoserver_catchment_layer)
         else:
             #remove old files if not on local server
-            delete_old_watershed_files(watershed)
+            delete_old_watershed_files(watershed, main_settings.local_prediction_files)
             
-        
         #change watershed attributes
         watershed.watershed_name = watershed_name
         watershed.subbasin_name = subbasin_name

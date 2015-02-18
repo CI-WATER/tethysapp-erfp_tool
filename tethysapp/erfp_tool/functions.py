@@ -22,8 +22,8 @@ def delete_old_watershed_files(watershed, local_prediction_files_location):
     """
     old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          'public','kml',watershed.folder_name)
-    old_geoserver_drainage_line_layer = format_name(watershed.subbasin_name) + "-drainage_line.kml"
-    old_geoserver_catchment_layer = format_name(watershed.subbasin_name) + "-catchment.kml"
+    old_geoserver_drainage_line_layer = "%s-drainage_line.kml" % watershed.file_name
+    old_geoserver_catchment_layer = "%s-catchment.kml" % watershed.file_name
     #remove old kml files on local server
     try:
         os.remove(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer))
