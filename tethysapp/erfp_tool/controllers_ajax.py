@@ -595,14 +595,14 @@ def watershed_update(request):
             delete_old_watershed_files(watershed, main_settings.local_prediction_files)
             
         #change watershed attributes
-        watershed.watershed_name = watershed_name
-        watershed.subbasin_name = subbasin_name
-        watershed.folder_name = folder_name
-        watershed.file_name = file_name
+        watershed.watershed_name = watershed_name.strip()
+        watershed.subbasin_name = subbasin_name.strip()
+        watershed.folder_name = folder_name.strip()
+        watershed.file_name = file_name.strip()
         watershed.data_store_id = data_store_id
         watershed.geoserver_id = geoserver_id
-        watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer
-        watershed.geoserver_catchment_layer = geoserver_catchment_layer
+        watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer.strip()
+        watershed.geoserver_catchment_layer = geoserver_catchment_layer.strip()
         
         #update database
         session.commit()

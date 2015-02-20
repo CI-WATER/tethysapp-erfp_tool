@@ -123,25 +123,28 @@ def map(request):
                 engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
                                                        username='admin',
                                                        password='geoserver')
-                drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer)
+                drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer.strip(), debug=True)
                 if drainage_line_info['success']: 
                     native_bbox = drainage_line_info['result']['native_bbox'][:4]
                     latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
+                    #'geojson': 'http://ciwmap.chpc.utah.edu/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=erfp:nhd_flowlines_12&outputFormat=application/json',
                     kml_urls['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
+                                                 'geojsonp': drainage_line_info['result']['wfs']['geojsonp'],
                                                  'native_bbox': [native_bbox[0],native_bbox[2],native_bbox[1],native_bbox[3]],
                                                  'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                                  'projection': drainage_line_info['result']['projection'],
                                                 }
+                """
                 catchment_info = engine.get_resource(resource_id=watershed.geoserver_catchment_layer)
                 if catchment_info['success']: 
                     native_bbox = catchment_info['result']['native_bbox'][:4]
                     latlon_bbox = catchment_info['result']['latlon_bbox'][:4]
-                    kml_urls['catchment'] = {'name': watershed.geoserver_drainage_line_layer,
+                    kml_urls['catchment'] = {'name': watershed.geoserver_catchment_layer,
                                              'native_bbox': [native_bbox[0],native_bbox[2],native_bbox[1],native_bbox[3]],
                                              'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                              'projection': catchment_info['result']['projection'],
                                             }
-        
+                """                                
                 kml_urls['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
                 layer_info.append(kml_urls)
