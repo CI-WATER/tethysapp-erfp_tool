@@ -19,6 +19,7 @@ var ERFP_MAP = (function() {
     *************************************************************************/
     var public_interface,                // Object returned by the module
        m_map,                    // the main map
+       m_chart,  //highcharts chart
        m_map_extent,           //the extent of all objects in map
        m_select_interaction,
        m_geoserver_drainage_line_layers,
@@ -27,8 +28,12 @@ var ERFP_MAP = (function() {
        m_selected_subbasin,
        m_selected_reach_id,
        m_selected_guess_index,
+       m_selected_usgs_id,
+       m_selected_nws_id,
        m_downloading_hydrograph,
        m_downloading_select,
+       m_downloading_usgs,
+       m_downloading_nws,
        m_chart_data_ajax_handle,
        m_select_data_ajax_handle;
         
@@ -36,9 +41,9 @@ var ERFP_MAP = (function() {
     /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
-    var bindInputs, zoomToAll, zoomToLayer, toTitleCase, updateInfoAlert, 
-        getBaseLayer, clearMessages, clearOldChart, getChartData, 
-        displayHydrograph;
+    var bindInputs, zoomToAll, zoomToLayer, toTitleCase, datePadString,  
+        updateInfoAlert, getBaseLayer, clearMessages, clearOldChart, 
+        getChartData, displayHydrograph;
 
 
     /************************************************************************
@@ -85,7 +90,10 @@ var ERFP_MAP = (function() {
     {
         return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
     };
-
+    //FUNCTION: to convert date to string
+    datePadString = function(i) {
+        return (i < 10) ? "0" + i : "" + i; 
+    }
     //FUNCTION: displays alert to user
     updateInfoAlert = function(css_alert_class, alert_message) {
         $("#erfp-info").removeClass('alert-info');
@@ -145,7 +153,7 @@ var ERFP_MAP = (function() {
         // For some browsers, `attr` is undefined; for others,
         // `attr` is false.  Check for both.
         if (typeof highcharts_attr !== typeof undefined && highcharts_attr !== false) {
-            $('#erfp-chart').highcharts().destroy();
+            $("#erfp-chart").highcharts().destroy();
             $('#erfp-chart').empty();
         }
     };
@@ -157,7 +165,37 @@ var ERFP_MAP = (function() {
         if(!m_downloading_hydrograph && !m_downloading_select) {
             updateInfoAlert('alert-info', "Retrieving Data ...");
             m_downloading_hydrograph = true;
-            //get chart data
+            $('#erfp-select').addClass('hidden');
+            $('#erfp-chart').removeClass('hidden');
+            $("#erfp-chart").highcharts({
+                title: { text: toTitleCase(m_selected_watershed)},
+                subtitle: {text: toTitleCase(m_selected_subbasin) + ": " + m_selected_reach_id},
+                chart: {
+                    zoomType: 'x',
+                },
+                plotOptions: {
+                    series: {
+                        marker: {
+                            enabled: false
+                        }
+                    }
+                },
+                xAxis: {
+                    type: 'datetime',
+                    title: {
+                        text: 'Date'
+                    },
+                    minRange: 1 * 24 * 3600000 // one day
+                },
+                yAxis: {            
+                    title: {
+                        text: 'Flow (cms)'
+                    },
+                    min: 0
+                },
+            });
+
+            //get ecmwf data
             m_chart_data_ajax_handle = jQuery.ajax({
                 type: "GET",
                 url: "get-hydrograph",
@@ -171,45 +209,44 @@ var ERFP_MAP = (function() {
                 },
                 success: function(data) {
                     if("success" in data) {
-
-                        var data_series = [];
+                        var chart = $("#erfp-chart").highcharts();
                         if("max" in data) {
-                            data_series.push({
+                            chart.addSeries({
                                                 name: "Maximum",
                                                 data: data['max'],
                                                 color: '#BE2625',
                                             });
                         }
                         if("mean_plus_std" in data) {
-                            data_series.push({
+                            chart.addSeries({
                                                 name: "Mean Plus Std. Dev.",
                                                 data: data['mean_plus_std'],
                                                 color: '#61B329',
                                             });
                         }                        
                         if("mean" in data) {
-                            data_series.push({
+                            chart.addSeries({
                                                 name: "Mean",
                                                 data: data['mean'],
                                                 color: '#00688B',
                                             });
                         }
                         if("mean_minus_std" in data) {
-                            data_series.push({
+                            chart.addSeries({
                                                 name: "Mean Minus Std. Dev.",
                                                 data: data['mean_minus_std'],
                                                 color: '#61B329',
                                             });
                         }
                         if("min" in data) {
-                            data_series.push({
+                            chart.addSeries({
                                                 name: "Minimum",
                                                 data: data['min'],
                                                 color: '#BE2625',
                                             });
                         }
                         if("high_res" in data) {
-                            data_series.push({
+                            chart.addSeries({
                                                 name: "High Res.",
                                                 data: data['high_res'],
                                                 dashStyle: 'longdash',
@@ -217,51 +254,121 @@ var ERFP_MAP = (function() {
                                             });
                         }
                         if("hrrr_data" in data) {
-                            data_series.push({
+                            chart.addSeries({
                                                 name: "WRF-Hydro",
                                                 data: data['hrrr_data'],
                                                 dashStyle: 'longdash',
                                             });
                         }
-                        $("#erfp-chart").highcharts({
-                            title: { text: toTitleCase(m_selected_watershed)},
-                            subtitle: {text: toTitleCase(m_selected_subbasin) + ": " + m_selected_reach_id},
-                            chart: {zoomType: 'x',},
-                            plotOptions: {
-                                series: {
-                                    marker: {
-                                        enabled: false
-                                    }
-                                }
-                            },
-                            xAxis: {
-                                type: 'datetime',
-                                title: {
-                                    text: 'Date'
-                                },
-                                minRange: 1 * 24 * 3600000 // one day
-                            },
-                            yAxis: {            
-                                title: {
-                                    text: 'Flow (cms)'
-                                },
-                                min: 0
-                            },
-                            series: data_series,
-                        });
                         $('#erfp-select').removeClass('hidden');
-                        clearMessages();
+                         clearMessages();
                     } else {
                         updateInfoAlert('alert-danger', "Error: " + data["error"]);
+                        $('#erfp-chart').addClass('hidden');
                     }
                 },
                 error: function(request, status, error) {
                     updateInfoAlert('alert-danger', "Error: " + error);
+                    $('#erfp-chart').addClass('hidden');
                 },
             })
             .always(function() {
                 m_downloading_hydrograph = false;
             });
+            //get dates
+            var date_now = new Date();
+            var date_now_string = datePadString(date_now.getFullYear()) + "-" +
+                                  datePadString(1 + date_now.getMonth()) + "-" +
+                                  datePadString(date_now.getDate());
+            var date_past = new Date();
+            date_past.setDate(date_now.getDate()-7);
+            var date_past_string = datePadString(date_past.getFullYear()) + "-" +
+                                  datePadString(1 + date_past.getMonth()) + "-" +
+                                  datePadString(date_past.getDate());
+            var date_future = new Date();
+            date_future.setDate(date_now.getDate()+7);
+            var date_future_string = datePadString(date_future.getFullYear()) + "-" +
+                                  datePadString(1 + date_future.getMonth()) + "-" +
+                                  datePadString(date_future.getDate());
+            if(typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) && m_selected_usgs_id.length >= 8) {
+                m_downloading_usgs = true;;
+                //get USGS data
+                var chart_usgs_data_ajax_handle = jQuery.ajax({
+                    type: "GET",
+                    url: "http://waterservices.usgs.gov/nwis/iv/",
+                    dataType: "json",
+                    data: {
+                        format: 'json',
+                        sites: m_selected_usgs_id,
+                        startDT: date_past_string,
+                        endDT:  date_now_string, 
+                        parameterCd: '00060',                    
+                    },
+                    success: function(data) {
+                        if(typeof data != 'undefined') {
+                            var time_series = [];
+                            try {
+                                data.value.timeSeries[0].values[0].value.map(function(data) {
+                                    time_series.push([Date.parse(data.dateTime), parseFloat(data.value)]);
+                                });
+                                var chart = $("#erfp-chart").highcharts();
+                                chart.addSeries({
+                                                name: "USGS",
+                                                data: time_series,
+                                                dashStyle: 'longdash',
+                                            });
+                            } catch (e) {
+                                if (e instanceof TypeError) {
+                                    console.log(data);
+                                } 
+                            }
+                        }
+                    },
+                    error: function(request, status, error) {
+                        updateInfoAlert('alert-danger', "Error: " + error);
+                    },
+                })
+                .always(function() {
+                    m_downloading_usgs = false;
+                });
+            }
+            if(typeof m_selected_nws_id != 'undefined' && !isNaN(m_selected_nws_id)) {
+                m_downloading_nws = true;
+                //get NWS data
+                var chart_nws_data_ajax_handle = jQuery.ajax({
+                    type: "GET",
+                    url: "http://wwokiweb01.cloudapp.net:8080/KiWIS/KiWIS",
+                    dataType: "json",
+                    data: {
+                        service: 'kisters',
+                        type: 'queryServices',
+                        request: 'getTimeseriesValues',
+                        datasource: '0',
+                        format: 'json',
+                        ts_id: m_selected_nws_id,
+                        from: date_now_string,
+                        to:  date_future_string, 
+                    },
+                    success: function(data) {
+                        var time_series = [];
+                        data[0].data.map(function(data) {
+                            time_series.push([Date.parse(data[0]), parseFloat(data[1])]);
+                        });
+                        var chart = $("#erfp-chart").highcharts();
+                        chart.addSeries({
+                                        name: "NWS",
+                                        data: time_series,
+                                        dashStyle: 'longdash',
+                                    });
+                    },
+                    error: function(request, status, error) {
+                        updateInfoAlert('alert-danger', "Error: " + error);
+                    },
+                })
+                .always(function() {
+                    m_downloading_nws = false;
+                });
+            }
         }
         else {
              //updateInfoAlert
@@ -270,7 +377,7 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: displays hydrograph at stream segment
-    displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index) {
+    displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index, usgs_id, nws_id) {
         //remove old chart reguardless
         clearOldChart();
         //check if old ajax call still running
@@ -280,6 +387,8 @@ var ERFP_MAP = (function() {
             m_selected_watershed = watershed;
             m_selected_subbasin = subbasin;
             m_selected_guess_index = guess_index;
+            m_selected_usgs_id = usgs_id;
+            m_selected_nws_id = nws_id;
             $('#erfp-select').addClass('hidden');
             getChartData("most_recent");
             //get the select data
@@ -370,8 +479,12 @@ var ERFP_MAP = (function() {
         m_selected_subbasin = null;
         m_selected_reach_id = null;
         m_selected_guess_index = null;
+        m_selected_usgs_id = null;
+        m_selected_nws_id = null;
         m_downloading_hydrograph = false;
         m_downloading_select = false;
+        m_downloading_usgs = false;
+        m_downloading_nws = false;
         m_chart_data_ajax_handle = null;
         m_select_data_ajax_handle = null;
         m_map_extent = ol.extent.createEmpty();
@@ -418,7 +531,6 @@ var ERFP_MAP = (function() {
                             } else if (map_zoom > 15) {
                                 stream_flow_limit = 0;
                             }
-                            console.log(m_map.getView().getZoom());
                             var url = kml_url['drainage_line']['geojsonp'] + 
                                   '&format_options=callback:loadFeatures' +
                                   '&PROPERTYNAME=the_geom,COMID' +
@@ -548,7 +660,6 @@ var ERFP_MAP = (function() {
                                 }
                         });
                     } else if (vector_layer.get('layer_type') == "geoserver") {
-                        console.log()
                         bindInputs('#'+vector_layer.get('layer_id'), vector_layer);
                         ol.extent.extend(m_map_extent, vector_layer.get('extent'));
                         m_map.getView().fitExtent(m_map_extent, m_map.getSize());
@@ -570,17 +681,29 @@ var ERFP_MAP = (function() {
             var watershed_name = selected_feature.get("watershed_name");
             var subbasin_name = selected_feature.get("subbasin_name");
             var guess_index = selected_feature.get("guess_index");
-            if(typeof reach_id == 'undefined') {
+            var usgs_id = selected_feature.get("usgs_id");
+            var nws_id = selected_feature.get("nws_id");
+            
+            if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
                 var reach_id = selected_feature.get('COMID');
+            }
+
+            if(typeof watershed_name == 'undefined') {
                 var watershed_name = "huc region 12";
                 var subbasin_name = "region 12";
-                var guess_index = null;
             }
-            console.log(reach_id);
-            displayHydrograph(selected_feature, reach_id,
+
+            if(typeof usgs_id != 'undefined' && !isNaN(usgs_id) && usgs_id.length < 8) {
+                usgs_id = '0' + usgs_id;
+            }
+
+            displayHydrograph(selected_feature, 
+                            reach_id,
                             watershed_name,
                             subbasin_name, 
-                            guess_index); 
+                            guess_index,
+                            usgs_id,
+                            nws_id); 
           }
         });
 
