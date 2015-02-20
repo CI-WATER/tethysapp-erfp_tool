@@ -123,7 +123,7 @@ def map(request):
                 engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
                                                        username='admin',
                                                        password='geoserver')
-                drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer.strip(), debug=True)
+                drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer.strip())
                 if drainage_line_info['success']: 
                     native_bbox = drainage_line_info['result']['native_bbox'][:4]
                     latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
@@ -134,8 +134,7 @@ def map(request):
                                                  'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                                  'projection': drainage_line_info['result']['projection'],
                                                 }
-                """
-                catchment_info = engine.get_resource(resource_id=watershed.geoserver_catchment_layer)
+                catchment_info = engine.get_resource(resource_id=watershed.geoserver_catchment_layer.strip())
                 if catchment_info['success']: 
                     native_bbox = catchment_info['result']['native_bbox'][:4]
                     latlon_bbox = catchment_info['result']['latlon_bbox'][:4]
@@ -144,7 +143,6 @@ def map(request):
                                              'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                              'projection': catchment_info['result']['projection'],
                                             }
-                """                                
                 kml_urls['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
                 layer_info.append(kml_urls)
