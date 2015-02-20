@@ -309,7 +309,7 @@ var ERFP_MAP = (function() {
                             var time_series = [];
                             try {
                                 data.value.timeSeries[0].values[0].value.map(function(data) {
-                                    time_series.push([Date.parse(data.dateTime), parseFloat(data.value)]);
+                                    time_series.push([Date.parse(data.dateTime), 0.0283168*parseFloat(data.value)]);
                                 });
                                 var chart = $("#erfp-chart").highcharts();
                                 chart.addSeries({
@@ -352,7 +352,7 @@ var ERFP_MAP = (function() {
                     success: function(data) {
                         var time_series = [];
                         data[0].data.map(function(data) {
-                            time_series.push([Date.parse(data[0]), parseFloat(data[1])]);
+                            time_series.push([Date.parse(data[0]), 0.0283168*parseFloat(data[1])]);
                         });
                         var chart = $("#erfp-chart").highcharts();
                         chart.addSeries({
