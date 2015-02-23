@@ -494,24 +494,24 @@ var ERFP_MAP = (function() {
         var basemap_layer = getBaseLayer(base_layer_info.name,base_layer_info.api_key);
         
         //load drainage line kml layers
-        var kml_info = JSON.parse($("#map").attr('layer-info'));
+        var layers_info = JSON.parse($("#map").attr('layer-info'));
         var all_group_layers = [];
         var drainage_line_layers = [];
         //add each watershed kml group
-        kml_info.forEach(function(kml_url, group_index) {
+        layers_info.forEach(function(layer_info, group_index) {
             var layers = [];
-            if('geoserver_url' in kml_url) {
+            if('geoserver_url' in layer_info) {
                 //add catchment if exists
-                if('catchment' in kml_url) {
+                if('catchment' in layer_info) {
                     var catchment = new ol.layer.Tile({
                         source: new ol.source.TileWMS({
-                            url: kml_url['geoserver_url'],
-                            params: {'LAYERS': kml_url['catchment']['name'], 
+                            url: layer_info['geoserver_url'],
+                            params: {'LAYERS': layer_info['catchment']['name'], 
                                      'TILED': true},
                             serverType: 'geoserver',
                         }),
                     });
-                    catchment.set('extent', ol.proj.transformExtent(kml_url['catchment']['latlon_bbox'].map(Number), 
+                    catchment.set('extent', ol.proj.transformExtent(layer_info['catchment']['latlon_bbox'].map(Number), 
                                                             'EPSG:4326',
                                                             'EPSG:3857'));
                     catchment.set('layer_id', 'layer' + group_index + 1);
@@ -520,69 +520,105 @@ var ERFP_MAP = (function() {
                 }
                 
                 //add drainage line if exists
-                if('drainage_line' in kml_url) {
-                    var drainage_line_vector_source = new ol.source.ServerVector({
-                        format: new ol.format.GeoJSON(),
-                        loader: function(extent, resolution, projection) {
-                            var stream_flow_limit = 100;
-                            var map_zoom = m_map.getView().getZoom();
-                            if (map_zoom > 10) {
-                                stream_flow_limit = 20;
-                            } else if (map_zoom > 15) {
-                                stream_flow_limit = 0;
-                            }
-                            var url = kml_url['drainage_line']['geojsonp'] + 
-                                  '&format_options=callback:loadFeatures' +
-                                  '&PROPERTYNAME=the_geom,COMID' +
-                                  '&CQL_FILTER=Natur_Flow > ' + stream_flow_limit +
-                                  ' AND bbox(the_geom,' + extent.join(',') + 
-                                  ',\'EPSG:3857\')' +
-                                  '&srsname=EPSG:3857';
-                            jQuery.ajax({
-                                url: encodeURI(url),
-                                dataType: 'jsonp',
-                                jsonpCallback: 'loadFeatures',
-                                success: function(response) {
-                                    drainage_line_vector_source.addFeatures(drainage_line_vector_source.readFeatures(response));
-                                },
+                if('drainage_line' in layer_info) {
+                    //check if required parameters exist
+                    if(layer_info['drainage_line']['missing_attributes'].length > 0) {
+                        updateInfoAlert('alert-danger', 'The drainage line layer for ' + 
+                                                          layer_info['watershed'] + '(' +
+                                                          layer_info['subbasin'] + ') ' +
+                                                          'is missing required attributes.');
+                    } else {
+                        //check layer capabilites
+                        if(layer_info['drainage_line']['geoserver_method'] == "natur_flow_query") {
+                            var drainage_line_vector_source = new ol.source.ServerVector({
+                                format: new ol.format.GeoJSON(),
+                                loader: function(extent, resolution, projection) {
+                                    var stream_flow_limit = 100;
+                                    var map_zoom = m_map.getView().getZoom();
+                                    if (map_zoom > 10) {
+                                        stream_flow_limit = 20;
+                                    } else if (map_zoom > 15) {
+                                        stream_flow_limit = 0;
+                                    }
+                                    var url = layer_info['drainage_line']['geojsonp'] + 
+                                          '&format_options=callback:loadFeatures' +
+                                          '&PROPERTYNAME=the_geom,' +
+                                          layer_info['drainage_line']['necessary_attributes'].join() +
+                                          '&CQL_FILTER=Natur_Flow > ' + stream_flow_limit +
+                                          ' AND bbox(the_geom,' + extent.join(',') + 
+                                          ',\'EPSG:3857\')' +
+                                          '&srsname=EPSG:3857';
+                                    jQuery.ajax({
+                                        url: encodeURI(url),
+                                        dataType: 'jsonp',
+                                        jsonpCallback: 'loadFeatures',
+                                        success: function(response) {
+                                            drainage_line_vector_source.addFeatures(drainage_line_vector_source.readFeatures(response));
+                                        },
+                                    });
+                                  },
+                                  strategy: function(extent, resolution) {
+                                      var zoom_range = 1;
+                                      var map_zoom = m_map.getView().getZoom();
+                                      if (map_zoom > 10) {
+                                          zoom_range = 2;
+                                      } else if (map_zoom > 15) {
+                                          zoom_range = 3;
+                                      }
+                                      if(zoom_range != this.zoom_range && typeof this.zoom_range != 'undefined') {
+                                          this.clear();  
+                                      }
+                                      this.zoom_range = zoom_range;
+                                      return [extent];
+                                  },
+                                  projection: 'EPSG:3857'
                             });
-                          },
-                          strategy: function(extent, resolution) {
-                              var zoom_range = 1;
-                              var map_zoom = m_map.getView().getZoom();
-                              if (map_zoom > 10) {
-                                  zoom_range = 2;
-                              } else if (map_zoom > 15) {
-                                  zoom_range = 3;
-                              }
-                              if(zoom_range != this.zoom_range && typeof this.zoom_range != 'undefined') {
-                                  this.clear();  
-                              }
-                              this.zoom_range = zoom_range;
-                              return [extent];
-                          },
-                          projection: 'EPSG:3857'
-                    });
-                    var drainage_line = new ol.layer.Vector({
-                        source: drainage_line_vector_source,
-                    });
-                    drainage_line.set('watershed_name', kml_url['watershed']);
-                    drainage_line.set('subbasin_name', kml_url['subbasin']);
-                    drainage_line.set('extent', ol.proj.transformExtent(kml_url['drainage_line']['latlon_bbox'].map(Number), 
-                                                            'EPSG:4326',
-                                                            'EPSG:3857'));
-                    drainage_line.set('layer_id', 'layer' + group_index + 0);
-                    drainage_line.set('layer_type', 'geoserver');
-                    drainage_line_layers.push(drainage_line);
-                    layers.push(drainage_line);
+                        } else { //layer_info['drainage_line']['geoserver_method'] == "simple"
+                            var drainage_line_vector_source = new ol.source.ServerVector({
+                                format: new ol.format.GeoJSON(),
+                                loader: function(extent, resolution, projection) {
+                                    var url = layer_info['drainage_line']['geojsonp'] + 
+                                          '&format_options=callback:loadFeatures' +
+                                          '&PROPERTYNAME=the_geom,' +
+                                          layer_info['drainage_line']['necessary_attributes'].join() +
+                                          '&BBOX=' + extent.join(',') + 
+                                          ',EPSG:3857' +
+                                          '&srsname=EPSG:3857';
+                                    jQuery.ajax({
+                                        url: encodeURI(url),
+                                        dataType: 'jsonp',
+                                        jsonpCallback: 'loadFeatures',
+                                        success: function(response) {
+                                            drainage_line_vector_source.addFeatures(drainage_line_vector_source.readFeatures(response));
+                                        },
+                                    });
+                                  },
+                                  strategy: ol.loadingstrategy.bbox,
+                                  projection: 'EPSG:3857'
+                            });
+                            
+                        }
+                        var drainage_line = new ol.layer.Vector({
+                            source: drainage_line_vector_source,
+                        });
+                        drainage_line.set('watershed_name', layer_info['watershed']);
+                        drainage_line.set('subbasin_name', layer_info['subbasin']);
+                        drainage_line.set('extent', ol.proj.transformExtent(layer_info['drainage_line']['latlon_bbox'].map(Number), 
+                                                                'EPSG:4326',
+                                                                'EPSG:3857'));
+                        drainage_line.set('layer_id', 'layer' + group_index + 0);
+                        drainage_line.set('layer_type', 'geoserver');
+                        drainage_line_layers.push(drainage_line);
+                        layers.push(drainage_line);
+                    }
                 }
             } else {                
                 //add catchment if exists
-                if('catchment' in kml_url) {
+                if('catchment' in layer_info) {
                     var catchment = new ol.layer.Vector({
                         source: new ol.source.KML({
                             projection: new ol.proj.get('EPSG:3857'),
-                            url: kml_url['catchment'],
+                            url: layer_info['catchment'],
                         }),
                     });
                     catchment.set('layer_id', 'layer' + group_index + 1);
@@ -591,11 +627,11 @@ var ERFP_MAP = (function() {
                 }
                 
                 //add drainage line if exists
-                if('drainage_line' in kml_url) {
+                if('drainage_line' in layer_info) {
                     var drainage_line = new ol.layer.Vector({
                         source: new ol.source.KML({
                             projection: new ol.proj.get('EPSG:3857'),
-                            url: kml_url['drainage_line'],
+                            url: layer_info['drainage_line'],
                         }),
                     });
                     drainage_line.set('layer_id', 'layer' + group_index + 0);
@@ -613,7 +649,7 @@ var ERFP_MAP = (function() {
 
         //send message to user if Drainage Line KML file not found
         if (drainage_line_layers.length <= 0) {
-            updateInfoAlert('alert-warning', 'No Drainage Line files found. Please upload to begin.');
+            updateInfoAlert('alert-danger', 'No valid drainage line layers found. Please upload to begin.');
         }
 
         //make drainage line layers selectable
@@ -675,35 +711,40 @@ var ERFP_MAP = (function() {
           if (e.target.getArray().length === 0) {
             // this means it's changed to no features selected
           } else {
-           // this means there is at least 1 feature selected
+            // this means there is at least 1 feature selected
             var selected_feature = e.target.item(0); // 1st feature in Collection
-            var reach_id = selected_feature.get('name');
+
+            //get attributes
+            var reach_id = selected_feature.get('COMID'); 
             var watershed_name = selected_feature.get("watershed_name");
             var subbasin_name = selected_feature.get("subbasin_name");
             var guess_index = selected_feature.get("guess_index");
             var usgs_id = selected_feature.get("usgs_id");
             var nws_id = selected_feature.get("nws_id");
             
+            //in case the reach_id is in a differen location
             if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
-                var reach_id = selected_feature.get('COMID');
-            }
-
-            if(typeof watershed_name == 'undefined') {
-                var watershed_name = "huc region 12";
-                var subbasin_name = "region 12";
+                var reach_id = selected_feature.get('name');
             }
 
             if(typeof usgs_id != 'undefined' && !isNaN(usgs_id) && usgs_id.length < 8) {
                 usgs_id = '0' + usgs_id;
             }
-
-            displayHydrograph(selected_feature, 
-                            reach_id,
-                            watershed_name,
-                            subbasin_name, 
-                            guess_index,
-                            usgs_id,
-                            nws_id); 
+            if(typeof reach_id != 'undefined' &&  
+               typeof watershed_name != 'undefined' &&
+               typeof subbasin_name != 'undefined')
+            {
+                displayHydrograph(selected_feature, 
+                                reach_id,
+                                watershed_name,
+                                subbasin_name, 
+                                guess_index,
+                                usgs_id,
+                                nws_id); 
+            }
+            else {
+                updateInfoAlert('alert-warning', 'The attributes in the file are faulty. Please fix and upload again.');
+            }
           }
         });
 

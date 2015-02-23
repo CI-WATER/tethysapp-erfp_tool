@@ -123,15 +123,31 @@ def map(request):
                 engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
                                                        username='admin',
                                                        password='geoserver')
-                drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer.strip(), debug=True)
-                if drainage_line_info['success']: 
+                #load drainage line layer if exists
+                drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer.strip())
+                if drainage_line_info['success']:
+                    #check layers attributes to see if valid
+                    layer_attributes = drainage_line_info['result']['attributes']
+                    necessary_attributes = ['watershed_name', 'subbasin_name', 'COMID']
+                    missing_attributes = []
+                    for necessary_attribute in necessary_attributes:
+                        if necessary_attribute not in layer_attributes:
+                            missing_attributes.append(necessary_attribute)
                     latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
-                    #'geojson': 'http://ciwmap.chpc.utah.edu/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=erfp:nhd_flowlines_12&outputFormat=application/json',
                     kml_urls['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
                                                  'geojsonp': drainage_line_info['result']['wfs']['geojsonp'],
                                                  'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                                  'projection': drainage_line_info['result']['projection'],
+                                                 'necessary_attributes': necessary_attributes,
+                                                 'missing_attributes': missing_attributes,
                                                 }
+                    #check if needed attribute is there to perfrom query based rendering of layer
+                    if 'Natur_Flow' not in layer_attributes:
+                        kml_urls['drainage_line']['geoserver_method'] = "simple"
+                    else:
+                        kml_urls['drainage_line']['geoserver_method'] = "natur_flow_query"
+
+                #load catchment layer if exists
                 catchment_info = engine.get_resource(resource_id=watershed.geoserver_catchment_layer.strip())
                 if catchment_info['success']: 
                     latlon_bbox = catchment_info['result']['latlon_bbox'][:4]
