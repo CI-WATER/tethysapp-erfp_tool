@@ -82,7 +82,6 @@ def format_name(string):
             formatted_string = formatted_string[1:]
     else:
         formatted_string = ""
-    print "%s %s" % (string, formatted_string)
     return formatted_string
 
 def format_watershed_title(watershed, subbasin):
