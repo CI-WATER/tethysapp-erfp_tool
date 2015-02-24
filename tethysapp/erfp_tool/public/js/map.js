@@ -533,10 +533,10 @@ var ERFP_MAP = (function() {
                             var drainage_line_vector_source = new ol.source.ServerVector({
                                 format: new ol.format.GeoJSON(),
                                 loader: function(extent, resolution, projection) {
-                                    var stream_flow_limit = 100;
+                                    var stream_flow_limit = 300;
                                     var map_zoom = m_map.getView().getZoom();
                                     if (map_zoom > 10) {
-                                        stream_flow_limit = 20;
+                                        stream_flow_limit = 40;
                                     } else if (map_zoom > 15) {
                                         stream_flow_limit = 0;
                                     }

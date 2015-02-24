@@ -3,22 +3,22 @@ from glob import glob
 import netCDF4 as NET
 import numpy as np
 import os
-from re import sub
+import re
 from shutil import rmtree
 
-def delete_old_watershed_prediction_files(watershed_name, local_prediction_files_location):
+def delete_old_watershed_prediction_files(folder_name, local_prediction_files_location):
     """
     Removes old watershed prediction files from system
     """
     try:
         rmtree(os.path.join(local_prediction_files_location,
-                                           watershed_name))
+                                           folder_name))
     except OSError:
         pass
 
-def delete_old_watershed_files(watershed, local_prediction_files_location):
+def delete_old_watershed_kml_files(watershed):
     """
-    Removes old watershed files from system
+    Removes old watershed kml files from system
     """
     old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          'public','kml',watershed.folder_name)
@@ -31,6 +31,13 @@ def delete_old_watershed_files(watershed, local_prediction_files_location):
         os.rmdir(old_kml_file_location)
     except OSError:
         pass
+
+def delete_old_watershed_files(watershed, local_prediction_files_location):
+    """
+    Removes old watershed files from system
+    """
+    #remove old kml files
+    delete_old_watershed_kml_files(watershed)
     #remove old prediction files
     delete_old_watershed_prediction_files(watershed.folder_name, 
                                           local_prediction_files_location)
@@ -68,9 +75,14 @@ def format_name(string):
     """
     Formats watershed name for code
     """
-    formatted_string = string.strip().replace(" ", "_").lower()
-    formatted_string = sub('[!@#$./?:;#%*^&()><,-]', '', formatted_string)
-    formatted_string = formatted_string.replace("\"","").replace("\'","").replace("\\","")
+    if string:
+        formatted_string = string.strip().replace(" ", "_").lower()
+        formatted_string = re.sub('[^a-zA-Z0-9_-]', '', formatted_string)
+        while formatted_string.startswith("-") or formatted_string.startswith("_"):
+            formatted_string = formatted_string[1:]
+    else:
+        formatted_string = ""
+    print "%s %s" % (string, formatted_string)
     return formatted_string
 
 def format_watershed_title(watershed, subbasin):

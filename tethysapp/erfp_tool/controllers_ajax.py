@@ -18,7 +18,8 @@ from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
 
 from .functions import (delete_old_watershed_prediction_files,
-                        delete_old_watershed_files, find_most_current_files, 
+                        delete_old_watershed_files, 
+                        delete_old_watershed_kml_files, find_most_current_files, 
                         format_name, get_cron_command, get_reach_index, 
                         handle_uploaded_file, user_permission_test)
                         
@@ -560,7 +561,7 @@ def watershed_update(request):
                 pass
 
             #if the name of watershed or subbasin is changed, update file name/location
-            if(watershed_name != watershed.watershed_name or subbasin_name != watershed.subbasin_name):
+            if(folder_name != watershed.folder_name or file_name != watershed.file_name):
                 #move drainage line kml
                 old_geoserver_drainage_line_layer = format_name(watershed.subbasin_name) + "-drainage_line.kml"
                 move(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer),
@@ -575,7 +576,7 @@ def watershed_update(request):
                 except OSError:
                     pass
                 #remove local prediction files
-                delete_old_watershed_prediction_files(watershed.watershed_name, 
+                delete_old_watershed_prediction_files(watershed.folder_name, 
                                                       main_settings.local_prediction_files)
             #upload new files if they exist
             if('drainage_line_kml_file' in request.FILES):
@@ -590,9 +591,12 @@ def watershed_update(request):
                 except OSError:
                     pass
                 handle_uploaded_file(request.FILES.get('catchment_kml_file'),new_kml_file_location, geoserver_catchment_layer)
-        else:
+        elif(folder_name != watershed.folder_name or file_name != watershed.file_name):
             #remove old files if not on local server
             delete_old_watershed_files(watershed, main_settings.local_prediction_files)
+        else:
+             #remove old kml files           
+            delete_old_watershed_kml_files(watershed)
             
         #change watershed attributes
         watershed.watershed_name = watershed_name.strip()
