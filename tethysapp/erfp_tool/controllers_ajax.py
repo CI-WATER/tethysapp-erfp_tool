@@ -8,10 +8,14 @@ import os
 from shutil import move
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import ObjectDeletedError
 from django.http import JsonResponse
 
 #django imports
 from django.contrib.auth.decorators import user_passes_test
+
+#tethys imports
+from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 
 #local imports
 from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
@@ -439,39 +443,90 @@ def watershed_add(request):
         geoserver_id = post_info.get('geoserver_id')
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
+        
+        #CHECK DATA
+        #make sure information exists 
         if not watershed_name or not subbasin_name or not data_store_id \
             or not geoserver_drainage_line_layer \
             or not geoserver_catchment_layer \
             or not folder_name or not file_name:
-            return JsonResponse({'error' : 'AJAX request input faulty'})
-        if(int(geoserver_id) == 1):
-            if 'drainage_line_kml_file' in request.FILES and 'catchment_kml_file' in request.FILES:
-                kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                                 'public','kml',folder_name)
-                geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
-                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),
-                                     kml_file_location, geoserver_drainage_line_layer)
-                geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
-                handle_uploaded_file(request.FILES.get('catchment_kml_file'),kml_file_location, 
-                                     geoserver_catchment_layer)
-            else:
-                return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
+            return JsonResponse({'error' : 'Request input missing data.'})
+        #make sure ids are ids
+        try:
+            int(data_store_id)
+            int(geoserver_id)
+        except ValueError:
+            return JsonResponse({'error' : 'One or more ids are faulty.'})
+      
         #initialize session
         session = SettingsSessionMaker()
-        
         #check to see if duplicate exists
         num_similar_watersheds  = session.query(Watershed) \
             .filter(Watershed.folder_name == folder_name) \
             .filter(Watershed.file_name == file_name) \
             .count()
         if(num_similar_watersheds > 0):
+            session.close()
             return JsonResponse({ 'error': "A watershed with the same name exists." })
-            
-        #add Data Store
-        session.add(Watershed(watershed_name, subbasin_name, folder_name, 
+
+        #COMMIT
+        #add watershed
+        watershed = Watershed(watershed_name, subbasin_name, folder_name, 
                               file_name, data_store_id, geoserver_id, 
                               geoserver_drainage_line_layer,
-                              geoserver_catchment_layer))
+                              geoserver_catchment_layer)
+        session.add(watershed)
+        #upload files
+        if(int(geoserver_id) == 1):
+            #LOCAL
+            if 'drainage_line_kml_file' in request.FILES and 'catchment_kml_file' in request.FILES:
+                kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                 'public','kml',folder_name)
+                geoserver_drainage_line_layer = "%s-drainage_line.kml" % file_name
+                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),
+                                     kml_file_location, geoserver_drainage_line_layer)
+                geoserver_catchment_layer = "%s-catchment.kml" % file_name
+                handle_uploaded_file(request.FILES.get('catchment_kml_file'),kml_file_location, 
+                                     geoserver_catchment_layer)
+            else:
+                session.close()
+                return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
+        """
+        else:
+            #GEOSERVER
+            engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
+                                       username='admin',
+                                       password='geoserver')
+            
+            # Create Workspaces
+            resource_workspace = 'erfp'
+            engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+    
+            # Create Test Stores/Resources/Layers
+            ## Shapefile
+            for layer_file in request.FILES:
+                #check layer type
+                layer_type = ""
+                if "drainage_line" in layer_file.name:
+                    layer_type = "drainage_line"
+                elif "catchment" in layer_file.name:
+                    layer_type = "catchment"
+                elif "gauge" in layer_file.name:
+                    layer_type = "gauge"
+                #upload if valid layer type
+                if layer_type:    
+                    # Resource and Layer will take the name of the file
+                    resource_name = "%s-%s-%s" % (folder_name, file_name, layer_type)
+            
+                    # Identifiers of the form 'workspace:item'
+                    resource_identifier = '{0}:{1}'.format(resource_workspace, resource_name)
+            
+                    # Do create shapefile
+                    engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
+                                                          overwrite=True)
+        """
+
+            
         session.commit()
         session.close()
 
@@ -515,7 +570,7 @@ def watershed_update(request):
     """
     if request.is_ajax() and request.method == 'POST':
         post_info = request.POST
-        #get/check information from AJAX request
+        #get information from AJAX request
         watershed_id = post_info.get('watershed_id')
         watershed_name = post_info.get('watershed_name')
         subbasin_name = post_info.get('subbasin_name')
@@ -525,12 +580,23 @@ def watershed_update(request):
         geoserver_id = post_info.get('geoserver_id')
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
-
+        
+        #CHECK INPUT
+        #check if variables exist
         if not watershed_id or not watershed_name or not subbasin_name or not data_store_id \
             or not geoserver_id or not geoserver_drainage_line_layer \
-            or not geoserver_catchment_layer or not folder_name:
-            return JsonResponse({'error' : 'AJAX request input faulty'})
-
+            or not geoserver_catchment_layer \
+            or not folder_name or not file_name:
+            return JsonResponse({'error' : 'Request input missing data.'})
+        #make sure ids are ids
+        try:
+            int(watershed_id)
+            int(data_store_id)
+            int(geoserver_id)
+        except ValueError:
+            return JsonResponse({'error' : 'One or more ids are faulty.'})
+            
+        #COMMIT    
         #initialize session
         session = SettingsSessionMaker()
         #check to see if duplicate exists
@@ -542,8 +608,13 @@ def watershed_update(request):
         if(num_similar_watersheds > 0):
             return JsonResponse({ 'error': "A watershed with the same name exists." })
         
+        #COMMIT
         #get desired watershed
-        watershed  = session.query(Watershed).get(watershed_id)
+        try:
+            watershed  = session.query(Watershed).get(watershed_id)
+        except ObjectDeletedError:
+            return JsonResponse({ 'error': "The watershed to update does not exist." })
+            
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
 
         #upload files to local server if ready

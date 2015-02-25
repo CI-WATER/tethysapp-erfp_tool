@@ -27,7 +27,7 @@ class ERFPDatasetManager():
         returns their attributes
         """
         all_info = []
-        basin_name_search = re.compile('Qout_(.+?)_[a-zA-Z\d]+.nc')
+        basin_name_search = re.compile(r'Qout_(.+?)_[a-zA-Z\d]+.nc')
         basin_files = glob(os.path.join(source_dir,'Qout_*.nc'))
         base_path = os.path.dirname(source_dir)
         base_name = os.path.basename(source_dir)

@@ -77,7 +77,7 @@ def format_name(string):
     """
     if string:
         formatted_string = string.strip().replace(" ", "_").lower()
-        formatted_string = re.sub('[^a-zA-Z0-9_-]', '', formatted_string)
+        formatted_string = re.sub(r'[^a-zA-Z0-9_-]', '', formatted_string)
         while formatted_string.startswith("-") or formatted_string.startswith("_"):
             formatted_string = formatted_string[1:]
     else:
@@ -163,7 +163,7 @@ def get_subbasin_list(file_path):
    
 def handle_uploaded_file(f, file_path, file_name):
     """
-    Uploads file to specifies path
+    Uploads file to specified path
     """
     if not os.path.exists(file_path):
         os.mkdir(file_path)

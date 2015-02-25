@@ -128,18 +128,28 @@ def map(request):
                 if drainage_line_info['success']:
                     #check layers attributes to see if valid
                     layer_attributes = drainage_line_info['result']['attributes']
-                    necessary_attributes = ['watershed_name', 'subbasin_name', 'COMID']
+                    optional_attributes = ['usgs_id', 'nws_id']
                     missing_attributes = []
+                    contained_attributes = []
+                    #check required attributes
+                    necessary_attributes = ['watershed_name', 'subbasin_name', 'COMID']
                     for necessary_attribute in necessary_attributes:
                         if necessary_attribute not in layer_attributes:
                             missing_attributes.append(necessary_attribute)
+                        else:
+                            contained_attributes.append(necessary_attribute)
+                    #check optional attributes
+                    for optional_attribute in optional_attributes:
+                        if optional_attribute in layer_attributes:
+                            contained_attributes.append(optional_attribute)
+                        
                     latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
                     kml_urls['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
                                                  'geojsonp': drainage_line_info['result']['wfs']['geojsonp'],
                                                  'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                                  'projection': drainage_line_info['result']['projection'],
-                                                 'necessary_attributes': necessary_attributes,
-                                                 'missing_attributes': missing_attributes,
+                                                 'contained_attributes': ",".join(contained_attributes),
+                                                 'missing_attributes': ", ".join(missing_attributes),
                                                 }
                     #check if needed attribute is there to perfrom query based rendering of layer
                     if 'Natur_Flow' not in layer_attributes:
