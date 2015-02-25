@@ -17,8 +17,8 @@
     {% gizmo select_input data_store_select %}
     <p class="help-block">Don't see the data store you want? Add one <a href="{% url 'erfp_tool:add-data-store' %}">here</a>.</p>
 
-    <h3>KML Geoserver Location</h3> 
-    <em>Where the reach and catchbasin KML files are stored.</em><br/><br/>
+    <h3>Geoserver Location</h3> 
+    <em>Where the reach and catchbasin files are stored.</em><br/><br/>
     {% gizmo select_input geoserver_select %}
     <p class="help-block">Don't see the geoserver you want? Add one <a href="{% url 'erfp_tool:add-geoserver' %}">here</a>.</p>
     {% gizmo toggle_switch shp_upload_toggle_switch %}
@@ -32,7 +32,7 @@
     <p class="help-block kml">This is the KML file representing the river network.</p>
     <div class="form-group shapefile upload hidden">
         <label class="control-label" for="drainage-line-shp-upload-input">Drainage Line Shapefile</label>
-        <input id="drainage-line-shp-upload-input" name="drainage-line-shp-upload-input" type="file" accept=".shp|.shx|.prj|.dbf">
+        <input id="drainage-line-shp-upload-input" name="drainage-line-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
         <p class="help-block hidden">Must select file to submit!</p>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the river network. Need .shp, .shx, .prj, .dbf files.</p>
@@ -45,7 +45,7 @@
     <p class="help-block kml">This is the KML file representing the watershed basin.</p>
     <div class="form-group shapefile upload hidden">
         <label class="control-label" for="catchment-shp-upload-input">Catchment Shapefile</label>
-        <input id="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp|.shx|.prj|.dbf">
+        <input id="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the watershed basin. Need .shp, .shx, .prj, .dbf files.</p>
     <!-- Gauge Stations !-->
@@ -57,7 +57,7 @@
     <p class="help-block kml">This is the KML file representing the gauge stations.</p>
     <div class="form-group shapefile upload hidden">
         <label class="control-label" for="gauge-shp-upload-input">Gauge Shapefile</label>
-        <input id="gauge-shp-upload-input" name="gauge-shp-upload-input" type="file" accept=".shp|.shx|.prj|.dbf">
+        <input id="gauge-shp-upload-input" name="gauge-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the gauge stations. Need .shp, .shx, .prj, .dbf files.</p>
 {% gizmo button_group add_button %}

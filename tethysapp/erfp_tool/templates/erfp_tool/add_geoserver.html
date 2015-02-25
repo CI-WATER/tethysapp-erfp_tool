@@ -11,6 +11,15 @@
     <em>Where the reach and catchbasin KML files are stored.</em><br/><br/>
     {% gizmo text_input geoserver_name_input %}
     {% gizmo text_input geoserver_url_input %}
+    {% gizmo text_input geoserver_username_input %}
+    <div class="form-group">
+        <label class="control-label" for="geoserver-password-input">Geoserver Password</label>
+        <div class="input-group">
+            <input id="geoserver-password-input" class="form-control" name="geoserver-password-input" type="password" placeholder="e.g.: geoserver">
+            <div class="input-group-addon"><span class="glyphicon glyphicon-lock"></span></div>
+        </div>
+        <p class="help-block hidden">No geoserver password specified.</p>
+    </div>
     {% gizmo button_group add_button %}
 {% endblock %}
 

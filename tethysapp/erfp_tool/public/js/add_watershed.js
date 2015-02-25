@@ -51,9 +51,9 @@ jQuery(function() {
             geoserver_gauge_layer = $('#geoserver-gauge-input').val(); //optional
         } else {
             //geoserver upload
-            drainage_line_shp_file = $('#drainage-line-shp-upload-input')[0].files);
-            catchment_shp_file = $('#catchment-shp-upload-input')[0].files);
-            gauge_shp_file = $('#gauge-shp-upload-input')[0].files);
+            drainage_line_shp_files = $('#drainage-line-shp-upload-input')[0].files;
+            catchment_shp_files = $('#catchment-shp-upload-input')[0].files;
+            gauge_shp_files = $('#gauge-shp-upload-input')[0].files;
         }
         
         //submit if the form is ready
@@ -77,9 +77,15 @@ jQuery(function() {
                 data.append("drainage_line_kml_file",drainage_line_kml_file);
                 data.append("catchment_kml_file",catchment_kml_file);
                 data.append("gauge_kml_file",gauge_kml_file);
-                data.append("drainage_line_shp_file",drainage_line_shp_file);
-                data.append("catchment_shp_file",catchment_shp_file);
-                data.append("gauge_shp_file",gauge_shp_file);
+                for(var i = 0; i < drainage_line_shp_files.length; i++) {
+                    data.append("drainage_line_shp_file",drainage_line_shp_files[i]);
+                }
+                for(var i = 0; i < catchment_shp_files.length; i++) {
+                    data.append("catchment_shp_file",catchment_shp_files[i]);
+                }
+                for(var i = 0; i < gauge_shp_files.length; i++) {
+                    data.append("gauge_shp_file",gauge_shp_files[i]);
+                }
                 var xhr = ajax_update_database_with_file("submit",data);
             } else {
                 var data = {
@@ -110,6 +116,8 @@ jQuery(function() {
                     $('#drainage-line-shp-upload-input').val('');
                     $('#catchment-shp-upload-input').val('');
                     $('#gauge-shp-upload-input').val('');
+                    $('.kml').removeClass('hidden');
+                    $('.shapefile').addClass('hidden');
                 }
             })
             .always(function() {

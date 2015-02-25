@@ -21,7 +21,8 @@ from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
 
-from .functions import (delete_old_watershed_prediction_files,
+from .functions import (check_shapefile_input_files,
+                        delete_old_watershed_prediction_files,
                         delete_old_watershed_files, 
                         delete_old_watershed_kml_files, find_most_current_files, 
                         format_name, get_cron_command, get_reach_index, 
@@ -126,6 +127,8 @@ def geoserver_add(request):
         post_info = request.POST
         geoserver_name = post_info.get('geoserver_name')
         geoserver_url = post_info.get('geoserver_url')
+        geoserver_username = post_info.get('geoserver_username')
+        geoserver_password = post_info.get('geoserver_password')
     
         #initialize session
         session = SettingsSessionMaker()
@@ -143,7 +146,7 @@ def geoserver_add(request):
             return JsonResponse({ 'error': "A geoserver with the same name or url exists." })
             
         #add Data Store
-        session.add(Geoserver(geoserver_name, geoserver_url))
+        session.add(Geoserver(geoserver_name, geoserver_url, geoserver_username, geoserver_password))
         session.commit()
         session.close()
         return JsonResponse({ 'success': "Geoserver Sucessfully Added!" })
@@ -447,9 +450,9 @@ def watershed_add(request):
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
         geoserver_gauge_layer = post_info.get('geoserver_gauge_layer')
         #shape files
-        drainage_line_shp_file = request.FILES.get('drainage_line_shp_file')
-        catchment_shp_file = request.FILES.get('catchment_shp_file')
-        gauge_shp_file = request.FILES.get('gauge_shp_file')
+        drainage_line_shp_file = request.FILES.getlist('drainage_line_shp_file')
+        catchment_shp_file = request.FILES.getlist('catchment_shp_file')
+        gauge_shp_file = request.FILES.getlist('gauge_shp_file')
         #kml files
         drainage_line_kml_file = request.FILES.get('drainage_line_kml_file')
         catchment_kml_file = request.FILES.get('catchment_kml_file')
@@ -471,9 +474,24 @@ def watershed_add(request):
             if not drainage_line_kml_file:
                 return JsonResponse({'error' : 'Missing drainage line KML file.'})
         else:
-            if not (drainage_line_shp_file or geoserver_drainage_line_layer):
+            if not drainage_line_shp_file and not geoserver_drainage_line_layer:
                 return JsonResponse({'error' : 'Missing geoserver drainage line.'})
-                
+            #check shapefiles
+            if drainage_line_shp_file:
+                missing_extenstions = check_shapefile_input_files(drainage_line_shp_file)
+                if missing_extenstions:
+                    return JsonResponse({'error' : 'Missing geoserver drainage line files with extensions %s.' % \
+                                        (", ".join(missing_extenstions)) })
+            if catchment_shp_file:
+                missing_extenstions = check_shapefile_input_files(catchment_shp_file)
+                if missing_extenstions:
+                    return JsonResponse({'error' : 'Missing geoserver catchment files with extensions %s.' % \
+                                        (", ".join(missing_extenstions)) })
+            if gauge_shp_file:
+                missing_extenstions = check_shapefile_input_files(gauge_shp_file)
+                if missing_extenstions:
+                    return JsonResponse({'error' : 'Missing geoserver gage files with extensions %s.' % \
+                                        (", ".join(missing_extenstions)) })
         #initialize session
         session = SettingsSessionMaker()
         #check to see if duplicate exists
@@ -508,9 +526,10 @@ def watershed_add(request):
             else:
                 session.close()
                 return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
-        """
         elif drainage_line_shp_file:
             #GEOSERVER UPLOAD
+            print drainage_line_shp_file
+            """
             engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
                                        username='admin',
                                        password='geoserver')
@@ -561,7 +580,7 @@ def watershed_add(request):
                 # Do create shapefile
                 engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
                                                       overwrite=True)
-        """
+            """
 
          
          

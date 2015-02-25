@@ -89,34 +89,40 @@ def map(request):
         ##find all kml files to add to page    
         kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          'public','kml')
-        layer_info = []
+        layers_info = []
         #add kml urls to list and add their navigation items as well
         group_id = 0
         for watershed in watersheds:
             if watershed.geoserver_id == 1:
                 file_path = os.path.join(kml_file_location, format_name(watershed.watershed_name))
-                kml_urls = {'watershed':watershed.folder_name, 
+                kml_info = {'watershed':watershed.folder_name, 
                             'subbasin':watershed.file_name,
                             }
                 #prepare kml files
                 drainage_line_kml = os.path.join(file_path, watershed.geoserver_drainage_line_layer)
                 if os.path.exists(drainage_line_kml):
                     drainage_line_kml = os.path.basename(drainage_line_kml)
-                    kml_urls['drainage_line'] = '/static/erfp_tool/kml/%s/%s' \
-                                % (format_name(watershed.watershed_name), 
+                    kml_info['drainage_line'] = '/static/erfp_tool/kml/%s/%s' \
+                                % (watershed.folder_name, 
                                    watershed.geoserver_drainage_line_layer)
                 catchment_kml = os.path.join(file_path, watershed.geoserver_catchment_layer)
                 if os.path.exists(catchment_kml):
                     catchment_kml = os.path.basename(catchment_kml)
-                    kml_urls['catchment'] = '/static/erfp_tool/kml/%s/%s' \
-                                            % (format_name(watershed.watershed_name),
+                    kml_info['catchment'] = '/static/erfp_tool/kml/%s/%s' \
+                                            % (watershed.folder_name,
                                                watershed.geoserver_catchment_layer)
+                gauge_kml = os.path.join(file_path, watershed.geoserver_gauge_layer)
+                if os.path.exists(gauge_kml):
+                    catchment_kml = os.path.basename(gauge_kml)
+                    kml_info['gauge'] = '/static/erfp_tool/kml/%s/%s' \
+                                            % (watershed.folder_name,
+                                               watershed.geoserver_gauge_layer)
         
-                kml_urls['title'] = format_watershed_title(watershed.watershed_name,
+                kml_info['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
-                layer_info.append(kml_urls)
+                layers_info.append(kml_info)
             else: # (get geoserver info)
-                kml_urls = {'watershed':watershed.folder_name, 
+                geoserver_info = {'watershed':watershed.folder_name, 
                             'subbasin':watershed.file_name,
                             'geoserver_url': "%s/wms" % watershed.geoserver.url,
                             }
@@ -144,7 +150,7 @@ def map(request):
                             contained_attributes.append(optional_attribute)
                         
                     latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
-                    kml_urls['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
+                    geoserver_info['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
                                                  'geojsonp': drainage_line_info['result']['wfs']['geojsonp'],
                                                  'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                                  'projection': drainage_line_info['result']['projection'],
@@ -153,21 +159,32 @@ def map(request):
                                                 }
                     #check if needed attribute is there to perfrom query based rendering of layer
                     if 'Natur_Flow' not in layer_attributes:
-                        kml_urls['drainage_line']['geoserver_method'] = "simple"
+                        geoserver_info['drainage_line']['geoserver_method'] = "simple"
                     else:
-                        kml_urls['drainage_line']['geoserver_method'] = "natur_flow_query"
+                        geoserver_info['drainage_line']['geoserver_method'] = "natur_flow_query"
 
                 #load catchment layer if exists
                 catchment_info = engine.get_resource(resource_id=watershed.geoserver_catchment_layer.strip())
                 if catchment_info['success']: 
                     latlon_bbox = catchment_info['result']['latlon_bbox'][:4]
-                    kml_urls['catchment'] = {'name': watershed.geoserver_catchment_layer,
+                    geoserver_info['catchment'] = {'name': watershed.geoserver_catchment_layer,
                                              'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                              'projection': catchment_info['result']['projection'],
                                             }
-                kml_urls['title'] = format_watershed_title(watershed.watershed_name,
+                geoserver_info['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
-                layer_info.append(kml_urls)
+                layers_info.append(geoserver_info)
+                #load catchment layer if exists
+                gauge_info = engine.get_resource(resource_id=watershed.geoserver_gauge_layer.strip())
+                if gauge_info['success']: 
+                    latlon_bbox = gauge_info['result']['latlon_bbox'][:4]
+                    geoserver_info['gauge'] = {'name': watershed.geoserver_gauge_layer,
+                                             'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                             'projection': gauge_info['result']['projection'],
+                                            }
+                geoserver_info['title'] = format_watershed_title(watershed.watershed_name,
+                                                            watershed.subbasin_name)
+                layers_info.append(geoserver_info)
 
 
             group_id += 1
@@ -182,8 +199,8 @@ def map(request):
                             }
     
         context = {
-                    'layer_info_json' : json.dumps(layer_info),
-                    'layer_info': layer_info,
+                    'layers_info_json' : json.dumps(layers_info),
+                    'layers_info': layers_info,
                     'base_layer_info' : json.dumps(base_layer_info),
                   }
     
@@ -502,11 +519,17 @@ def add_geoserver(request):
     geoserver_url_input = {
         'display_text': 'Geoserver Url',
         'name': 'geoserver-url-input',
-        'placeholder': 'e.g.: http://felek.cns.umass.edu:8080/geoserver/wms',
+        'placeholder': 'e.g.: http://felek.cns.umass.edu:8080/geoserver',
         'icon_append':'glyphicon glyphicon-cloud-download',
         }
               
- 
+    geoserver_username_input = {
+        'display_text': 'Geoserver Username',
+        'name': 'geoserver-username-input',
+        'placeholder': 'e.g.: admin',
+        'icon_append':'glyphicon glyphicon-user',
+        }
+        
     add_button = {'buttons': [
                                  {'display_text': 'Add Geoserver',
                                   'icon': 'glyphicon glyphicon-plus',
@@ -521,6 +544,7 @@ def add_geoserver(request):
     context = {
                 'geoserver_name_input': geoserver_name_input,
                 'geoserver_url_input': geoserver_url_input,
+                'geoserver_username_input': geoserver_username_input,
                 'add_button': add_button,
               }
     return render(request, 'erfp_tool/add_geoserver.html', context)

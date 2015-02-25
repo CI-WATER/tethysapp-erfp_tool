@@ -494,7 +494,7 @@ var ERFP_MAP = (function() {
         var basemap_layer = getBaseLayer(base_layer_info.name,base_layer_info.api_key);
         
         //load drainage line kml layers
-        var layers_info = JSON.parse($("#map").attr('layer-info'));
+        var layers_info = JSON.parse($("#map").attr('layers-info'));
         var all_group_layers = [];
         var drainage_line_layers = [];
         //add each watershed kml group

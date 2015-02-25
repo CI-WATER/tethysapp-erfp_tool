@@ -6,6 +6,20 @@ import os
 import re
 from shutil import rmtree
 
+def check_shapefile_input_files(shp_files):
+    """
+    #make sure required files for shapefiles are included
+    """
+    required_extentsions = ['.shp', '.shx', '.prj','.dbf']
+    accepted_extensions = []
+    for shp_file in shp_files:
+        file_name = shp_file.name
+        for required_extentsion in required_extentsions: 
+            if file_name.endswith(required_extentsion):
+                accepted_extensions.append(required_extentsion)
+                required_extentsions.remove(required_extentsion)
+    return required_extentsions
+    
 def delete_old_watershed_prediction_files(folder_name, local_prediction_files_location):
     """
     Removes old watershed prediction files from system
