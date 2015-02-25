@@ -107,13 +107,17 @@ class Geoserver(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     url = Column(String)
-
-    def __init__(self, name, url):
+    username = Column(String)
+    password = Column(String)
+    
+    def __init__(self, name, url, username, password):
         """
         Constructor for settings
         """
         self.name = name
         self.url = url
+        self.username = username
+        self.password = password
 
 # SQLAlchemy ORM definition for the data_store table
 class Watershed(Base):
@@ -134,12 +138,13 @@ class Watershed(Base):
     geoserver = relationship("Geoserver")
     geoserver_drainage_line_layer = Column(String)
     geoserver_catchment_layer = Column(String)
+    geoserver_gauge_layer = Column(String)
     watershed_groups = relationship("WatershedGroup", 
                               secondary='watershed_watershed_group_link')
                               
     def __init__(self, watershed_name, subbasin_name, folder_name, file_name,
                  data_store_id, geoserver_id, geoserver_drainage_line_layer, 
-                 geoserver_catchment_layer):
+                 geoserver_catchment_layer, geoserver_gauge_layer):
         """
         Constructor for settings
         """
@@ -151,6 +156,7 @@ class Watershed(Base):
         self.geoserver_id = geoserver_id
         self.geoserver_drainage_line_layer = geoserver_drainage_line_layer
         self.geoserver_catchment_layer = geoserver_catchment_layer
+        self.geoserver_gauge_layer = geoserver_gauge_layer
 
 class WatershedWatershedGroupLink(Base):
     __tablename__ = 'watershed_watershed_group_link'

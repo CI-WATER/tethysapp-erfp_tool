@@ -441,14 +441,23 @@ def watershed_add(request):
         file_name = format_name(subbasin_name) if subbasin_name else None
         data_store_id = post_info.get('data_store_id')
         geoserver_id = post_info.get('geoserver_id')
+        #REQUIRED TO HAVE drainage_line from one of these
+        #layer names
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
+        geoserver_gauge_layer = post_info.get('geoserver_gauge_layer')
+        #shape files
+        drainage_line_shp_file = request.FILES.get('drainage_line_shp_file')
+        catchment_shp_file = request.FILES.get('catchment_shp_file')
+        gauge_shp_file = request.FILES.get('gauge_shp_file')
+        #kml files
+        drainage_line_kml_file = request.FILES.get('drainage_line_kml_file')
+        catchment_kml_file = request.FILES.get('catchment_kml_file')
+        gauge_kml_file = request.FILES.get('gauge_kml_file')
         
         #CHECK DATA
         #make sure information exists 
         if not watershed_name or not subbasin_name or not data_store_id \
-            or not geoserver_drainage_line_layer \
-            or not geoserver_catchment_layer \
             or not folder_name or not file_name:
             return JsonResponse({'error' : 'Request input missing data.'})
         #make sure ids are ids
@@ -457,7 +466,14 @@ def watershed_add(request):
             int(geoserver_id)
         except ValueError:
             return JsonResponse({'error' : 'One or more ids are faulty.'})
-      
+        #make sure one layer exists
+        if(int(geoserver_id)==1):
+            if not drainage_line_kml_file:
+                return JsonResponse({'error' : 'Missing drainage line KML file.'})
+        else:
+            if not (drainage_line_shp_file or geoserver_drainage_line_layer):
+                return JsonResponse({'error' : 'Missing geoserver drainage line.'})
+                
         #initialize session
         session = SettingsSessionMaker()
         #check to see if duplicate exists
@@ -470,30 +486,31 @@ def watershed_add(request):
             return JsonResponse({ 'error': "A watershed with the same name exists." })
 
         #COMMIT
-        #add watershed
-        watershed = Watershed(watershed_name, subbasin_name, folder_name, 
-                              file_name, data_store_id, geoserver_id, 
-                              geoserver_drainage_line_layer,
-                              geoserver_catchment_layer)
-        session.add(watershed)
         #upload files
         if(int(geoserver_id) == 1):
-            #LOCAL
-            if 'drainage_line_kml_file' in request.FILES and 'catchment_kml_file' in request.FILES:
+            #LOCAL UPLOAD
+            if drainage_line_kml_file:
                 kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                                  'public','kml',folder_name)
                 geoserver_drainage_line_layer = "%s-drainage_line.kml" % file_name
-                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),
+                handle_uploaded_file(drainage_line_kml_file,
                                      kml_file_location, geoserver_drainage_line_layer)
-                geoserver_catchment_layer = "%s-catchment.kml" % file_name
-                handle_uploaded_file(request.FILES.get('catchment_kml_file'),kml_file_location, 
-                                     geoserver_catchment_layer)
+                #upload catchment kml if exists
+                if catchment_kml_file:
+                    geoserver_catchment_layer = "%s-catchment.kml" % file_name
+                    handle_uploaded_file(catchment_kml_file,kml_file_location, 
+                                         geoserver_catchment_layer)
+                #uploade gauge kml if exists
+                if gauge_kml_file:
+                    geoserver_gauge_layer = "%s-gauge.kml" % file_name
+                    handle_uploaded_file(gauge_kml_file,kml_file_location, 
+                                         geoserver_gauge_layer)
             else:
                 session.close()
                 return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
         """
-        else:
-            #GEOSERVER
+        elif drainage_line_shp_file:
+            #GEOSERVER UPLOAD
             engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
                                        username='admin',
                                        password='geoserver')
@@ -504,29 +521,58 @@ def watershed_add(request):
     
             # Create Test Stores/Resources/Layers
             ## Shapefile
-            for layer_file in request.FILES:
-                #check layer type
-                layer_type = ""
-                if "drainage_line" in layer_file.name:
-                    layer_type = "drainage_line"
-                elif "catchment" in layer_file.name:
-                    layer_type = "catchment"
-                elif "gauge" in layer_file.name:
-                    layer_type = "gauge"
-                #upload if valid layer type
-                if layer_type:    
-                    # Resource and Layer will take the name of the file
-                    resource_name = "%s-%s-%s" % (folder_name, file_name, layer_type)
+            if 'drainage_line_shp_file' in request.FILES:
+                kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                 'public','kml',folder_name)
+                geoserver_drainage_line_layer = "%s-drainage_line.kml" % file_name
+                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),
+                                     kml_file_location, geoserver_drainage_line_layer)
+                #upload catchment kml if exists
+                if 'catchment_shp_file' in request.FILES:
+                    geoserver_catchment_layer = "%s-catchment.kml" % file_name
+                    handle_uploaded_file(request.FILES.get('catchment_kml_file'),kml_file_location, 
+                                         geoserver_catchment_layer)
+                #uploade gauge kml if exists
+                if 'gauge_shp_file' in request.FILES:
+                    geoserver_gauge_layer = "%s-gauge.kml" % file_name
+                    handle_uploaded_file(request.FILES.get('gauge_kml_file'),kml_file_location, 
+                                         geoserver_gauge_layer)
+            else:
+                session.close()
+                return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
             
-                    # Identifiers of the form 'workspace:item'
-                    resource_identifier = '{0}:{1}'.format(resource_workspace, resource_name)
-            
-                    # Do create shapefile
-                    engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
-                                                          overwrite=True)
+            TODO: make geoserver layer upload function
+            #check layer type
+            layer_type = ""
+            if "drainage_line" in layer_file.name:
+                layer_type = "drainage_line"
+            elif "catchment" in layer_file.name:
+                layer_type = "catchment"
+            elif "gauge" in layer_file.name:
+                layer_type = "gauge"
+            #upload if valid layer type
+            if layer_type:    
+                # Resource and Layer will take the name of the file
+                resource_name = "%s-%s-%s" % (folder_name, file_name, layer_type)
+        
+                # Identifiers of the form 'workspace:item'
+                resource_identifier = '{0}:{1}'.format(resource_workspace, resource_name)
+        
+                # Do create shapefile
+                engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
+                                                      overwrite=True)
         """
 
-            
+         
+         
+         #add watershed
+        watershed = Watershed(watershed_name, subbasin_name, folder_name, 
+                              file_name, data_store_id, geoserver_id, 
+                              geoserver_drainage_line_layer,
+                              geoserver_catchment_layer,
+                              geoserver_gauge_layer)
+        session.add(watershed)
+    
         session.commit()
         session.close()
 
@@ -543,7 +589,11 @@ def watershed_delete(request):
         #get/check information from AJAX request
         post_info = request.POST
         watershed_id = post_info.get('watershed_id')
-    
+        #make sure ids are ids
+        try:
+            int(watershed_id)
+        except ValueError:
+            return JsonResponse({'error' : 'Watershed id is faulty.'})    
         
         if watershed_id:
             #initialize session

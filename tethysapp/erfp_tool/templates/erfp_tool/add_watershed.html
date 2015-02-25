@@ -21,20 +21,45 @@
     <em>Where the reach and catchbasin KML files are stored.</em><br/><br/>
     {% gizmo select_input geoserver_select %}
     <p class="help-block">Don't see the geoserver you want? Add one <a href="{% url 'erfp_tool:add-geoserver' %}">here</a>.</p>
+    {% gizmo toggle_switch shp_upload_toggle_switch %}
+    <!-- Drainage Line !-->
     {% gizmo text_input geoserver_drainage_line_input %}
-    <div class="form-group">
+    <div class="form-group kml">
         <label class="control-label" for="drainage-line-kml-upload-input">Drainage Line KML File</label>
-        <input id="drainage-line-kml-upload-input" name="drainage-line-kml-upload-input" type="file" accept="*.kml">
+        <input id="drainage-line-kml-upload-input" name="drainage-line-kml-upload-input" type="file" accept=".kml">
         <p class="help-block hidden">Must select file to submit!</p>
     </div>
-    <p class="help-block">This is the KML file representing the river network.</p>
+    <p class="help-block kml">This is the KML file representing the river network.</p>
+    <div class="form-group shapefile upload hidden">
+        <label class="control-label" for="drainage-line-shp-upload-input">Drainage Line Shapefile</label>
+        <input id="drainage-line-shp-upload-input" name="drainage-line-shp-upload-input" type="file" accept=".shp|.shx|.prj|.dbf">
+        <p class="help-block hidden">Must select file to submit!</p>
+    </div>
+    <p class="help-block shapefile upload hidden">This is the shapefile file representing the river network. Need .shp, .shx, .prj, .dbf files.</p>
+    <!-- Catchments !-->
     {% gizmo text_input geoserver_catchment_input %}
-    <div class="form-group">
+    <div class="form-group kml">
         <label class="control-label" for="catchment-kml-upload-input">Catchment KML File</label>
-        <input id="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept="*.kml">
-        <p class="help-block hidden">Must select file to submit!</p>
+        <input id="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept=".kml">
     </div>
-    <p class="help-block">This is the KML file representing the watershed basin.</p>
+    <p class="help-block kml">This is the KML file representing the watershed basin.</p>
+    <div class="form-group shapefile upload hidden">
+        <label class="control-label" for="catchment-shp-upload-input">Catchment Shapefile</label>
+        <input id="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp|.shx|.prj|.dbf">
+    </div>
+    <p class="help-block shapefile upload hidden">This is the shapefile file representing the watershed basin. Need .shp, .shx, .prj, .dbf files.</p>
+    <!-- Gauge Stations !-->
+    {% gizmo text_input geoserver_gauge_input %}
+    <div class="form-group kml">
+        <label class="control-label" for="gauge-kml-upload-input">Gauge KML File</label>
+        <input id="gauge-kml-upload-input" name="gauge-kml-upload-input" type="file" accept=".kml">
+    </div>
+    <p class="help-block kml">This is the KML file representing the gauge stations.</p>
+    <div class="form-group shapefile upload hidden">
+        <label class="control-label" for="gauge-shp-upload-input">Gauge Shapefile</label>
+        <input id="gauge-shp-upload-input" name="gauge-shp-upload-input" type="file" accept=".shp|.shx|.prj|.dbf">
+    </div>
+    <p class="help-block shapefile upload hidden">This is the shapefile file representing the gauge stations. Need .shp, .shx, .prj, .dbf files.</p>
 {% gizmo button_group add_button %}
 {% endblock %}
 

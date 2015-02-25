@@ -325,20 +325,31 @@ def add_watershed(request):
                 }
                 
     geoserver_drainage_line_input = {
-                'display_text': 'Geoserver Drainage Line KML Layer',
+                'display_text': 'Geoserver Drainage Line Layer',
                 'name': 'geoserver-drainage-line-input',
-                'placeholder': 'e.g.: Streams:Developed',
+                'placeholder': 'e.g.: erfp:streams',
                 'icon_append':'glyphicon glyphicon-link',
-                'attributes':'class=hidden',
               }
     geoserver_catchment_input = {
-                'display_text': 'Geoserver Catchment KML Layer',
+                'display_text': 'Geoserver Catchment Layer',
                 'name': 'geoserver-catchment-input',
-                'placeholder': 'e.g.: Streams:Developed',
+                'placeholder': 'e.g.: erfp:catchment',
                 'icon_append':'glyphicon glyphicon-link',
-                'attributes':'class=hidden',
               }
-              
+    geoserver_gauge_input = {
+                'display_text': 'Geoserver Gauge Layer',
+                'name': 'geoserver-gauge-input',
+                'placeholder': 'e.g.: erfp:gauge',
+                'icon_append':'glyphicon glyphicon-link',
+              }
+    shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
+                'name': 'shp-upload-toggle',
+                'on_label': 'Yes',
+                'off_label': 'No',
+                'on_style': 'success',
+                'off_style': 'danger',
+                'initial': True,
+                }
 
     add_button = {'buttons': [
                                  {'display_text': 'Add Watershed',
@@ -358,6 +369,8 @@ def add_watershed(request):
                 'geoserver_select': geoserver_select,
                 'geoserver_drainage_line_input': geoserver_drainage_line_input,
                 'geoserver_catchment_input': geoserver_catchment_input,
+                'geoserver_gauge_input': geoserver_gauge_input,
+                'shp_upload_toggle_switch': shp_upload_toggle_switch,
                 'add_button': add_button,
               }
 
