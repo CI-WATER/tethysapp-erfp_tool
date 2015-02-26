@@ -72,13 +72,14 @@ $(function() {
             gage_kml_file = parent_row.find('.gage-kml-upload-input')[0].files[0];
             
         } else if (!parent_row.find('#shp-upload-toggle').bootstrapSwitch('state')) {
-            console.log(parent_row.find('.geoserver-drainage-line-input').val());
             //geoserver update
             geoserver_drainage_line_layer = checkTableCellInputWithError(parent_row.find('.geoserver-drainage-line-input'),safe_to_submit);
             geoserver_catchment_layer = parent_row.find('.geoserver-catchment-input').val(); //optional
             geoserver_gage_layer = parent_row.find('.geoserver-gage-input').val(); //optional
-            console.log(geoserver_drainage_line_layer);
         } else {
+            geoserver_drainage_line_layer = parent_row.find('.geoserver-drainage-line-input').val(); //optional if file uploaded
+            geoserver_catchment_layer = parent_row.find('.geoserver-catchment-input').val(); //optional
+            geoserver_gage_layer = parent_row.find('.geoserver-gage-input').val(); //optional
             //geoserver upload
             drainage_line_shp_files = parent_row.find('.drainage-line-shp-upload-input')[0].files;
             catchment_shp_files = parent_row.find('.catchment-shp-upload-input')[0].files;
@@ -93,7 +94,7 @@ $(function() {
             addInfoMessage("Submitting Data. Please Wait.");
             submit_button.text('Submitting ...');
             //update database
-            if(geoserver_id==1 && (geoserver_drainage_line_layer != old_drainage_line_kml || geoserver_catchment_layer != old_catchment_kml)){
+            if(geoserver_id==1 || parent_row.find('#shp-upload-toggle').bootstrapSwitch('state')){
                 //local upload
                 var data = new FormData();
                 data.append("watershed_id",watershed_id);
