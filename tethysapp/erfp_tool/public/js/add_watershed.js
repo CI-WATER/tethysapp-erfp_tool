@@ -116,7 +116,6 @@ var ERFP_ADD_WATERSHED = (function() {
                     }
                     var xhr = ajax_update_database_with_file("submit",data);
                 } else {
-                    m_uploading_data = true;
                     var data = {
                             watershed_name: watershed_name,
                             subbasin_name: subbasin_name,
@@ -129,6 +128,7 @@ var ERFP_ADD_WATERSHED = (function() {
             
                     var xhr = ajax_update_database("submit",data);
                 }
+                m_uploading_data = true;
                 xhr.done(function(data) {
                     if ('success' in data) {
                         //reset inputs
@@ -154,8 +154,10 @@ var ERFP_ADD_WATERSHED = (function() {
                     m_uploading_data = false;
                 });
             } else if (m_uploading_data) {
-                                //give user information
+                //give user information
                 addWarningMessage("Submitting Data. Please Wait.");
+            } else {
+                addErrorMessage("Not submitted. Please fix form errors to proceed.");
             }
         
         });

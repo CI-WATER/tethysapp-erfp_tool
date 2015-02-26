@@ -81,7 +81,6 @@
                         <p class="help-block hidden">Must select file to submit!</p>
                     </div>
                     <div class="form-group shapefile upload hidden">
-                        <label class="control-label" for="drainage-line-shp-upload-input">Drainage Line Shapefile</label>
                         <input class="drainage-line-shp-upload-input" name="drainage-line-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
                     </div>
                     <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.geoserver_drainage_line_layer}}</p>
@@ -94,7 +93,6 @@
                         <input class="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept=".kml">
                     </div>
                     <div class="form-group shapefile upload hidden">
-                        <label class="control-label" for="catchment-shp-upload-input">Catchment Shapefile</label>
                         <input class="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
                     </div>
                     <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.geoserver_catchment_layer}}</p>
@@ -107,7 +105,6 @@
                         <input class="gage-kml-upload-input" name="gage-kml-upload-input" type="file" accept=".kml">
                     </div>
                     <div class="form-group shapefile upload hidden">
-                        <label class="control-label" for="gage-shp-upload-input">Gage Shapefile</label>
                         <input class="gage-shp-upload-input" name="gage-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
                     </div>
                     <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.geoserver_gage_layer}}</p>

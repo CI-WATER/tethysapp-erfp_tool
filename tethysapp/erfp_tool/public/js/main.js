@@ -21,7 +21,7 @@ function csrfSafeMethod(method) {
     return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 //add csrf token to approporiate ajax requests
-$(document).ready(function() {
+$(function() {
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
             if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
@@ -29,7 +29,7 @@ $(document).ready(function() {
             }
         }
     });
-});
+}); //document ready
 
 //form submission check function
 function checkInputWithError(input, safe_to_submit, one_parent, select_two) {
