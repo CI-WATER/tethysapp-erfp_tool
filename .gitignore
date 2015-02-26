@@ -56,3 +56,4 @@ target/
 # Other backup files
 *~
 *.kml
+*.nc
