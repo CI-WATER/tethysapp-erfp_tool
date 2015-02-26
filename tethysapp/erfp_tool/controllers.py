@@ -171,10 +171,7 @@ def map(request):
                                              'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                              'projection': catchment_info['result']['projection'],
                                             }
-                geoserver_info['title'] = format_watershed_title(watershed.watershed_name,
-                                                            watershed.subbasin_name)
-                layers_info.append(geoserver_info)
-                #load catchment layer if exists
+                #load gage layer if exists
                 gage_info = engine.get_resource(resource_id=watershed.geoserver_gage_layer.strip())
                 if gage_info['success']: 
                     latlon_bbox = gage_info['result']['latlon_bbox'][:4]
@@ -185,7 +182,6 @@ def map(request):
                 geoserver_info['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
                 layers_info.append(geoserver_info)
-
 
             group_id += 1
             
@@ -414,10 +410,20 @@ def manage_watersheds(request):
     # Query DB for geoservers
     geoservers = session.query(Geoserver).all()
 
+    shp_upload_toggle_switch = {
+                'name': 'shp-upload-toggle',
+                'on_label': 'Yes',
+                'off_label': 'No',
+                'on_style': 'success',
+                'off_style': 'danger',
+                'initial': False,
+                }
+
     context = {
                 'watersheds': watersheds,
                 'data_stores': data_stores,
                 'geoservers': geoservers,
+                'shp_upload_toggle_switch': shp_upload_toggle_switch,
               }
     return render(request, 'erfp_tool/manage_watersheds.html', context)
 

@@ -27,8 +27,10 @@
                 <th>Subbasin Name</th>
                 <th>Data Store</th>
                 <th>Geoserver</th>
-                <th>Drainage Line KML</th>
-                <th>Catchment KML</th>
+                <th>Upload To Geoserver?</th>
+                <th>Drainage Line Layer</th>
+                <th>Catchment Layer</th>
+                <th>Gage Layer</th>
             </thead>
         <tbody>
         {% for watershed in watersheds %}
@@ -66,33 +68,50 @@
                     {% endfor %}
                     </select>
                 </td>
-                <td class="drainage-line-kml"
-                    {% if watershed.geoserver_id == 1 %}
-                        local-kml-file="{{watershed.geoserver_drainage_line_layer}}"
-                        geoserver-kml-file=""
-                        ><div class="form-group">
-                            <input class="drainage-line-kml-upload-input" name="drainage-line-kml-upload-input" type="file" accept="*.kml">
-                            <p class="help-block hidden">Must select file to submit!</p>
-                         </div>
-                        <p class="help-block">Current: {{watershed.geoserver_drainage_line_layer}}</p>
-                    {% else %}   
-                        geoserver-kml-file="{{watershed.geoserver_drainage_line_layer}}"
-                        contenteditable>{{watershed.geoserver_drainage_line_layer}}
-                    {% endif %}
+                <td class="geoserver-upload"
+                    {% gizmo toggle_switch shp_upload_toggle_switch %}
+                    <p class="kml{% if watershed.geoserver_id != 1 %} hidden{% endif %}">N/A</p>
                 </td>  
-                <td class="catchment-kml"
-                    {% if watershed.geoserver_id == 1 %}
-                        local-kml-file="{{watershed.geoserver_catchment_layer}}"
-                        geoserver-kml-file=""
-                        ><div class="form-group">
-                            <input class="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept="*.kml">
-                            <p class="help-block hidden">Must select file to submit!</p>
-                         </div>
-                        <p class="help-block">Current: {{watershed.geoserver_catchment_layer}}</p>
-                    {% else %}   
-                        geoserver-kml-file="{{watershed.geoserver_catchment_layer}}"
-                        contenteditable>{{watershed.geoserver_catchment_layer}}
-                    {% endif %}
+                <td class="drainage-line-layer">
+                    <div class="form-group shapefile{% if watershed.geoserver_id == 1 %} hidden{% endif %}">
+                        <input class="geoserver-drainage-line-input" name="geoserver-drainage-line-input" type="input" value="{{watershed.geoserver_drainage_line_layer}}">
+                    </div>
+                    <div class="form-group upload kml{% if watershed.geoserver_id != 1 %} hidden{% endif %}">
+                        <input class="drainage-line-kml-upload-input" name="drainage-line-kml-upload-input" type="file" accept=".kml">
+                        <p class="help-block hidden">Must select file to submit!</p>
+                    </div>
+                    <div class="form-group shapefile upload hidden">
+                        <label class="control-label" for="drainage-line-shp-upload-input">Drainage Line Shapefile</label>
+                        <input id="drainage-line-shp-upload-input" name="drainage-line-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
+                    </div>
+                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.geoserver_drainage_line_layer}}</p>
+                </td>  
+                <td class="catchment-layer">
+                    <div class="form-group shapefile{% if watershed.geoserver_id == 1 %} hidden{% endif %}">
+                        <input class="geoserver-catchment-input" name="geoserver-catchment-input" type="input" value="{{watershed.geoserver_catchment_layer}}">
+                    </div>
+                    <div class="form-group upload kml{% if watershed.geoserver_id != 1 %} hidden{% endif %}">
+                        <input class="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept=".kml">
+                    </div>
+                    <div class="form-group shapefile upload hidden">
+                        <label class="control-label" for="catchment-shp-upload-input">Catchment Shapefile</label>
+                        <input id="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
+                    </div>
+                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.geoserver_catchment_layer}}</p>
+                </td>  
+                <td class="gage-layer">
+                    <div class="form-group shapefile{% if watershed.geoserver_id == 1 %} hidden{% endif %}">
+                        <input class="geoserver-gage-input" name="geoserver-gage-input" type="input" value="{{watershed.geoserver_gage_layer}}">
+                    </div>
+                    <div class="form-group upload kml{% if watershed.geoserver_id != 1 %} hidden{% endif %}">
+                        <input class="gage-kml-upload-input" name="gage-kml-upload-input" type="file" accept=".kml">
+                    </div>
+                    <div class="form-group shapefile upload hidden">
+                        <label class="control-label" for="gage-shp-upload-input">Gage Shapefile</label>
+                        <input id="gage-shp-upload-input" name="gage-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
+                    </div>
+                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.geoserver_gage_layer}}</p>
+                </td>  
             </tr>
         {% endfor %}
         </tbody>

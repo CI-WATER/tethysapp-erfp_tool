@@ -19,10 +19,11 @@ var ERFP_MAP = (function() {
     *************************************************************************/
     var public_interface,                // Object returned by the module
        m_map,                    // the main map
-       m_chart,  //highcharts chart
+       m_map_projection, //main map projection
        m_map_extent,           //the extent of all objects in map
-       m_select_interaction,
        m_geoserver_drainage_line_layers,
+       m_select_interaction,
+       m_chart,  //highcharts chart
        m_selected_feature,
        m_selected_watershed,
        m_selected_subbasin,
@@ -60,11 +61,13 @@ var ERFP_MAP = (function() {
                 .transform(parseFloat, String);
           }
       );
-    }    
+    }
+    
     //FUNCTION: zooms to all kml files
     zoomToAll = function() {
         m_map.getView().fitExtent(m_map_extent, m_map.getSize());
     };
+
     //FUNCTION: zooms to kml layer with id layer_id
     zoomToLayer = function(layer_id) {
         m_map.getLayers().forEach(function(layer, i) {
@@ -90,24 +93,28 @@ var ERFP_MAP = (function() {
     {
         return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
     };
+
     //FUNCTION: to convert date to string
     datePadString = function(i) {
         return (i < 10) ? "0" + i : "" + i; 
     }
+
     //FUNCTION: displays alert to user
     updateInfoAlert = function(css_alert_class, alert_message) {
         $("#erfp-info").removeClass('alert-info');
         $("#erfp-info").removeClass('alert-warning');
         $("#erfp-info").removeClass('alert-danger');
-        $("#erfp-info").addClass(css_alert_class);
         var glyphycon = '';
         if(css_alert_class == 'alert-info') {
+            $("#erfp-info").addClass(css_alert_class);
             glyphycon = '<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> ';
         }
         else if(css_alert_class == 'alert-warning') {
+            $("#erfp-info").addClass(css_alert_class);
             glyphycon = '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> ';
         }
         else if(css_alert_class == 'alert-danger') {
+            $("#erfp-info").addClass(css_alert_class);
             glyphycon = '<span class="glyphicon glyphicon-fire" aria-hidden="true"></span> ';
         }
         $("#erfp-message").removeClass('hidden');
@@ -146,7 +153,7 @@ var ERFP_MAP = (function() {
     getKMLLayer = function(layer_info, layer_id) {
         var layer = new ol.layer.Vector({
             source: new ol.source.KML({
-                projection: new ol.proj.get('EPSG:3857'),
+                projection: new ol.proj.get(m_map_projection),
                 url: layer_info,
             }),
         });
@@ -167,17 +174,19 @@ var ERFP_MAP = (function() {
         });
         layer.set('extent', ol.proj.transformExtent(layer_info['latlon_bbox'].map(Number), 
                                                 'EPSG:4326',
-                                                'EPSG:3857'));
+                                                m_map_projection));
         layer.set('layer_id', layer_id);
         layer.set('layer_type', 'geoserver');
         return layer;
     };
 
+    //FUNCTION: removes message and hides the div
     clearMessages = function() {
         $('#erfp-message').addClass('hidden');
         $('#erfp-message').empty();
     };
 
+    //FUNCTION: removes highchart
     clearOldChart = function() {
        //clear old chart
         var highcharts_attr = $('#erfp-chart').attr('data-highcharts-chart');              
@@ -189,11 +198,13 @@ var ERFP_MAP = (function() {
         }
     };
 
+    //FUNCTION: gets all data for chart
     getChartData = function(start_folder) {
         m_chart_data_ajax_handle = null;
         //make sure old chart is removed
         clearOldChart();
-        if(!m_downloading_hydrograph && !m_downloading_select) {
+        if(!m_downloading_hydrograph && !m_downloading_select && 
+            !m_downloading_usgs && !m_downloading_nws) {
             updateInfoAlert('alert-info', "Retrieving Data ...");
             m_downloading_hydrograph = true;
             $('#erfp-select').addClass('hidden');
@@ -437,12 +448,9 @@ var ERFP_MAP = (function() {
                     if("success" in data) {
                         //remove select2 if exists
                         if($('#erfp-select').data('select2')) {
-                            //remove event handler
-                            $('#erfp-select').off();
-                            //remove selection
-                            $('#erfp-select').select2('val', '');
-                            //destroy
-                            $('#erfp-select').select2('destroy');
+                            $('#erfp-select').off('change.select2') //remove event handler
+                                             .select2('val', '') //remove selection
+                                             .select2('destroy'); //destroy
                         }
                         
                         //sort to get first element 
@@ -452,7 +460,7 @@ var ERFP_MAP = (function() {
                         $('#erfp-select').select2({data: select2_data,
                                                     placeholder: "Select a Date"});
                         //add on change event handler
-                        $('#erfp-select').change(function() {
+                        $('#erfp-select').on('change.select2', function() {
                             var folder = $(this).select2('data').id;
                             getChartData(folder);
                         });
@@ -505,6 +513,8 @@ var ERFP_MAP = (function() {
     // the DOM tree finishes loading
     $(function() {
         //initialize map global variables
+        m_map_projection = 'EPSG:3857';
+        m_map_extent = ol.extent.createEmpty();
         m_selected_feature = null;
         m_selected_watershed = null;
         m_selected_subbasin = null;
@@ -518,7 +528,6 @@ var ERFP_MAP = (function() {
         m_downloading_nws = false;
         m_chart_data_ajax_handle = null;
         m_select_data_ajax_handle = null;
-        m_map_extent = ol.extent.createEmpty();
         //load base layer
         var base_layer_info = JSON.parse($("#map").attr('base-layer-info'));
         
@@ -569,16 +578,20 @@ var ERFP_MAP = (function() {
                                       layer_info['drainage_line']['contained_attributes'] +
                                       '&CQL_FILTER=Natur_Flow > ' + stream_flow_limit +
                                       ' AND bbox(the_geom,' + extent.join(',') + 
-                                      ',\'EPSG:3857\')' +
-                                      '&srsname=EPSG:3857';
+                                      ',\'' + m_map_projection + '\')' +
+                                      '&srsname=' + m_map_projection;
+                                //TODO: ADD LOADING MESSAGE
                                 jQuery.ajax({
                                     url: encodeURI(url),
                                     dataType: 'jsonp',
                                     jsonpCallback: 'loadFeatures',
                                     success: function(response) {
+                                        
                                         drainage_line_vector_source.addFeatures(drainage_line_vector_source.readFeatures(response));
                                     },
                                 });
+                                //ON ERROR ADD MESSAGE
+                                //ALWAYS REMOVE LOADING MESSAGE
                               },
                               strategy: function(extent, resolution) {
                                   var zoom_range = 1;
@@ -594,7 +607,7 @@ var ERFP_MAP = (function() {
                                   this.zoom_range = zoom_range;
                                   return [extent];
                               },
-                              projection: 'EPSG:3857'
+                              projection: m_map_projection,
                         });
                     } else { //layer_info['drainage_line']['geoserver_method'] == "simple"
                         var drainage_line_vector_source = new ol.source.ServerVector({
@@ -605,8 +618,8 @@ var ERFP_MAP = (function() {
                                       '&PROPERTYNAME=the_geom,' +
                                       layer_info['drainage_line']['contained_attributes'].join() +
                                       '&BBOX=' + extent.join(',') + 
-                                      ',EPSG:3857' +
-                                      '&srsname=EPSG:3857';
+                                      ','+ m_map_projection +
+                                      '&srsname=' + m_map_projection;
                                 jQuery.ajax({
                                     url: encodeURI(url),
                                     dataType: 'jsonp',
@@ -617,7 +630,7 @@ var ERFP_MAP = (function() {
                                 });
                               },
                               strategy: ol.loadingstrategy.bbox,
-                              projection: 'EPSG:3857'
+                              projection: m_map_projection
                         });
                         
                     }
@@ -628,7 +641,7 @@ var ERFP_MAP = (function() {
                     drainage_line.set('subbasin_name', layer_info['subbasin']);
                     drainage_line.set('extent', ol.proj.transformExtent(layer_info['drainage_line']['latlon_bbox'].map(Number), 
                                                             'EPSG:4326',
-                                                            'EPSG:3857'));
+                                                            m_map_projection));
                     drainage_line.set('layer_id', 'layer' + group_index + 0);
                     drainage_line.set('layer_type', 'geoserver');
                     drainage_line_layers.push(drainage_line);

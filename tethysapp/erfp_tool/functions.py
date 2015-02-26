@@ -36,12 +36,27 @@ def delete_old_watershed_kml_files(watershed):
     """
     old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          'public','kml',watershed.folder_name)
-    old_geoserver_drainage_line_layer = "%s-drainage_line.kml" % watershed.file_name
-    old_geoserver_catchment_layer = "%s-catchment.kml" % watershed.file_name
     #remove old kml files on local server
+    #draiange line
     try:
-        os.remove(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer))
-        os.remove(os.path.join(old_kml_file_location, old_geoserver_catchment_layer))
+        os.remove(os.path.join(old_kml_file_location, 
+                               watershed.geoserver_drainage_line_layer))
+    except OSError:
+        pass
+    #catchment
+    try:
+        os.remove(os.path.join(old_kml_file_location, 
+                               watershed.geoserver_catchment_layer))
+    except OSError:
+        pass
+    #gage
+    try:
+        os.remove(os.path.join(old_kml_file_location, 
+                               watershed.geoserver_gage_layer))
+    except OSError:
+        pass
+    #folder
+    try:
         os.rmdir(old_kml_file_location)
     except OSError:
         pass
@@ -52,6 +67,8 @@ def delete_old_watershed_files(watershed, local_prediction_files_location):
     """
     #remove old kml files
     delete_old_watershed_kml_files(watershed)
+    #TODO: remove old geoserver files
+    
     #remove old prediction files
     delete_old_watershed_prediction_files(watershed.folder_name, 
                                           local_prediction_files_location)
@@ -115,8 +132,10 @@ def format_watershed_title(watershed, subbasin):
     return (watershed + " (" + subbasin + ")")
 
 def get_cron_command():
+    """
+    Gets cron command for downloading datasets
+    """
     #/usr/lib/tethys/src/tethys_apps/tethysapp/erfp_tool/cron/load_datasets.py
-    #/usr/lib/tethys/local/lib/python2.7/site-packages/tethys_apps/tethysapp/erfp_tool/cron/load_datasets.py
     local_directory = os.path.dirname(os.path.abspath(__file__))
     delimiter = ""
     if "/" in local_directory:
@@ -179,9 +198,15 @@ def handle_uploaded_file(f, file_path, file_name):
     """
     Uploads file to specified path
     """
+    #remove old file if exists
+    try:
+        os.remove(os.path.join(file_path, file_name))
+    except OSError:
+        pass
+    #make directory
     if not os.path.exists(file_path):
         os.mkdir(file_path)
-        
+    #upload file    
     with open(os.path.join(file_path,file_name), 'wb+') as destination:
         for chunk in f.chunks():
             destination.write(chunk)

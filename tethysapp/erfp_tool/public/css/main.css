@@ -26,10 +26,6 @@
     color: grey;
 }
 
-.hidden {
-    display: none;
-}
-
 @-moz-document url-prefix() {
   fieldset { display: table-cell; }
 }

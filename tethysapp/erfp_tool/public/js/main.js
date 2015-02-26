@@ -83,7 +83,21 @@ function addErrorMessage(error) {
     .removeClass('hidden')
     .removeClass('alert-success')
     .removeClass('alert-info')
+    .removeClass('alert-warning')
     .addClass('alert-danger');
+ 
+}
+//add error message to #message div
+function addWarningrMessage(error) {
+   $('#message').html(
+      '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
+      '<span class="sr-only">Error:</span> ' + error
+    )
+    .removeClass('hidden')
+    .removeClass('alert-success')
+    .removeClass('alert-info')
+    .removeClass('alert-danger')
+    .addClass('alert-warning');
  
 }
 //add information message to #message div
@@ -95,6 +109,7 @@ function addInfoMessage(message) {
     .removeClass('hidden')
     .removeClass('alert-success')
     .removeClass('alert-danger')
+    .removeClass('alert-warning')
     .addClass('alert-info');
  
 }
@@ -106,6 +121,7 @@ function addSuccessMessage(message) {
     ).removeClass('hidden')
     .removeClass('alert-danger')
     .removeClass('alert-info')
+    .removeClass('alert-warning')
     .addClass('alert-success'); 
 }
 

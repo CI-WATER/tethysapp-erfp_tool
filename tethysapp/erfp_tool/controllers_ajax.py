@@ -461,7 +461,7 @@ def watershed_add(request):
         #CHECK DATA
         #make sure information exists 
         if not watershed_name or not subbasin_name or not data_store_id \
-            or not folder_name or not file_name:
+            or not geoserver_id or not folder_name or not file_name:
             return JsonResponse({'error' : 'Request input missing data.'})
         #make sure ids are ids
         try:
@@ -504,7 +504,7 @@ def watershed_add(request):
             return JsonResponse({ 'error': "A watershed with the same name exists." })
 
         #COMMIT
-        #upload files
+        #upload files if files present
         if(int(geoserver_id) == 1):
             #LOCAL UPLOAD
             if drainage_line_kml_file:
@@ -528,66 +528,50 @@ def watershed_add(request):
                 return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
         elif drainage_line_shp_file:
             #GEOSERVER UPLOAD
-            print drainage_line_shp_file
             """
-    
-            if drainage_line_shp_file:
-                engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
-                                           username=watershed.geoserver.username,
-                                           password=watershed.geoserver.password)
-                
-                resource_workspace = 'erfp'
-                engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
-
-                #upload files
-                # Resource and Layer will take the name of the file
-                resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
-        
-                # Identifiers of the form 'workspace:item'
-                resource_identifier = '{0}:{1}'.format(resource_workspace, resource_name)
-        
+            engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
+                                       username=watershed.geoserver.username,
+                                       password=watershed.geoserver.password)
+            """
+            resource_workspace = 'erfp'
+            """
+            engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+            """
+            #TODO: REMOVE PAST GEOSERVER FILES ASSOCIATED WITH WATERSHED IF UPLOADED
+            resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
+            geoserver_drainage_line_layer = '{0}:{1}'.format(resource_workspace, resource_name)
+            """        
+            # Do create shapefile
+            engine.create_shapefile_resource(geoserver_drainage_line_layer, shapefile_base=drainage_line_shp_file,
+                                                  overwrite=True)
+            """
+            if catchment_shp_file:
+                #upload file
+                resource_name = "%s-%s-%s" % (folder_name, file_name, 'catchment')
+                geoserver_catchment_layer = '{0}:{1}'.format(resource_workspace, resource_name)
+                """
                 # Do create shapefile
-                engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
+                engine.create_shapefile_resource(geoserver_catchment_layer, shapefile_base=catchment_shp_file,
                                                       overwrite=True)
-                if catchment_shp_file:
-                    #upload file
-                    # Resource and Layer will take the name of the file
-                    resource_name = "%s-%s-%s" % (folder_name, file_name, 'catchment')
-            
-                    # Identifiers of the form 'workspace:item'
-                    resource_identifier = '{0}:{1}'.format(resource_workspace, resource_name)
-            
-                    # Do create shapefile
-                    engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
-                                                          overwrite=True)
-                if gage_shp_file:
-                    #upload file
-                    # Resource and Layer will take the name of the file
-                    resource_name = "%s-%s-%s" % (folder_name, file_name, 'gage')
-            
-                    # Identifiers of the form 'workspace:item'
-                    resource_identifier = '{0}:{1}'.format(resource_workspace, resource_name)
-            
-                    # Do create shapefile
-                    engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
-                                                          overwrite=True)
-            else:
-                session.close()
-                return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
-            
-            TODO: make geoserver layer upload function
-            """
+                """
+            if gage_shp_file:
+                #upload file
+                resource_name = "%s-%s-%s" % (folder_name, file_name, 'gage')
+                geoserver_gage_layer = '{0}:{1}'.format(resource_workspace, resource_name)
+                """
+                # Do create shapefile
+                engine.create_shapefile_resource(geoserver_gage_layer, shapefile_base=gage_shp_file,
+                                                      overwrite=True)
+                """
+            #TODO: make geoserver layer upload function
 
-         
-         
-         #add watershed
-        watershed = Watershed(watershed_name, subbasin_name, folder_name, 
-                              file_name, data_store_id, geoserver_id, 
-                              geoserver_drainage_line_layer,
-                              geoserver_catchment_layer,
-                              geoserver_gage_layer)
+        #add watershed
+        watershed = Watershed(watershed_name.strip(), subbasin_name.strip(), folder_name.strip(), 
+                              file_name.strip(), data_store_id, geoserver_id, 
+                              geoserver_drainage_line_layer.strip(),
+                              geoserver_catchment_layer.strip(),
+                              geoserver_gage_layer.strip())
         session.add(watershed)
-    
         session.commit()
         session.close()
 
@@ -618,7 +602,8 @@ def watershed_delete(request):
             main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
             #remove watershed kml and prediction files
             delete_old_watershed_files(watershed, main_settings.local_prediction_files)
-                
+            #TODO: remove geoserver files?
+            
             #delete watershed from database
             session.delete(watershed)
             session.commit()
@@ -635,23 +620,32 @@ def watershed_update(request):
     """
     if request.is_ajax() and request.method == 'POST':
         post_info = request.POST
-        #get information from AJAX request
+        #get/check information from AJAX request
         watershed_id = post_info.get('watershed_id')
         watershed_name = post_info.get('watershed_name')
         subbasin_name = post_info.get('subbasin_name')
-        folder_name = format_name(watershed_name)
-        file_name = format_name(subbasin_name)
+        folder_name = format_name(watershed_name) if watershed_name else None
+        file_name = format_name(subbasin_name) if subbasin_name else None
         data_store_id = post_info.get('data_store_id')
         geoserver_id = post_info.get('geoserver_id')
+        #REQUIRED TO HAVE drainage_line from one of these
+        #layer names
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
+        geoserver_gage_layer = post_info.get('geoserver_gage_layer')
+        #shape files
+        drainage_line_shp_file = request.FILES.getlist('drainage_line_shp_file')
+        catchment_shp_file = request.FILES.getlist('catchment_shp_file')
+        gage_shp_file = request.FILES.getlist('gage_shp_file')
+        #kml files
+        drainage_line_kml_file = request.FILES.get('drainage_line_kml_file')
+        catchment_kml_file = request.FILES.get('catchment_kml_file')
+        gage_kml_file = request.FILES.get('gage_kml_file')
         
         #CHECK INPUT
         #check if variables exist
         if not watershed_id or not watershed_name or not subbasin_name or not data_store_id \
-            or not geoserver_id or not geoserver_drainage_line_layer \
-            or not geoserver_catchment_layer \
-            or not folder_name or not file_name:
+            or not geoserver_id or not folder_name or not file_name:
             return JsonResponse({'error' : 'Request input missing data.'})
         #make sure ids are ids
         try:
@@ -660,6 +654,29 @@ def watershed_update(request):
             int(geoserver_id)
         except ValueError:
             return JsonResponse({'error' : 'One or more ids are faulty.'})
+        #make sure one layer exists
+        if(int(geoserver_id)==1):
+            if not drainage_line_kml_file:
+                return JsonResponse({'error' : 'Missing drainage line KML file.'})
+        else:
+            if not drainage_line_shp_file and not geoserver_drainage_line_layer:
+                return JsonResponse({'error' : 'Missing geoserver drainage line.'})
+            #check shapefiles
+            if drainage_line_shp_file:
+                missing_extenstions = check_shapefile_input_files(drainage_line_shp_file)
+                if missing_extenstions:
+                    return JsonResponse({'error' : 'Missing geoserver drainage line files with extensions %s.' % \
+                                        (", ".join(missing_extenstions)) })
+            if catchment_shp_file:
+                missing_extenstions = check_shapefile_input_files(catchment_shp_file)
+                if missing_extenstions:
+                    return JsonResponse({'error' : 'Missing geoserver catchment files with extensions %s.' % \
+                                        (", ".join(missing_extenstions)) })
+            if gage_shp_file:
+                missing_extenstions = check_shapefile_input_files(gage_shp_file)
+                if missing_extenstions:
+                    return JsonResponse({'error' : 'Missing geoserver gage files with extensions %s.' % \
+                                        (", ".join(missing_extenstions)) })
             
         #COMMIT    
         #initialize session
@@ -673,7 +690,6 @@ def watershed_update(request):
         if(num_similar_watersheds > 0):
             return JsonResponse({ 'error': "A watershed with the same name exists." })
         
-        #COMMIT
         #get desired watershed
         try:
             watershed  = session.query(Watershed).get(watershed_id)
@@ -688,8 +704,9 @@ def watershed_update(request):
                                                  'public','kml',watershed.folder_name)
             new_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                                  'public','kml',folder_name)
-            geoserver_drainage_line_layer = format_name(subbasin_name) + "-drainage_line.kml"
-            geoserver_catchment_layer = format_name(subbasin_name) + "-catchment.kml"
+            geoserver_drainage_line_layer = "%s-drainage_line.kml" % file_name
+            geoserver_catchment_layer = "%s-catchment.kml" % file_name
+            geoserver_gage_layer = "%s-gage.kml" % file_name
             #add new directory if it does not exist                
             try:
                 os.mkdir(new_kml_file_location)
@@ -698,41 +715,79 @@ def watershed_update(request):
 
             #if the name of watershed or subbasin is changed, update file name/location
             if(folder_name != watershed.folder_name or file_name != watershed.file_name):
-                #move drainage line kml
-                old_geoserver_drainage_line_layer = format_name(watershed.subbasin_name) + "-drainage_line.kml"
-                move(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer),
-                     os.path.join(new_kml_file_location, geoserver_drainage_line_layer))
-                #move catchment kml
-                old_geoserver_catchment_layer = format_name(watershed.subbasin_name) + "-catchment.kml"
-                move(os.path.join(old_kml_file_location, old_geoserver_catchment_layer),
-                     os.path.join(new_kml_file_location, geoserver_catchment_layer))
-                #remove old directory if exists
-                try:
-                    os.rmdir(old_kml_file_location)
-                except OSError:
-                    pass
+                if(watershed.geoserver_id == 1):
+                    #move drainage line kml
+                    old_geoserver_drainage_line_layer = "%s-drainage_line.kml" % watershed.file_name
+                    move(os.path.join(old_kml_file_location, old_geoserver_drainage_line_layer),
+                         os.path.join(new_kml_file_location, geoserver_drainage_line_layer))
+                    #move catchment kml
+                    old_geoserver_catchment_layer = "%s-catchment.kml" % watershed.file_name
+                    move(os.path.join(old_kml_file_location, old_geoserver_catchment_layer),
+                         os.path.join(new_kml_file_location, geoserver_catchment_layer))
+                    #move gage kml
+                    old_geoserver_gage_layer = "%s-gage.kml" % watershed.file_name
+                    move(os.path.join(old_kml_file_location, old_geoserver_gage_layer),
+                         os.path.join(new_kml_file_location, geoserver_gage_layer))
+                    #remove old directory if exists
+                    try:
+                        os.rmdir(old_kml_file_location)
+                    except OSError:
+                        pass
                 #remove local prediction files
                 delete_old_watershed_prediction_files(watershed.folder_name, 
                                                       main_settings.local_prediction_files)
             #upload new files if they exist
-            if('drainage_line_kml_file' in request.FILES):
-                try:
-                    os.remove(os.path.join(new_kml_file_location, geoserver_drainage_line_layer))
-                except OSError:
-                    pass
-                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),new_kml_file_location, geoserver_drainage_line_layer)
-            if('catchment_kml_file' in request.FILES):
-                try:
-                    os.remove(os.path.join(new_kml_file_location, geoserver_catchment_layer))
-                except OSError:
-                    pass
-                handle_uploaded_file(request.FILES.get('catchment_kml_file'),new_kml_file_location, geoserver_catchment_layer)
-        elif(folder_name != watershed.folder_name or file_name != watershed.file_name):
-            #remove old files if not on local server
-            delete_old_watershed_files(watershed, main_settings.local_prediction_files)
+            if(drainage_line_kml_file):
+                handle_uploaded_file(drainage_line_kml_file, new_kml_file_location, geoserver_drainage_line_layer)
+            if(catchment_kml_file):
+                handle_uploaded_file(catchment_kml_file, new_kml_file_location, geoserver_catchment_layer)
+            if(gage_kml_file):
+                handle_uploaded_file(gage_kml_file, new_kml_file_location, geoserver_gage_layer)
         else:
-             #remove old kml files           
+            #remove old kml files           
             delete_old_watershed_kml_files(watershed)
+
+            if(folder_name != watershed.folder_name or file_name != watershed.file_name):
+                #remove old prediction files if not on local server
+                delete_old_watershed_prediction_files(watershed.folder_name, 
+                                                      main_settings.local_prediction_files)
+            #TODO: GEOSERVER UPLOAD
+            """
+            engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
+                                       username=watershed.geoserver.username,
+                                       password=watershed.geoserver.password)
+            """
+            resource_workspace = 'erfp'
+            """
+            engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+            """
+            if drainage_line_shp_file:
+                #TODO: remove old geoserver layer
+                resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
+                geoserver_drainage_line_layer = '{0}:{1}'.format(resource_workspace, resource_name)
+                """        
+                # Do create shapefile
+                engine.create_shapefile_resource(geoserver_drainage_line_layer, shapefile_base=drainage_line_shp_file,
+                                                      overwrite=True)
+                """
+            if catchment_shp_file:
+                #TODO: remove old geoserver layer
+                resource_name = "%s-%s-%s" % (folder_name, file_name, 'catchment')
+                geoserver_catchment_layer = '{0}:{1}'.format(resource_workspace, resource_name)
+                """
+                # Do create shapefile
+                engine.create_shapefile_resource(geoserver_catchment_layer, shapefile_base=catchment_shp_file,
+                                                      overwrite=True)
+                """
+            if gage_shp_file:
+                #TODO: remove old geoserver layer
+                resource_name = "%s-%s-%s" % (folder_name, file_name, 'gage')
+                geoserver_gage_layer = '{0}:{1}'.format(resource_workspace, resource_name)
+                """
+                # Do create shapefile
+                engine.create_shapefile_resource(geoserver_gage_layer, shapefile_base=gage_shp_file,
+                                                      overwrite=True)
+                """
             
         #change watershed attributes
         watershed.watershed_name = watershed_name.strip()
@@ -743,6 +798,7 @@ def watershed_update(request):
         watershed.geoserver_id = geoserver_id
         watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer.strip()
         watershed.geoserver_catchment_layer = geoserver_catchment_layer.strip()
+        watershed.geoserver_gage_layer = geoserver_gage_layer.strip()
         
         #update database
         session.commit()
