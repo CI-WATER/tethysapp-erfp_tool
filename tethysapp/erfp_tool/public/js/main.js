@@ -62,6 +62,9 @@ function checkInputWithError(input, safe_to_submit, one_parent, select_two) {
 //form submission check function
 function checkTableCellInputWithError(input, safe_to_submit) {
     var data_value = input.text();
+    if(data_value == "") {
+        data_value = input.val();
+    }
     var parent = input.parent();
 
     if(data_value) {
