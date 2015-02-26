@@ -100,23 +100,23 @@ def map(request):
                             }
                 #prepare kml files
                 drainage_line_kml = os.path.join(file_path, watershed.geoserver_drainage_line_layer)
-                if os.path.exists(drainage_line_kml):
+                if os.path.exists(drainage_line_kml) and watershed.geoserver_drainage_line_layer:
                     drainage_line_kml = os.path.basename(drainage_line_kml)
                     kml_info['drainage_line'] = '/static/erfp_tool/kml/%s/%s' \
                                 % (watershed.folder_name, 
                                    watershed.geoserver_drainage_line_layer)
                 catchment_kml = os.path.join(file_path, watershed.geoserver_catchment_layer)
-                if os.path.exists(catchment_kml):
+                if os.path.exists(catchment_kml) and watershed.geoserver_catchment_layer:
                     catchment_kml = os.path.basename(catchment_kml)
                     kml_info['catchment'] = '/static/erfp_tool/kml/%s/%s' \
                                             % (watershed.folder_name,
                                                watershed.geoserver_catchment_layer)
-                gauge_kml = os.path.join(file_path, watershed.geoserver_gauge_layer)
-                if os.path.exists(gauge_kml):
-                    catchment_kml = os.path.basename(gauge_kml)
-                    kml_info['gauge'] = '/static/erfp_tool/kml/%s/%s' \
+                gage_kml = os.path.join(file_path, watershed.geoserver_gage_layer)
+                if os.path.exists(gage_kml) and watershed.geoserver_gage_layer:
+                    catchment_kml = os.path.basename(gage_kml)
+                    kml_info['gage'] = '/static/erfp_tool/kml/%s/%s' \
                                             % (watershed.folder_name,
-                                               watershed.geoserver_gauge_layer)
+                                               watershed.geoserver_gage_layer)
         
                 kml_info['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
@@ -175,12 +175,12 @@ def map(request):
                                                             watershed.subbasin_name)
                 layers_info.append(geoserver_info)
                 #load catchment layer if exists
-                gauge_info = engine.get_resource(resource_id=watershed.geoserver_gauge_layer.strip())
-                if gauge_info['success']: 
-                    latlon_bbox = gauge_info['result']['latlon_bbox'][:4]
-                    geoserver_info['gauge'] = {'name': watershed.geoserver_gauge_layer,
+                gage_info = engine.get_resource(resource_id=watershed.geoserver_gage_layer.strip())
+                if gage_info['success']: 
+                    latlon_bbox = gage_info['result']['latlon_bbox'][:4]
+                    geoserver_info['gage'] = {'name': watershed.geoserver_gage_layer,
                                              'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
-                                             'projection': gauge_info['result']['projection'],
+                                             'projection': gage_info['result']['projection'],
                                             }
                 geoserver_info['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
@@ -353,10 +353,10 @@ def add_watershed(request):
                 'placeholder': 'e.g.: erfp:catchment',
                 'icon_append':'glyphicon glyphicon-link',
               }
-    geoserver_gauge_input = {
-                'display_text': 'Geoserver Gauge Layer',
-                'name': 'geoserver-gauge-input',
-                'placeholder': 'e.g.: erfp:gauge',
+    geoserver_gage_input = {
+                'display_text': 'Geoserver Gage Layer',
+                'name': 'geoserver-gage-input',
+                'placeholder': 'e.g.: erfp:gage',
                 'icon_append':'glyphicon glyphicon-link',
               }
     shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
@@ -386,7 +386,7 @@ def add_watershed(request):
                 'geoserver_select': geoserver_select,
                 'geoserver_drainage_line_input': geoserver_drainage_line_input,
                 'geoserver_catchment_input': geoserver_catchment_input,
-                'geoserver_gauge_input': geoserver_gauge_input,
+                'geoserver_gage_input': geoserver_gage_input,
                 'shp_upload_toggle_switch': shp_upload_toggle_switch,
                 'add_button': add_button,
               }

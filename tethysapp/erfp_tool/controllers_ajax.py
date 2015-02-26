@@ -448,15 +448,15 @@ def watershed_add(request):
         #layer names
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
-        geoserver_gauge_layer = post_info.get('geoserver_gauge_layer')
+        geoserver_gage_layer = post_info.get('geoserver_gage_layer')
         #shape files
         drainage_line_shp_file = request.FILES.getlist('drainage_line_shp_file')
         catchment_shp_file = request.FILES.getlist('catchment_shp_file')
-        gauge_shp_file = request.FILES.getlist('gauge_shp_file')
+        gage_shp_file = request.FILES.getlist('gage_shp_file')
         #kml files
         drainage_line_kml_file = request.FILES.get('drainage_line_kml_file')
         catchment_kml_file = request.FILES.get('catchment_kml_file')
-        gauge_kml_file = request.FILES.get('gauge_kml_file')
+        gage_kml_file = request.FILES.get('gage_kml_file')
         
         #CHECK DATA
         #make sure information exists 
@@ -487,8 +487,8 @@ def watershed_add(request):
                 if missing_extenstions:
                     return JsonResponse({'error' : 'Missing geoserver catchment files with extensions %s.' % \
                                         (", ".join(missing_extenstions)) })
-            if gauge_shp_file:
-                missing_extenstions = check_shapefile_input_files(gauge_shp_file)
+            if gage_shp_file:
+                missing_extenstions = check_shapefile_input_files(gage_shp_file)
                 if missing_extenstions:
                     return JsonResponse({'error' : 'Missing geoserver gage files with extensions %s.' % \
                                         (", ".join(missing_extenstions)) })
@@ -518,11 +518,11 @@ def watershed_add(request):
                     geoserver_catchment_layer = "%s-catchment.kml" % file_name
                     handle_uploaded_file(catchment_kml_file,kml_file_location, 
                                          geoserver_catchment_layer)
-                #uploade gauge kml if exists
-                if gauge_kml_file:
-                    geoserver_gauge_layer = "%s-gauge.kml" % file_name
-                    handle_uploaded_file(gauge_kml_file,kml_file_location, 
-                                         geoserver_gauge_layer)
+                #uploade gage kml if exists
+                if gage_kml_file:
+                    geoserver_gage_layer = "%s-gage.kml" % file_name
+                    handle_uploaded_file(gage_kml_file,kml_file_location, 
+                                         geoserver_gage_layer)
             else:
                 session.close()
                 return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
@@ -530,49 +530,18 @@ def watershed_add(request):
             #GEOSERVER UPLOAD
             print drainage_line_shp_file
             """
-            engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
-                                       username='admin',
-                                       password='geoserver')
-            
-            # Create Workspaces
-            resource_workspace = 'erfp'
-            engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
     
-            # Create Test Stores/Resources/Layers
-            ## Shapefile
-            if 'drainage_line_shp_file' in request.FILES:
-                kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                                 'public','kml',folder_name)
-                geoserver_drainage_line_layer = "%s-drainage_line.kml" % file_name
-                handle_uploaded_file(request.FILES.get('drainage_line_kml_file'),
-                                     kml_file_location, geoserver_drainage_line_layer)
-                #upload catchment kml if exists
-                if 'catchment_shp_file' in request.FILES:
-                    geoserver_catchment_layer = "%s-catchment.kml" % file_name
-                    handle_uploaded_file(request.FILES.get('catchment_kml_file'),kml_file_location, 
-                                         geoserver_catchment_layer)
-                #uploade gauge kml if exists
-                if 'gauge_shp_file' in request.FILES:
-                    geoserver_gauge_layer = "%s-gauge.kml" % file_name
-                    handle_uploaded_file(request.FILES.get('gauge_kml_file'),kml_file_location, 
-                                         geoserver_gauge_layer)
-            else:
-                session.close()
-                return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
-            
-            TODO: make geoserver layer upload function
-            #check layer type
-            layer_type = ""
-            if "drainage_line" in layer_file.name:
-                layer_type = "drainage_line"
-            elif "catchment" in layer_file.name:
-                layer_type = "catchment"
-            elif "gauge" in layer_file.name:
-                layer_type = "gauge"
-            #upload if valid layer type
-            if layer_type:    
+            if drainage_line_shp_file:
+                engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
+                                           username=watershed.geoserver.username,
+                                           password=watershed.geoserver.password)
+                
+                resource_workspace = 'erfp'
+                engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+
+                #upload files
                 # Resource and Layer will take the name of the file
-                resource_name = "%s-%s-%s" % (folder_name, file_name, layer_type)
+                resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
         
                 # Identifiers of the form 'workspace:item'
                 resource_identifier = '{0}:{1}'.format(resource_workspace, resource_name)
@@ -580,6 +549,33 @@ def watershed_add(request):
                 # Do create shapefile
                 engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
                                                       overwrite=True)
+                if catchment_shp_file:
+                    #upload file
+                    # Resource and Layer will take the name of the file
+                    resource_name = "%s-%s-%s" % (folder_name, file_name, 'catchment')
+            
+                    # Identifiers of the form 'workspace:item'
+                    resource_identifier = '{0}:{1}'.format(resource_workspace, resource_name)
+            
+                    # Do create shapefile
+                    engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
+                                                          overwrite=True)
+                if gage_shp_file:
+                    #upload file
+                    # Resource and Layer will take the name of the file
+                    resource_name = "%s-%s-%s" % (folder_name, file_name, 'gage')
+            
+                    # Identifiers of the form 'workspace:item'
+                    resource_identifier = '{0}:{1}'.format(resource_workspace, resource_name)
+            
+                    # Do create shapefile
+                    engine.create_shapefile_resource(resource_identifier, shapefile_base=layer_file,
+                                                          overwrite=True)
+            else:
+                session.close()
+                return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
+            
+            TODO: make geoserver layer upload function
             """
 
          
@@ -589,7 +585,7 @@ def watershed_add(request):
                               file_name, data_store_id, geoserver_id, 
                               geoserver_drainage_line_layer,
                               geoserver_catchment_layer,
-                              geoserver_gauge_layer)
+                              geoserver_gage_layer)
         session.add(watershed)
     
         session.commit()

@@ -48,18 +48,18 @@
         <input id="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the watershed basin. Need .shp, .shx, .prj, .dbf files.</p>
-    <!-- Gauge Stations !-->
-    {% gizmo text_input geoserver_gauge_input %}
+    <!-- gage Stations !-->
+    {% gizmo text_input geoserver_gage_input %}
     <div class="form-group kml">
-        <label class="control-label" for="gauge-kml-upload-input">Gauge KML File</label>
-        <input id="gauge-kml-upload-input" name="gauge-kml-upload-input" type="file" accept=".kml">
+        <label class="control-label" for="gage-kml-upload-input">gage KML File</label>
+        <input id="gage-kml-upload-input" name="gage-kml-upload-input" type="file" accept=".kml">
     </div>
-    <p class="help-block kml">This is the KML file representing the gauge stations.</p>
+    <p class="help-block kml">This is the KML file representing the gage stations.</p>
     <div class="form-group shapefile upload hidden">
-        <label class="control-label" for="gauge-shp-upload-input">Gauge Shapefile</label>
-        <input id="gauge-shp-upload-input" name="gauge-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
+        <label class="control-label" for="gage-shp-upload-input">gage Shapefile</label>
+        <input id="gage-shp-upload-input" name="gage-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
-    <p class="help-block shapefile upload hidden">This is the shapefile file representing the gauge stations. Need .shp, .shx, .prj, .dbf files.</p>
+    <p class="help-block shapefile upload hidden">This is the shapefile file representing the gage stations. Need .shp, .shx, .prj, .dbf files.</p>
 {% gizmo button_group add_button %}
 {% endblock %}
 

@@ -42,8 +42,8 @@ var ERFP_MAP = (function() {
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
     var bindInputs, zoomToAll, zoomToLayer, toTitleCase, datePadString,  
-        updateInfoAlert, getBaseLayer, clearMessages, clearOldChart, 
-        getChartData, displayHydrograph;
+        updateInfoAlert, getBaseLayer, getTileLayer, getKMLLayer, 
+        clearMessages, clearOldChart, getChartData, displayHydrograph;
 
 
     /************************************************************************
@@ -140,6 +140,37 @@ var ERFP_MAP = (function() {
                         ]
                 });
 
+    };
+
+    //FUNCTION: gets KML layer for geoserver
+    getKMLLayer = function(layer_info, layer_id) {
+        var layer = new ol.layer.Vector({
+            source: new ol.source.KML({
+                projection: new ol.proj.get('EPSG:3857'),
+                url: layer_info,
+            }),
+        });
+        layer.set('layer_id', layer_id);
+        layer.set('layer_type', 'kml');
+        return layer;
+    };
+
+    //FUNCTION: gets tile layer for geoserver
+    getTileLayer = function(layer_info, geoserver_url, layer_id) {
+        var layer = new ol.layer.Tile({
+            source: new ol.source.TileWMS({
+                url: geoserver_url,
+                params: {'LAYERS': layer_info['name'], 
+                         'TILED': true},
+                serverType: 'geoserver',
+            }),
+        });
+        layer.set('extent', ol.proj.transformExtent(layer_info['latlon_bbox'].map(Number), 
+                                                'EPSG:4326',
+                                                'EPSG:3857'));
+        layer.set('layer_id', layer_id);
+        layer.set('layer_type', 'geoserver');
+        return layer;
     };
 
     clearMessages = function() {
@@ -503,22 +534,12 @@ var ERFP_MAP = (function() {
             if('geoserver_url' in layer_info) {
                 //add catchment if exists
                 if('catchment' in layer_info) {
-                    var catchment = new ol.layer.Tile({
-                        source: new ol.source.TileWMS({
-                            url: layer_info['geoserver_url'],
-                            params: {'LAYERS': layer_info['catchment']['name'], 
-                                     'TILED': true},
-                            serverType: 'geoserver',
-                        }),
-                    });
-                    catchment.set('extent', ol.proj.transformExtent(layer_info['catchment']['latlon_bbox'].map(Number), 
-                                                            'EPSG:4326',
-                                                            'EPSG:3857'));
-                    catchment.set('layer_id', 'layer' + group_index + 1);
-                    catchment.set('layer_type', 'geoserver');
-                    layers.push(catchment);
+                    layers.push(getTileLayer(layer_info['catchment'], layer_info['geoserver_url'], 'layer' + group_index + 1));
                 }
-                
+                //add gage if exists
+                if('gage' in layer_info) {
+                    layers.push(getTileLayer(layer_info['gage'], layer_info['geoserver_url'], 'layer' + group_index + 2));
+                }
                 //add drainage line if exists
                 if('drainage_line' in layer_info) {
                     //check if required parameters exist
@@ -613,38 +634,29 @@ var ERFP_MAP = (function() {
                     drainage_line_layers.push(drainage_line);
                     layers.push(drainage_line);
                 }
-            } else {                
+            } else { //assume KML                
                 //add catchment if exists
                 if('catchment' in layer_info) {
-                    var catchment = new ol.layer.Vector({
-                        source: new ol.source.KML({
-                            projection: new ol.proj.get('EPSG:3857'),
-                            url: layer_info['catchment'],
-                        }),
-                    });
-                    catchment.set('layer_id', 'layer' + group_index + 1);
-                    catchment.set('layer_type', 'kml');
-                    layers.push(catchment);
+                    layers.push(getKMLLayer(layer_info['catchment'],'layer' + group_index + 1));
                 }
-                
+                //add gage if exists
+                if('gage' in layer_info) {
+                    layers.push(getKMLLayer(layer_info['gage'],'layer' + group_index + 2));
+                }
                 //add drainage line if exists
                 if('drainage_line' in layer_info) {
-                    var drainage_line = new ol.layer.Vector({
-                        source: new ol.source.KML({
-                            projection: new ol.proj.get('EPSG:3857'),
-                            url: layer_info['drainage_line'],
-                        }),
-                    });
-                    drainage_line.set('layer_id', 'layer' + group_index + 0);
-                    drainage_line.set('layer_type', 'kml');
-                    drainage_line_layers.push(drainage_line);
-                    layers.push(drainage_line);
+                    var drainage_line_layer = getKMLLayer(layer_info['drainage_line'],'layer' + group_index + 0)
+                    layers.push(drainage_line_layer);
+                    drainage_line_layers.push(drainage_line_layer);
                 }
             }
-            var group_layer = new ol.layer.Group({ 
-                    layers: layers,
-            });
-            all_group_layers.push(group_layer);
+            //make sure there are layers to add
+            if (layers.length > 0) {
+                var group_layer = new ol.layer.Group({ 
+                        layers: layers,
+                });
+                all_group_layers.push(group_layer);
+            }
         });
 
 
