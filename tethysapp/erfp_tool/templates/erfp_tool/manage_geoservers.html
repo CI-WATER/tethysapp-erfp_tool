@@ -17,6 +17,8 @@
                 <th>ID</th>
                 <th>Name</th>
                 <th>URL</th>
+                <th>Username</th>
+                <th>Password</th>
             </thead>
         <tbody>
         {% for geoserver in geoservers %}
@@ -32,6 +34,16 @@
                 <td class="geoserver-id">{{geoserver.id}}</td>
                 <td class="geoserver-name" contenteditable>{{geoserver.name}}</td>
                 <td class="geoserver-url" contenteditable>{{geoserver.url}}</td>
+                <td class="geoserver-username" contenteditable>{{geoserver.username}}</td>
+                <td class="geoserver-password">    
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input class="geoserver-password-input" class="form-control" name="geoserver-password-input" type="password" value="{{geoserver.password}}" placeholder="e.g.: geoserver">
+                            <div class="input-group-addon"><span class="glyphicon glyphicon-lock"></span></div>
+                        </div>
+                        <p class="help-block hidden">No geoserver password specified.</p>
+                    </div>
+                </td>
             </tr>
         {% endfor %}
         </tbody>

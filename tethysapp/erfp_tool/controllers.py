@@ -127,8 +127,8 @@ def map(request):
                             'geoserver_url': "%s/wms" % watershed.geoserver.url,
                             }
                 engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
-                                                       username='admin',
-                                                       password='geoserver')
+                                                       username=watershed.geoserver.username,
+                                                       password=watershed.geoserver.password)
                 #load drainage line layer if exists
                 drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer.strip())
                 if drainage_line_info['success']:

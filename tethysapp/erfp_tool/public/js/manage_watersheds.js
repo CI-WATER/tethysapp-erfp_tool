@@ -178,7 +178,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
         
         //handle the submit update event
         $('.submit-delete-watershed').click(function(){
-            data = {
+            var data = {
                     watershed_id: $(this).parent().parent().parent()
                                     .find('.watershed-id').text(),
                     };

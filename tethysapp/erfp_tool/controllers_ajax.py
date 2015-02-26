@@ -130,6 +130,14 @@ def geoserver_add(request):
         geoserver_username = post_info.get('geoserver_username')
         geoserver_password = post_info.get('geoserver_password')
     
+        #check data
+        if not geoserver_name or not geoserver_url or not \
+            geoserver_username or not geoserver_password:
+            return JsonResponse({ 'error': "Missing input data." })
+        #clean url
+        geoserver_url = geoserver_url.strip()
+        if geoserver_url.endswith('/'):
+            geoserver_url = geoserver_url[:-1]
         #initialize session
         session = SettingsSessionMaker()
         
@@ -143,10 +151,12 @@ def geoserver_add(request):
             ) \
             .count()
         if(num_similar_geoservers > 0):
+            session.close()
             return JsonResponse({ 'error': "A geoserver with the same name or url exists." })
             
         #add Data Store
-        session.add(Geoserver(geoserver_name, geoserver_url, geoserver_username, geoserver_password))
+        session.add(Geoserver(geoserver_name.strip(), geoserver_url.strip(),
+                              geoserver_username.strip(), geoserver_password.strip()))
         session.commit()
         session.close()
         return JsonResponse({ 'success': "Geoserver Sucessfully Added!" })
@@ -167,12 +177,17 @@ def geoserver_delete(request):
             #initialize session
             session = SettingsSessionMaker()
             try:
-                #update data store
-                geoserver  = session.query(Geoserver).get(geoserver_id)
+                #delete geoserver
+                try:
+                    geoserver = session.query(Geoserver).get(geoserver_id)
+                except ObjectDeletedError:
+                    session.close()
+                    return JsonResponse({ 'error': "The geoserver to delete does not exist." })
                 session.delete(geoserver)
                 session.commit()
                 session.close()
             except IntegrityError:
+                session.close()
                 return JsonResponse({ 'error': "This geoserver is connected with a watershed! Must remove connection to delete." })
             return JsonResponse({ 'success': "Geoserver sucessfully deleted!" })
         return JsonResponse({ 'error': "Cannot change this geoserver." })
@@ -189,14 +204,49 @@ def geoserver_update(request):
         geoserver_id = post_info.get('geoserver_id')
         geoserver_name = post_info.get('geoserver_name')
         geoserver_url = post_info.get('geoserver_url')
-    
+        geoserver_username = post_info.get('geoserver_username')
+        geoserver_password = post_info.get('geoserver_password')
+        #check data
+        if not geoserver_id or not geoserver_name or not geoserver_url or not \
+            geoserver_username or not geoserver_password:
+            return JsonResponse({ 'error': "Missing input data." })
+        #make sure id is id
+        try:
+            int(geoserver_id)
+        except ValueError:
+            return JsonResponse({'error' : 'Geoserver id is faulty.'})
+        #clean url
+        geoserver_url = geoserver_url.strip()
+        if geoserver_url.endswith('/'):
+            geoserver_url = geoserver_url[:-1]
+
         if int(geoserver_id) != 1:
             #initialize session
             session = SettingsSessionMaker()
-            #update data store
-            geoserver = session.query(Geoserver).get(geoserver_id)
-            geoserver.name = geoserver_name
-            geoserver.url= geoserver_url    
+            #check to see if duplicate exists
+            num_similar_geoservers  = session.query(Geoserver) \
+                .filter(
+                    or_(
+                        Geoserver.name == geoserver_name, 
+                        Geoserver.url == geoserver_url,
+                        Geoserver.id != geoserver_id,
+                    )
+                ) \
+                .count()
+            if(num_similar_geoservers > 0):
+                session.close()
+                return JsonResponse({ 'error': "A geoserver with the same name or url exists." })
+            #update geoserver
+            try:
+                geoserver = session.query(Geoserver).get(geoserver_id)
+            except ObjectDeletedError:
+                session.close()
+                return JsonResponse({ 'error': "The geoserver to update does not exist." })
+            
+            geoserver.name = geoserver_name.strip()
+            geoserver.url = geoserver_url.strip()    
+            geoserver.username = geoserver_username.strip()    
+            geoserver.password = geoserver_password.strip()    
             session.commit()
             session.close()
             return JsonResponse({ 'success': "Geoserver sucessfully updated!" })
@@ -598,7 +648,10 @@ def watershed_delete(request):
             #initialize session
             session = SettingsSessionMaker()
             #get watershed to delete
-            watershed  = session.query(Watershed).get(watershed_id)
+            try:
+                watershed  = session.query(Watershed).get(watershed_id)
+            except ObjectDeletedError:
+                return JsonResponse({ 'error': "The watershed to delete does not exist." })
             main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
             #remove watershed kml and prediction files
             delete_old_watershed_files(watershed, main_settings.local_prediction_files)
