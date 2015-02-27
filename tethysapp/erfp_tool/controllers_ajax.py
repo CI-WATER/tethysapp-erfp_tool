@@ -225,14 +225,11 @@ def geoserver_update(request):
             session = SettingsSessionMaker()
             #check to see if duplicate exists
             num_similar_geoservers  = session.query(Geoserver) \
-                .filter(
-                    or_(
-                        Geoserver.name == geoserver_name, 
-                        Geoserver.url == geoserver_url,
-                        Geoserver.id != geoserver_id,
-                    )
-                ) \
-                .count()
+              .filter(Geoserver.name == geoserver_name) \
+              .filter(Geoserver.url == geoserver_url) \
+              .filter(Geoserver.id != geoserver_id) \
+              .count()
+              
             if(num_similar_geoservers > 0):
                 session.close()
                 return JsonResponse({ 'error': "A geoserver with the same name or url exists." })
