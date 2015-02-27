@@ -138,7 +138,7 @@ def map(request):
                     missing_attributes = []
                     contained_attributes = []
                     #check required attributes
-                    necessary_attributes = ['watershed_name', 'subbasin_name', 'COMID']
+                    necessary_attributes = ['watershed', 'subbasin', 'COMID']
                     for necessary_attribute in necessary_attributes:
                         if necessary_attribute not in layer_attributes:
                             missing_attributes.append(necessary_attribute)

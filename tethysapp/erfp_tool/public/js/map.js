@@ -752,6 +752,12 @@ var ERFP_MAP = (function() {
             if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
                 var reach_id = selected_feature.get('name');
             }
+            if(typeof watershed_name == 'undefined') {
+                var watershed_name = selected_feature.get('watershed');
+            }
+            if(typeof subbasin_name == 'undefined') {
+                var subbasin_name = selected_feature.get('subbasin');
+            }
 
             if(typeof usgs_id != 'undefined' && !isNaN(usgs_id) && usgs_id.length < 8) {
                 usgs_id = '0' + usgs_id;

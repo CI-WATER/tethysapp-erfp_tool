@@ -119,7 +119,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                     "if the watershed or subbasin name are changed.")) {
 
                     var submit_button = $(this);
-                    submit_button_html = submit_button.html();
+                    var submit_button_html = submit_button.html();
                     //give user information
                     addInfoMessage("Submitting Data. Please Wait.");
                     submit_button.text('Submitting ...');
