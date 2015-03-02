@@ -1,6 +1,6 @@
 # Put your persistent store models in this file
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker
 
 from .utilities import get_persistent_store_engine
@@ -139,12 +139,21 @@ class Watershed(Base):
     geoserver_drainage_line_layer = Column(String)
     geoserver_catchment_layer = Column(String)
     geoserver_gage_layer = Column(String)
+    geoserver_drainage_line_uploaded = Column(Boolean)
+    geoserver_catchment_uploaded = Column(Boolean)
+    geoserver_gage_uploaded = Column(Boolean)
+    kml_drainage_line_layer = Column(String)
+    kml_catchment_layer = Column(String)
+    kml_gage_layer = Column(String)
     watershed_groups = relationship("WatershedGroup", 
                               secondary='watershed_watershed_group_link')
                               
     def __init__(self, watershed_name, subbasin_name, folder_name, file_name,
                  data_store_id, geoserver_id, geoserver_drainage_line_layer, 
-                 geoserver_catchment_layer, geoserver_gage_layer):
+                 geoserver_catchment_layer, geoserver_gage_layer, 
+                 geoserver_drainage_line_uploaded, geoserver_catchment_uploaded,
+                 geoserver_gage_uploaded, kml_drainage_line_layer,
+                 kml_catchment_layer, kml_gage_layer):
         """
         Constructor for settings
         """
@@ -157,6 +166,12 @@ class Watershed(Base):
         self.geoserver_drainage_line_layer = geoserver_drainage_line_layer
         self.geoserver_catchment_layer = geoserver_catchment_layer
         self.geoserver_gage_layer = geoserver_gage_layer
+        self.geoserver_drainage_line_uploaded = geoserver_drainage_line_uploaded
+        self.geoserver_catchment_uploaded = geoserver_catchment_uploaded
+        self.geoserver_gage_uploaded = geoserver_gage_uploaded
+        self.kml_drainage_line_layer = kml_drainage_line_layer
+        self.kml_catchment_layer = kml_catchment_layer
+        self.kml_gage_layer = kml_gage_layer
 
 class WatershedWatershedGroupLink(Base):
     __tablename__ = 'watershed_watershed_group_link'

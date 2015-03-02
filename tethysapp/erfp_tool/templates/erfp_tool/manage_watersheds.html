@@ -72,7 +72,7 @@
                     {% gizmo toggle_switch shp_upload_toggle_switch %}
                     <p class="kml{% if watershed.geoserver_id != 1 %} hidden{% endif %}">N/A</p>
                 </td>  
-                <td class="drainage-line-layer">
+                <td class="drainage-line-layer"{% if watershed.geoserver_id == 1 %} kml-file-name="{{watershed.kml_drainage_line_layer}}"{% endif %}>
                     <div class="form-group shapefile{% if watershed.geoserver_id == 1 %} hidden{% endif %}">
                         <input class="geoserver-drainage-line-input" name="geoserver-drainage-line-input" type="input" value="{{watershed.geoserver_drainage_line_layer}}">
                     </div>
@@ -83,9 +83,9 @@
                     <div class="form-group shapefile upload hidden">
                         <input class="drainage-line-shp-upload-input" name="drainage-line-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
                     </div>
-                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.geoserver_drainage_line_layer}}</p>
+                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.kml_drainage_line_layer}}</p>
                 </td>  
-                <td class="catchment-layer">
+                <td class="catchment-layer"{% if watershed.geoserver_id == 1 %} kml-file-name="{{watershed.kml_catchment_layer}}"{% endif %}>
                     <div class="form-group shapefile{% if watershed.geoserver_id == 1 %} hidden{% endif %}">
                         <input class="geoserver-catchment-input" name="geoserver-catchment-input" type="input" value="{{watershed.geoserver_catchment_layer}}">
                     </div>
@@ -95,9 +95,9 @@
                     <div class="form-group shapefile upload hidden">
                         <input class="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
                     </div>
-                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.geoserver_catchment_layer}}</p>
+                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.kml_catchment_layer}}</p>
                 </td>  
-                <td class="gage-layer">
+                <td class="gage-layer"{% if watershed.geoserver_id == 1 %} kml-file-name="{{watershed.kml_gage_layer}}"{% endif %}>
                     <div class="form-group shapefile{% if watershed.geoserver_id == 1 %} hidden{% endif %}">
                         <input class="geoserver-gage-input" name="geoserver-gage-input" type="input" value="{{watershed.geoserver_gage_layer}}">
                     </div>
@@ -107,7 +107,7 @@
                     <div class="form-group shapefile upload hidden">
                         <input class="gage-shp-upload-input" name="gage-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
                     </div>
-                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.geoserver_gage_layer}}</p>
+                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.kml_gage_layer}}</p>
                 </td>  
             </tr>
         {% endfor %}

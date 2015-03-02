@@ -37,22 +37,25 @@ def delete_old_watershed_kml_files(watershed):
     old_kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          'public','kml',watershed.folder_name)
     #remove old kml files on local server
-    #draiange line
+    #drainange line
     try:
-        os.remove(os.path.join(old_kml_file_location, 
-                               watershed.geoserver_drainage_line_layer))
+        if watershed.kml_drainage_line_layer:
+            os.remove(os.path.join(old_kml_file_location, 
+                                   watershed.kml_drainage_line_layer))
     except OSError:
         pass
     #catchment
     try:
-        os.remove(os.path.join(old_kml_file_location, 
-                               watershed.geoserver_catchment_layer))
+        if watershed.kml_catchment_layer:
+            os.remove(os.path.join(old_kml_file_location, 
+                                   watershed.kml_catchment_layer))
     except OSError:
         pass
     #gage
     try:
-        os.remove(os.path.join(old_kml_file_location, 
-                               watershed.geoserver_gage_layer))
+        if watershed.kml_gage_layer:
+            os.remove(os.path.join(old_kml_file_location, 
+                                   watershed.kml_gage_layer))
     except OSError:
         pass
     #folder
