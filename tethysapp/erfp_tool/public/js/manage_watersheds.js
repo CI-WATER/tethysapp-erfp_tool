@@ -96,9 +96,6 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             var gage_kml_file = null;
     
             if(geoserver_id==1){
-                kml_drainage_line_layer = parent_row.find('.drainage-line-layer').attr('kml-file-name'); //optional
-                kml_catchment_layer = parent_row.find('.catchment-layer').attr('kml-file-name'); //optional
-                kml_gage_layer = parent_row.find('.gage-layer').attr('kml-file-name'); //optional
                 //kml upload
                 drainage_line_kml_file = parent_row.find('.drainage-line-kml-upload-input')[0].files[0];
                 catchment_kml_file = parent_row.find('.catchment-kml-upload-input')[0].files[0];
@@ -141,9 +138,6 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                         data.append("geoserver_drainage_line_layer",geoserver_drainage_line_layer);
                         data.append("geoserver_catchment_layer",geoserver_catchment_layer);
                         data.append("geoserver_gage_layer",geoserver_gage_layer);
-                        data.append("kml_drainage_line_layer",kml_drainage_line_layer);
-                        data.append("kml_catchment_layer",kml_catchment_layer);
-                        data.append("kml_gage_layer",kml_gage_layer);
                         data.append("drainage_line_kml_file",drainage_line_kml_file);
                         data.append("catchment_kml_file",catchment_kml_file);
                         data.append("gage_kml_file",gage_kml_file);
@@ -172,9 +166,14 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                         var xhr = ajax_update_database("submit",data);
                     }
                     m_uploading_data = true;
-                    xhr.always(function(){
-                        submit_button.html(submit_button_html);
-                        m_uploading_data = false;
+                    xhr.done(function(data) {
+                            parent_row.find('.drainage-line-layer').find('.help-block.upload').text('Current: ' + data['kml_drainage_line_layer']);
+                            parent_row.find('.catchment-layer').find('.help-block.upload').text('Current: ' + data['kml_catchment_layer']);
+                            parent_row.find('.gage-layer').find('.help-block.upload').text('Current: ' + data['kml_gage_layer']);
+                        })
+                       .always(function(){
+                            submit_button.html(submit_button_html);
+                            m_uploading_data = false;
                     });
                 } //window confirm
             }  else if (m_uploading_data) {

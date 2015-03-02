@@ -18,6 +18,8 @@ from django.contrib.auth.decorators import user_passes_test
 from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 
 #local imports
+from cron.load_datasets import load_datasets
+
 from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
 
@@ -637,7 +639,10 @@ def watershed_add(request):
         session.add(watershed)
         session.commit()
         session.close()
-
+        
+        #load prediction datasets for watershed
+        load_datasets()
+        
         return JsonResponse({ 'success': "Watershed Sucessfully Added!" })
 
     return JsonResponse({ 'error': "A problem with your request exists." })
@@ -666,10 +671,8 @@ def watershed_delete(request):
             except ObjectDeletedError:
                 return JsonResponse({ 'error': "The watershed to delete does not exist." })
             main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
-            #remove watershed kml and prediction files
+            #remove watershed geoserver, kml, and prediction files
             delete_old_watershed_files(watershed, main_settings.local_prediction_files)
-            #TODO: remove geoserver files?
-            
             #delete watershed from database
             session.delete(watershed)
             session.commit()
@@ -699,9 +702,6 @@ def watershed_update(request):
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
         geoserver_gage_layer = post_info.get('geoserver_gage_layer')
-        kml_drainage_line_layer = post_info.get('kml_drainage_line_layer')
-        kml_catchment_layer = post_info.get('kml_catchment_layer')
-        kml_gage_layer = post_info.get('kml_gage_layer')
         #shape files
         drainage_line_shp_file = request.FILES.getlist('drainage_line_shp_file')
         catchment_shp_file = request.FILES.getlist('catchment_shp_file')
@@ -727,9 +727,29 @@ def watershed_update(request):
             int(geoserver_id)
         except ValueError:
             return JsonResponse({'error' : 'One or more ids are faulty.'})
+
+        #initialize session
+        session = SettingsSessionMaker()
+        #check to see if duplicate exists
+        num_similar_watersheds  = session.query(Watershed) \
+            .filter(Watershed.folder_name == folder_name) \
+            .filter(Watershed.file_name == file_name) \
+            .filter(Watershed.id != watershed_id) \
+            .count()
+        if(num_similar_watersheds > 0):
+            session.close()
+            return JsonResponse({ 'error': "A watershed with the same name exists." })
+        
+        #get desired watershed
+        try:
+            watershed  = session.query(Watershed).get(watershed_id)
+        except ObjectDeletedError:
+            session.close()
+            return JsonResponse({ 'error': "The watershed to update does not exist." })
+
         #make sure one layer exists
         if(int(geoserver_id)==1):
-            if not drainage_line_kml_file and not kml_drainage_line_layer:
+            if not drainage_line_kml_file and not watershed.kml_drainage_line_layer:
                 return JsonResponse({'error' : 'Missing drainage line KML file.'})
         else:
             if not drainage_line_shp_file and not geoserver_drainage_line_layer:
@@ -752,25 +772,11 @@ def watershed_update(request):
                                         (", ".join(missing_extenstions)) })
             
         #COMMIT    
-        #initialize session
-        session = SettingsSessionMaker()
-        #check to see if duplicate exists
-        num_similar_watersheds  = session.query(Watershed) \
-            .filter(Watershed.folder_name == folder_name) \
-            .filter(Watershed.file_name == file_name) \
-            .filter(Watershed.id != watershed_id) \
-            .count()
-        if(num_similar_watersheds > 0):
-            return JsonResponse({ 'error': "A watershed with the same name exists." })
-        
-        #get desired watershed
-        try:
-            watershed  = session.query(Watershed).get(watershed_id)
-        except ObjectDeletedError:
-            return JsonResponse({ 'error': "The watershed to update does not exist." })
-            
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
 
+        kml_drainage_line_layer = ""
+        kml_catchment_layer = ""
+        kml_gage_layer = ""
         #upload files to local server if ready
         if(int(geoserver_id) == 1):
             #remove old geoserver files
@@ -824,15 +830,16 @@ def watershed_update(request):
             #upload new files if they exist
             if(drainage_line_kml_file):
                 handle_uploaded_file(drainage_line_kml_file, new_kml_file_location, kml_drainage_line_layer)
+            #other case already handled for drainage line
                 
             if(catchment_kml_file):
                 handle_uploaded_file(catchment_kml_file, new_kml_file_location, kml_catchment_layer)
-            else:
+            elif not watershed.kml_catchment_layer:
                 kml_catchment_layer = ""
                 
             if(gage_kml_file):
                 handle_uploaded_file(gage_kml_file, new_kml_file_location, kml_gage_layer)
-            else:
+            elif not watershed.kml_gage_layer:
                 kml_gage_layer = ""
         else:
             #remove old kml files           
@@ -848,6 +855,8 @@ def watershed_update(request):
             resource_workspace = 'erfp'
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
 
+            if geoserver_drainage_line_layer is None:
+                geoserver_drainage_line_layer = watershed.geoserver_drainage_line_layer
             if drainage_line_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_drainage_line_uploaded \
@@ -861,7 +870,9 @@ def watershed_update(request):
                 engine.create_shapefile_resource(geoserver_drainage_line_layer, shapefile_upload=drainage_line_shp_file,
                                                       overwrite=True)
                 geoserver_drainage_line_uploaded = True
-            geoserver_catchment_layer = ""
+
+            if geoserver_catchment_layer is None:
+                geoserver_catchment_layer = watershed.geoserver_catchment_layer
             if catchment_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_catchment_uploaded \
@@ -875,7 +886,8 @@ def watershed_update(request):
                 engine.create_shapefile_resource(geoserver_catchment_layer, shapefile_upload=catchment_shp_file,
                                                       overwrite=True)
                 geoserver_catchment_uploaded = True
-            geoserver_gage_layer = ""
+            if geoserver_gage_layer is None:
+                geoserver_gage_layer = watershed.geoserver_gage_layer
             if gage_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_gage_uploaded \
@@ -911,7 +923,14 @@ def watershed_update(request):
         session.commit()
         session.close()
 
-        return JsonResponse({ 'success': "Watershed sucessfully updated!" })
+        #load prediction datasets for watershed
+        load_datasets()
+        
+        return JsonResponse({ 'success': "Watershed sucessfully updated!", 
+                              'kml_drainage_line_layer': kml_drainage_line_layer,
+                              'kml_catchment_layer': kml_catchment_layer,
+                              'kml_gage_layer': kml_gage_layer,
+                              })
 
     return JsonResponse({ 'error': "A problem with your request exists." })
 
