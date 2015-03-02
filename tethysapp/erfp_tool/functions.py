@@ -29,7 +29,6 @@ def rename_shapefile_input_files(shp_files, new_file_name):
     for shp_file in shp_files:
         file_name, file_extension = os.path.splitext(shp_file.name)
         shp_file.name = "%s%s" % (new_file_name, file_extension)
-        print shp_file
     
 def delete_old_watershed_prediction_files(folder_name, local_prediction_files_location):
     """
