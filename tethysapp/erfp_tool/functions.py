@@ -5,6 +5,8 @@ import numpy as np
 import os
 import re
 from shutil import rmtree
+#tethys imports
+from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 
 def check_shapefile_input_files(shp_files):
     """
@@ -13,12 +15,21 @@ def check_shapefile_input_files(shp_files):
     required_extentsions = ['.shp', '.shx', '.prj','.dbf']
     accepted_extensions = []
     for shp_file in shp_files:
-        file_name = shp_file.name
+        file_name, file_extension = os.path.splitext(shp_file.name)
         for required_extentsion in required_extentsions: 
-            if file_name.endswith(required_extentsion):
+            if file_extension == required_extentsion:
                 accepted_extensions.append(required_extentsion)
                 required_extentsions.remove(required_extentsion)
     return required_extentsions
+
+def rename_shapefile_input_files(shp_files, new_file_name):
+    """
+    #make sure required files for shapefiles are included
+    """
+    for shp_file in shp_files:
+        file_name, file_extension = os.path.splitext(shp_file.name)
+        shp_file.name = "%s%s" % (new_file_name, file_extension)
+        print shp_file
     
 def delete_old_watershed_prediction_files(folder_name, local_prediction_files_location):
     """
@@ -64,14 +75,29 @@ def delete_old_watershed_kml_files(watershed):
     except OSError:
         pass
 
+def delete_old_watershed_geoserver_files(watershed):
+    """
+    Removes old watershed geoserver files from system
+    """
+    engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
+                           username=watershed.geoserver.username,
+                           password=watershed.geoserver.password)
+
+    if watershed.geoserver_drainage_line_uploaded:
+        engine.delete_layer(watershed.geoserver_drainage_line_layer)
+    if watershed.geoserver_catchment_uploaded:
+        engine.delete_layer(watershed.geoserver_catchment_layer)
+    if watershed.geoserver_gage_uploaded:
+        engine.delete_layer(watershed.geoserver_gage_layer)
+
 def delete_old_watershed_files(watershed, local_prediction_files_location):
     """
     Removes old watershed files from system
     """
     #remove old kml files
     delete_old_watershed_kml_files(watershed)
-    #TODO: remove old geoserver files
-    
+    #remove old geoserver files
+    delete_old_watershed_geoserver_files(watershed)
     #remove old prediction files
     delete_old_watershed_prediction_files(watershed.folder_name, 
                                           local_prediction_files_location)

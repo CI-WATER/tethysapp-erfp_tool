@@ -91,7 +91,7 @@ function addErrorMessage(error) {
  
 }
 //add error message to #message div
-function addWarningrMessage(error) {
+function addWarningMessage(error) {
    $('#message').html(
       '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
       '<span class="sr-only">Error:</span> ' + error

@@ -99,20 +99,20 @@ def map(request):
                             'subbasin':watershed.file_name,
                             }
                 #prepare kml files
-                drainage_line_kml = os.path.join(file_path, watershed.geoserver_drainage_line_layer)
-                if os.path.exists(drainage_line_kml) and watershed.geoserver_drainage_line_layer:
+                drainage_line_kml = os.path.join(file_path, watershed.kml_drainage_line_layer)
+                if os.path.exists(drainage_line_kml) and watershed.kml_drainage_line_layer:
                     drainage_line_kml = os.path.basename(drainage_line_kml)
                     kml_info['drainage_line'] = '/static/erfp_tool/kml/%s/%s' \
                                 % (watershed.folder_name, 
-                                   watershed.geoserver_drainage_line_layer)
-                catchment_kml = os.path.join(file_path, watershed.geoserver_catchment_layer)
-                if os.path.exists(catchment_kml) and watershed.geoserver_catchment_layer:
+                                   watershed.kml_drainage_line_layer)
+                catchment_kml = os.path.join(file_path, watershed.kml_catchment_layer)
+                if os.path.exists(catchment_kml) and watershed.kml_catchment_layer:
                     catchment_kml = os.path.basename(catchment_kml)
                     kml_info['catchment'] = '/static/erfp_tool/kml/%s/%s' \
                                             % (watershed.folder_name,
                                                watershed.geoserver_catchment_layer)
-                gage_kml = os.path.join(file_path, watershed.geoserver_gage_layer)
-                if os.path.exists(gage_kml) and watershed.geoserver_gage_layer:
+                gage_kml = os.path.join(file_path, watershed.kml_gage_layer)
+                if os.path.exists(gage_kml) and watershed.kml_gage_layer:
                     catchment_kml = os.path.basename(gage_kml)
                     kml_info['gage'] = '/static/erfp_tool/kml/%s/%s' \
                                             % (watershed.folder_name,
