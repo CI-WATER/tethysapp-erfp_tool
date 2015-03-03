@@ -409,10 +409,12 @@ var ERFP_MAP = (function() {
                         clearMessages();
                     } else {
                         updateInfoAlert('alert-danger', "Error: " + data["error"]);
+                        $('#erfp-chart').addClass('hidden');
                     }
                 },
                 error: function(request, status, error) {
                     updateInfoAlert('alert-danger', "Error: " + error);
+                    $('#erfp-chart').addClass('hidden');
                 },
             })
             .always(function() {
