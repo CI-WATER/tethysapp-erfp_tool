@@ -17,6 +17,7 @@ def init_erfp_settings_db(first_time):
         session.add(BaseLayer("BingMaps","",))
         
         #add all possible data story types
+        session.add(DataStoreType("local", "Local (KML)"))
         session.add(DataStoreType("ckan", "CKAN"))
         session.add(DataStoreType("hydroshare", "HydroShare"))
         

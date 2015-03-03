@@ -457,7 +457,7 @@ def add_data_store(request):
               }
 
     # Query DB for data store types
-    data_store_types = session.query(DataStoreType).all()
+    data_store_types = session.query(DataStoreType).filter(DataStoreType.id>1).all()
     data_store_type_list = []
     for data_store_type in data_store_types:
         data_store_type_list.append((data_store_type.human_readable_name, 

@@ -113,6 +113,19 @@ def data_store_update(request):
         if int(data_store_id) != 1:
             #initialize session
             session = SettingsSessionMaker()
+            #check to see if duplicate exists
+            num_similar_data_stores  = session.query(DataStore) \
+                .filter(
+                    or_(
+                        DataStore.name == data_store_name, 
+                        DataStore.api_endpoint == data_store_api_endpoint
+                    )
+                ) \
+                .filter(DataStore.id != data_store_id) \
+                .count()
+            if(num_similar_data_stores > 0):
+                session.close()
+                return JsonResponse({ 'error': "A data store with the same name or api endpoint exists." })
             #update data store
             data_store  = session.query(DataStore).get(data_store_id)
             data_store.name = data_store_name

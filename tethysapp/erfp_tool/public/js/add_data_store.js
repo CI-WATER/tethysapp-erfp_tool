@@ -37,7 +37,7 @@ $('#submit-add-data-store').click(function(){
             if ('success' in data) {
                 //reset inputs
                 $('#data-store-name-input').val('');
-                $('#data-store-type-select').select2('val','1');
+                $('#data-store-type-select').select2('val','2');
                 $('#data-store-endpoint-input').val('');
                 $('#data-store-api-key-input').val('');
             }

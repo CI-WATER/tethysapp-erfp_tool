@@ -17,7 +17,7 @@ class ERFPDatasetManager():
             engine_url = engine_url[:-1]
         if not engine_url.endswith('api/action') and not engine_url.endswith('api/3/action'):
             engine_url += '/api/action'
-        
+        print engine_url
         self.dataset_engine = CkanDatasetEngine(endpoint=engine_url, apikey=api_key)
         self.output_files_location = output_files_location
 
