@@ -87,9 +87,6 @@ def map(request):
                                     WatershedGroup.id == group_id)) \
                             .all()
             
-        #Query DB for settings
-        main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
-        session.close()
         ##find all kml files to add to page    
         kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          'public','kml')
@@ -204,7 +201,10 @@ def map(request):
                     }          
 
 
+        #Query DB for settings
+        main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         base_layer = main_settings.base_layer
+        session.close()
      
         base_layer_info = {
                             'name': base_layer.name,
