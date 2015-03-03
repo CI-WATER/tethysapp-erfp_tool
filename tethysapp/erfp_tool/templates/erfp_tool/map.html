@@ -15,7 +15,6 @@
 
 {% block styles %}
   {{ block.super }}
-  <!-- <link rel="stylesheet" href="http://openlayers.org/en/v3.0.0/css/ol.css" type="text/css"> -->
   <link rel="stylesheet" href="{% static 'erfp_tool/vendor/openlayers/v3.2.1/ol.css' %}" type="text/css">
   <link rel="stylesheet" href="{% static 'erfp_tool/vendor/select2/v3.5.2/select2.css' %}" type="text/css">
 {% endblock %}
@@ -25,7 +24,7 @@
         {% gizmo select_input watershed_select %}
         <div class="form-group inline-block">
             <label class="control-label" for="reach-id-input">Reach ID</label>
-            <input id="reach-id-input" type="input">
+            <input class="form-control" id="reach-id-input" type="input">
             <p class="help-block" id="reach-id-help-message"></p>
         </div>
         <div class="btn-group inline-block">

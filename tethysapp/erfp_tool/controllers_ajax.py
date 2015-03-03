@@ -588,7 +588,7 @@ def watershed_add(request):
                                          kml_gage_layer)
             else:
                 session.close()
-                return JsonResponse({ 'error': "File Upload Failed! Please check your KML files." })
+                return JsonResponse({ 'error': "Drainage line KML file missing." })
         elif drainage_line_shp_file:
             geoserver = session.query(Geoserver).get(geoserver_id)
             #GEOSERVER UPLOAD
