@@ -179,12 +179,19 @@ var ERFP_MAP = (function() {
                         source: new ol.source.BingMaps({key: api_key, imagerySet: "AerialWithLabels"}),
                     });
         } 
-        else if (base_layer_name == "OSM") {
-
+        else if (base_layer_name == "Esri") {
             return new ol.layer.Tile({
-                        source: new ol.source.OSM(),
-                    });
+              source: new ol.source.XYZ({
+                attributions: [new ol.Attribution({
+                  html: 'Tiles &copy; <a href="http://services.arcgisonline.com/ArcGIS/' +
+                      'rest/services/World_Topo_Map/MapServer">ArcGIS</a>'
+                })],
+                url: 'http://server.arcgisonline.com/ArcGIS/rest/services/' +
+                    'World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
+              })
+            });
         }
+        //default to mapquest
         return new ol.layer.Group({
                         style: 'AerialWithLabels',
                         layers: [
@@ -209,8 +216,12 @@ var ERFP_MAP = (function() {
         });
         layer.set('layer_id', layer_id);
         layer.set('layer_type', 'kml');
-        layer.set('watershed_name', watershed_name);
-        layer.set('subbasin_name', subbasin_name);
+        if( typeof watershed_name != 'undefined') {
+            layer.set('watershed_name', watershed_name);
+        }
+        if( typeof subbasin_name != 'undefined') {
+            layer.set('subbasin_name', subbasin_name);
+        }
         return layer;
     };
 

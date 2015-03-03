@@ -13,11 +13,10 @@ def init_erfp_settings_db(first_time):
         
         #add all possible base layers
         session.add(BaseLayer("MapQuest","none",))
+        session.add(BaseLayer("Esri","none",))
         session.add(BaseLayer("BingMaps","",))
-        session.add(BaseLayer("OSM","none",))
         
         #add all possible data story types
-        session.add(DataStoreType("local", "Local Server"))
         session.add(DataStoreType("ckan", "CKAN"))
         session.add(DataStoreType("hydroshare", "HydroShare"))
         
