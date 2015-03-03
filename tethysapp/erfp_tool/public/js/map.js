@@ -45,8 +45,8 @@ var ERFP_MAP = (function() {
     *************************************************************************/
     var bindInputs, zoomToAll, zoomToLayer, zoomToFeature, toTitleCase, datePadString,  
         updateInfoAlert, getBaseLayer, getTileLayer, getKMLLayer, 
-        clearMessages, clearOldChart, getChartData, displayHydrograph,
-        loadHydrographFromFeature;
+        clearMessages, clearOldChart, clearChartSelect2, getChartData, 
+        displayHydrograph, loadHydrographFromFeature;
 
 
     /************************************************************************
@@ -281,6 +281,16 @@ var ERFP_MAP = (function() {
         }
     };
 
+    //FUNCTION: removes chart select2
+    clearChartSelect2 = function() {
+        if($('#erfp-select').data('select2')) {
+            $('#erfp-select').off('change.select2') //remove event handler
+                             .select2('val', '') //remove selection
+                             .select2('destroy'); //destroy
+        }
+
+    };
+
     //FUNCTION: gets all data for chart
     getChartData = function(start_folder) {
         m_chart_data_ajax_handle = null;
@@ -293,7 +303,7 @@ var ERFP_MAP = (function() {
             updateInfoAlert('alert-info', "Retrieving Data ...");
             m_downloading_hydrograph = true;
             $('#erfp-select').addClass('hidden');
-            $('#erfp-chart').removeClass('hidden');
+            $('#erfp-reset').addClass('hidden');
             $("#erfp-chart").highcharts({
                 title: { text: toTitleCase(m_selected_watershed)},
                 subtitle: {text: toTitleCase(m_selected_subbasin) + ": " + m_selected_reach_id},
@@ -388,15 +398,14 @@ var ERFP_MAP = (function() {
                                             });
                         }
                         $('#erfp-select').removeClass('hidden');
+                        $('#erfp-reset').removeClass('hidden');
                          clearMessages();
                     } else {
                         updateInfoAlert('alert-danger', "Error: " + data["error"]);
-                        $('#erfp-chart').addClass('hidden');
                     }
                 },
                 error: function(request, status, error) {
                     updateInfoAlert('alert-danger', "Error: " + error);
-                    $('#erfp-chart').addClass('hidden');
                 },
             })
             .always(function() {
@@ -506,10 +515,11 @@ var ERFP_MAP = (function() {
 
     //FUNCTION: displays hydrograph at stream segment
     displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index, usgs_id, nws_id) {
-        //remove old chart reguardless
-        clearOldChart();
         //check if old ajax call still running
-        if(!m_downloading_hydrograph && !m_downloading_select) {
+        if(!m_downloading_hydrograph && !m_downloading_select && 
+            !m_downloading_usgs && !m_downloading_nws) {
+            //remove old chart reguardless
+            clearOldChart();
             m_selected_feature = feature;
             m_selected_reach_id = reach_id;
             m_selected_watershed = watershed;
@@ -517,7 +527,6 @@ var ERFP_MAP = (function() {
             m_selected_guess_index = guess_index;
             m_selected_usgs_id = usgs_id;
             m_selected_nws_id = nws_id;
-            $('#erfp-select').addClass('hidden');
             getChartData("most_recent");
             //get the select data
             m_downloading_select = true;
@@ -533,12 +542,8 @@ var ERFP_MAP = (function() {
                 success: function(data) {
                     if("success" in data) {
                         //remove select2 if exists
-                        if($('#erfp-select').data('select2')) {
-                            $('#erfp-select').off('change.select2') //remove event handler
-                                             .select2('val', '') //remove selection
-                                             .select2('destroy'); //destroy
-                        }
-                        
+                        clearChartSelect2();
+                        $('#erfp-select').removeClass('hidden');
                         //sort to get first element 
                         var select2_data = data['output_directories'];
     
@@ -885,9 +890,19 @@ var ERFP_MAP = (function() {
             var reach_id = $(this).parent().parent().find('#reach-id-input').val();
             zoomToFeature(watershed_info, reach_id);
         });
+        //zoom to all
         $('.ol-zoom-extent').off().click(function() {
             zoomToAll();
         });
+        //reset chart area
+        $('#erfp-reset').off().click(function() {
+            clearOldChart();
+            clearChartSelect2();
+            updateInfoAlert('alert-info', 'Click on a reach to view flow predictions.');
+            $('#erfp-reset').addClass('hidden');
+            $('#erfp-select').addClass('hidden');
+
+       });
 
     });
 

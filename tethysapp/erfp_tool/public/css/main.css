@@ -11,7 +11,15 @@
     text-align:center;
     background: white;
 }
-
+.erfp-select {
+    margin-left: 5%;
+    display: inline-block;
+    width: 60%;
+}
+#erfp-reset {
+    display: inline-block;
+    float: right;
+}
 @media screen and (max-width: 1000px) {
     #erfp-chart {
         position: relative !important;
