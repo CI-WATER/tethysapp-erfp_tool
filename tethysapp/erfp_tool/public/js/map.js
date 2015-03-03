@@ -43,7 +43,8 @@ var ERFP_MAP = (function() {
     /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
-    var bindInputs, zoomToAll, zoomToLayer, zoomToFeature, toTitleCase, datePadString,  
+    var bindInputs, zoomToAll, zoomToLayer, zoomToFeature, toTitleCase, 
+        removeInfoDivClases, datePadString,  
         updateInfoAlert, getBaseLayer, getTileLayer, getKMLLayer, 
         clearMessages, clearOldChart, clearChartSelect2, getChartData, 
         displayHydrograph, loadHydrographFromFeature;
@@ -170,11 +171,16 @@ var ERFP_MAP = (function() {
         return (i < 10) ? "0" + i : "" + i; 
     }
 
-    //FUNCTION: displays alert to user
-    updateInfoAlert = function(css_alert_class, alert_message) {
+    //FUNCTION: resets info div css
+    removeInfoDivClases = function() {
         $("#erfp-info").removeClass('alert-info');
         $("#erfp-info").removeClass('alert-warning');
         $("#erfp-info").removeClass('alert-danger');
+    };
+
+    //FUNCTION: displays alert to user
+    updateInfoAlert = function(css_alert_class, alert_message) {
+        removeInfoDivClases();
         var glyphycon = '';
         if(css_alert_class == 'alert-info') {
             $("#erfp-info").addClass(css_alert_class);
@@ -265,6 +271,7 @@ var ERFP_MAP = (function() {
 
     //FUNCTION: removes message and hides the div
     clearMessages = function() {
+        removeInfoDivClases();
         $('#erfp-message').addClass('hidden');
         $('#erfp-message').empty();
     };
@@ -399,7 +406,7 @@ var ERFP_MAP = (function() {
                         }
                         $('#erfp-select').removeClass('hidden');
                         $('#erfp-reset').removeClass('hidden');
-                         clearMessages();
+                        clearMessages();
                     } else {
                         updateInfoAlert('alert-danger', "Error: " + data["error"]);
                     }
