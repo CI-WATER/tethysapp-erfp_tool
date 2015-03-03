@@ -141,10 +141,13 @@ def map(request):
                     #check required attributes
                     necessary_attributes = ['watershed', 'subbasin', 'COMID']
                     for necessary_attribute in necessary_attributes:
-                        if necessary_attribute not in layer_attributes:
+                        found = False
+                        for attribute in layer_attributes:    
+                            if necessary_attribute.lower() == attribute.lower():
+                                contained_attributes.append(attribute)
+                                found = True
+                        if not found:
                             missing_attributes.append(necessary_attribute)
-                        else:
-                            contained_attributes.append(necessary_attribute)
                     #check optional attributes
                     for optional_attribute in optional_attributes:
                         if optional_attribute in layer_attributes:
