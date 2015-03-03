@@ -21,7 +21,7 @@ var ERFP_MAP = (function() {
        m_map,                    // the main map
        m_map_projection, //main map projection
        m_map_extent,           //the extent of all objects in map
-       m_geoserver_drainage_line_layers,
+       m_drainage_line_layers,
        m_select_interaction,
        m_chart,  //highcharts chart
        m_selected_feature,
@@ -42,7 +42,7 @@ var ERFP_MAP = (function() {
     /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
-    var bindInputs, zoomToAll, zoomToLayer, toTitleCase, datePadString,  
+    var bindInputs, zoomToAll, zoomToLayer, zoomToFeature, toTitleCase, datePadString,  
         updateInfoAlert, getBaseLayer, getTileLayer, getKMLLayer, 
         clearMessages, clearOldChart, getChartData, displayHydrograph;
 
@@ -68,7 +68,7 @@ var ERFP_MAP = (function() {
         m_map.getView().fitExtent(m_map_extent, m_map.getSize());
     };
 
-    //FUNCTION: zooms to kml layer with id layer_id
+    //FUNCTION: zooms to layer with id layer_id
     zoomToLayer = function(layer_id) {
         m_map.getLayers().forEach(function(layer, i) {
             if (layer instanceof ol.layer.Group) {
@@ -86,6 +86,57 @@ var ERFP_MAP = (function() {
                 });
             }
         });    
+    };
+
+    //FUNCTION: zooms to feature in layer
+    zoomToFeature = function(watershed_info, reach_id) {
+        $("#reach-id-help-message").text('');
+        $("#reach-id-help-message").removeClass('alert-danger');
+        var watershed_split = watershed_info.split(":");        
+        var watershed_name = watershed_split[0];
+        var subbasin_name = watershed_split[1];
+
+        m_drainage_line_layers.forEach(function(drainage_line_layer, j) {
+            if(drainage_line_layer.get('watershed_name') == watershed_name &&
+                drainage_line_layer.get('subbasin_name') == subbasin_name) {
+                if(drainage_line_layer.get('layer_type') == "kml") {
+                    var features = drainage_line_layer.getSource().getFeatures();
+                    for(var i=0; features.length>i; i++) {
+                        var feature_reach_id = features[i].get('COMID');
+                        if(typeof feature_reach_id == 'undefined' || isNaN(feature_reach_id)) {
+                            var feature_reach_id = features[i].get('name');
+                        }
+
+                        if (feature_reach_id == reach_id) {
+                            var geometry = features[i].get('geometry');
+                            m_map.getView().fitExtent(geometry.getExtent(), m_map.getSize());
+                            return;
+                        }
+                    }
+                    $("#reach-id-help-message").text('Reach ID ' + reach_id + ' not found');
+                    $("#reach-id-help-message").addClass('alert-danger');
+                    return;
+                } else if (drainage_line_layer.get('layer_type') == "geoserver") {
+                    var url = drainage_line_layer.get('geoserver_url') + 
+                          '&format_options=callback:loadFeatures' +
+                          '&CQL_FILTER=COMID=' + reach_id +
+                          '&srsname=' + m_map_projection;
+                    jQuery.ajax({
+                        url: encodeURI(url),
+                        dataType: 'jsonp',
+                        jsonpCallback: 'loadFeatures',
+                        success: function(response) {
+                            if (response.totalFeatures > 0) {
+                                var features = drainage_line_layer.getSource().readFeatures(response);
+                                m_map.getView().fitExtent(features[0].getGeometry().getExtent(), m_map.getSize());
+                            }
+                        },
+                    });
+
+                    return;
+                }
+            }
+        });   
     };
 
     //FUNCTION: converts string to title case  
@@ -119,7 +170,6 @@ var ERFP_MAP = (function() {
         }
         $("#erfp-message").removeClass('hidden');
         $("#erfp-message").html(glyphycon + alert_message);
-
     };
 
     //FUNCTION: adds appropriate base layer based on name
@@ -150,7 +200,7 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: gets KML layer for geoserver
-    getKMLLayer = function(layer_info, layer_id) {
+    getKMLLayer = function(layer_info, layer_id, watershed_name, subbasin_name) {
         var layer = new ol.layer.Vector({
             source: new ol.source.KML({
                 projection: new ol.proj.get(m_map_projection),
@@ -159,6 +209,8 @@ var ERFP_MAP = (function() {
         });
         layer.set('layer_id', layer_id);
         layer.set('layer_type', 'kml');
+        layer.set('watershed_name', watershed_name);
+        layer.set('subbasin_name', subbasin_name);
         return layer;
     };
 
@@ -512,6 +564,7 @@ var ERFP_MAP = (function() {
     // Initialization: jQuery function that gets called when 
     // the DOM tree finishes loading
     $(function() {
+        $('#watershed_select').select2('container').parent().addClass('inline-block');
         //initialize map global variables
         m_map_projection = 'EPSG:3857';
         m_map_extent = ol.extent.createEmpty();
@@ -536,7 +589,7 @@ var ERFP_MAP = (function() {
         //load drainage line kml layers
         var layers_info = JSON.parse($("#map").attr('layers-info'));
         var all_group_layers = [];
-        var drainage_line_layers = [];
+        m_drainage_line_layers = [];
         //add each watershed kml group
         layers_info.forEach(function(layer_info, group_index) {
             var layers = [];
@@ -637,6 +690,7 @@ var ERFP_MAP = (function() {
                     var drainage_line = new ol.layer.Vector({
                         source: drainage_line_vector_source,
                     });
+                    drainage_line.set('geoserver_url', layer_info['drainage_line']['geojsonp'])
                     drainage_line.set('watershed_name', layer_info['watershed']);
                     drainage_line.set('subbasin_name', layer_info['subbasin']);
                     drainage_line.set('extent', ol.proj.transformExtent(layer_info['drainage_line']['latlon_bbox'].map(Number), 
@@ -644,7 +698,7 @@ var ERFP_MAP = (function() {
                                                             m_map_projection));
                     drainage_line.set('layer_id', 'layer' + group_index + 0);
                     drainage_line.set('layer_type', 'geoserver');
-                    drainage_line_layers.push(drainage_line);
+                    m_drainage_line_layers.push(drainage_line);
                     layers.push(drainage_line);
                 }
             } else { //assume KML                
@@ -658,9 +712,12 @@ var ERFP_MAP = (function() {
                 }
                 //add drainage line if exists
                 if('drainage_line' in layer_info) {
-                    var drainage_line_layer = getKMLLayer(layer_info['drainage_line'],'layer' + group_index + 0)
+                    var drainage_line_layer = getKMLLayer(layer_info['drainage_line'],
+                                                          'layer' + group_index + 0, 
+                                                          layer_info['watershed'], 
+                                                          layer_info['subbasin'])
                     layers.push(drainage_line_layer);
-                    drainage_line_layers.push(drainage_line_layer);
+                    m_drainage_line_layers.push(drainage_line_layer);
                 }
             }
             //make sure there are layers to add
@@ -674,13 +731,13 @@ var ERFP_MAP = (function() {
 
 
         //send message to user if Drainage Line KML file not found
-        if (drainage_line_layers.length <= 0) {
+        if (m_drainage_line_layers.length <= 0) {
             updateInfoAlert('alert-danger', 'No valid drainage line layers found. Please upload to begin.');
         }
 
         //make drainage line layers selectable
         m_select_interaction = new ol.interaction.Select({
-                                    layers: drainage_line_layers,
+                                    layers: m_drainage_line_layers,
                                 });
 
         //make chart control in map
@@ -781,12 +838,18 @@ var ERFP_MAP = (function() {
         });
 
         
-        //create function to zoom to feature
+        //create function to zoom to layer
         $('.zoom-to-layer').click(function() {
             var layer_id = $(this).parent().parent().attr('id');
             zoomToLayer(layer_id);
         });
 
+        //function to zoom to feature by id
+        $('#submit-search-reach-id').click(function() {
+            var watershed_info = $(this).parent().parent().find('#watershed_select').select2('val');
+            var reach_id = $(this).parent().parent().find('#reach-id-input').val();
+            zoomToFeature(watershed_info, reach_id);
+        });
     });
 
     return public_interface;

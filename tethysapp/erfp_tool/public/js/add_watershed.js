@@ -89,7 +89,8 @@ var ERFP_ADD_WATERSHED = (function() {
                 var submit_button = $(this);
                 var submit_button_html = submit_button.html();
                 //give user information
-                addInfoMessage("Submitting Data. Please Wait.");
+                addInfoMessage("Submiting data. Please be patient! "+
+                               "This may take a few minutes due to downloading prediction datasets.");
                 submit_button.text('Submitting ...');
                 //update database
                 if(geoserver_id==1 || $('#shp-upload-toggle').bootstrapSwitch('state')){

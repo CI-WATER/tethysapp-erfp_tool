@@ -2,6 +2,8 @@
 
 {% load staticfiles %}
 
+{% load tethys_gizmos %}
+
 {% block global_scripts %}
   {{ block.super }}
   <script src="{% static 'erfp_tool/vendor/openlayers/v3.2.1/ol.js' %}" type="text/javascript"></script>
@@ -19,6 +21,20 @@
 {% endblock %}
 
 {% block app_content %}
+    <div id="map_top_navigation">
+        {% gizmo select_input watershed_select %}
+        <div class="form-group inline-block">
+            <label class="control-label" for="reach-id-input">Reach ID</label>
+            <input id="reach-id-input" type="input">
+            <p class="help-block" id="reach-id-help-message"></p>
+        </div>
+        <div class="btn-group inline-block">
+            <a class="btn btn-success" role="button" id="submit-search-reach-id">
+                <span class="glyphicon glyphicon-play"></span> Search for Reach
+            </a>
+        </div>
+
+    </div>
     <div id="map" class="map" base-layer-info="{{base_layer_info}}" layers-info="{{layers_info_json}}"></div>
     <div id="erfp-info" class="ol-control alert alert-info" role="alert">
         <div id="erfp-message"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Click on a reach to view flow predictions.</div>

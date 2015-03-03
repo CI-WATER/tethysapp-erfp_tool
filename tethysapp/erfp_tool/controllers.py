@@ -32,9 +32,10 @@ def home(request):
                                watershed.id))
     watershed_groups = []
     groups  = session.query(WatershedGroup).order_by(WatershedGroup.name).all()
+    session.close()
     for group in groups:
         watershed_groups.append((group.name,group.id))
- 
+    
     watershed_select = {
                 'display_text': 'Select Watershed(s)',
                 'name': 'watershed_select',
@@ -185,6 +186,18 @@ def map(request):
 
             group_id += 1
             
+        watershed_list = []
+        for watershed in watersheds:
+            watershed_list.append(("%s (%s)" % (watershed.watershed_name, watershed.subbasin_name),
+                                   "%s:%s" % (watershed.folder_name, watershed.file_name)))
+        watershed_select = {
+                    'display_text': 'Select Watershed',
+                    'name': 'watershed_select',
+                    'options': watershed_list,
+                    'placeholder': 'Select Watershed',
+                    }          
+
+
         #Query DB for settings
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         base_layer = main_settings.base_layer
@@ -198,6 +211,7 @@ def map(request):
                     'layers_info_json' : json.dumps(layers_info),
                     'layers_info': layers_info,
                     'base_layer_info' : json.dumps(base_layer_info),
+                    'watershed_select' : watershed_select,
                   }
     
         return render(request, 'erfp_tool/map.html', context)
