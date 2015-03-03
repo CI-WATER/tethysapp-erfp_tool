@@ -284,10 +284,12 @@ var ERFP_MAP = (function() {
     //FUNCTION: gets all data for chart
     getChartData = function(start_folder) {
         m_chart_data_ajax_handle = null;
-        //make sure old chart is removed
-        clearOldChart();
         if(!m_downloading_hydrograph && !m_downloading_select && 
             !m_downloading_usgs && !m_downloading_nws) {
+            //make sure old chart is removed
+            clearOldChart();
+            //turn off select interaction
+            m_select_interaction.setMap(null);
             updateInfoAlert('alert-info', "Retrieving Data ...");
             m_downloading_hydrograph = true;
             $('#erfp-select').addClass('hidden');
@@ -399,6 +401,7 @@ var ERFP_MAP = (function() {
             })
             .always(function() {
                 m_downloading_hydrograph = false;
+                m_select_interaction.setMap(m_map);
             });
             //get dates
             var date_now = new Date();
@@ -564,9 +567,6 @@ var ERFP_MAP = (function() {
         else {
             //updateInfoAlert
             updateInfoAlert('alert-warning', "Please wait for datasets to download before making another selection.");
-            //clear selection and select previously selected feature
-            m_select_interaction.getFeatures().clear();
-            m_select_interaction.getFeatures().push(m_selected_feature);
         }
 
     };
