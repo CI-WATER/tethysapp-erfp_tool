@@ -559,7 +559,9 @@ var ERFP_MAP = (function() {
                         //create new select2
                         $('#erfp-select').select2({data: select2_data,
                                                     placeholder: "Select a Date"});
-                        $('#erfp-select').addClass('hidden');
+                        if (m_downloading_hydrograph) {
+                            $('#erfp-select').addClass('hidden');
+                        }
                         //add on change event handler
                         $('#erfp-select').on('change.select2', function() {
                             var folder = $(this).select2('data').id;
