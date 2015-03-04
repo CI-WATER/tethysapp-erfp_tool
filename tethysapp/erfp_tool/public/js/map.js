@@ -338,6 +338,7 @@ var ERFP_MAP = (function() {
                     min: 0
                 },
             });
+            $('#erfp-chart').addClass('hidden');
 
             //get ecmwf data
             m_chart_data_ajax_handle = jQuery.ajax({
@@ -406,15 +407,14 @@ var ERFP_MAP = (function() {
                         }
                         $('#erfp-select').removeClass('hidden');
                         $('#erfp-reset').removeClass('hidden');
+                        $('#erfp-chart').removeClass('hidden');
                         clearMessages();
                     } else {
                         updateInfoAlert('alert-danger', "Error: " + data["error"]);
-                        $('#erfp-chart').addClass('hidden');
                     }
                 },
                 error: function(request, status, error) {
                     updateInfoAlert('alert-danger', "Error: " + error);
-                    $('#erfp-chart').addClass('hidden');
                 },
             })
             .always(function() {
