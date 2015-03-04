@@ -683,14 +683,15 @@ var ERFP_MAP = (function() {
             if('geoserver_url' in layer_info) {
                 //add catchment if exists
                 if('catchment' in layer_info) {
-                    layers.push(getTileLayer(layer_info['catchment'], layer_info['geoserver_url'], 'layer' + group_index + 1));
+                    layers.push(getTileLayer(layer_info['catchment'], layer_info['geoserver_url'], 'layer' + group_index + 'g' + 1));
                 }
                 //add gage if exists
                 if('gage' in layer_info) {
-                    layers.push(getTileLayer(layer_info['gage'], layer_info['geoserver_url'], 'layer' + group_index + 2));
+                    layers.push(getTileLayer(layer_info['gage'], layer_info['geoserver_url'], 'layer' + group_index + 'g' + 2));
                 }
                 //add drainage line if exists
                 if('drainage_line' in layer_info) {
+                    var drainage_line_layer_id = 'layer' + group_index + 'g' + 0;
                     //check if required parameters exist
                     if(layer_info['drainage_line']['missing_attributes'].length > 0) {
                         updateInfoAlert('alert-danger', 'The drainage line layer for ' + 
@@ -713,7 +714,8 @@ var ERFP_MAP = (function() {
                                     stream_flow_limit = 40;
                                 }
                                 var url = layer_info['drainage_line']['geojsonp'] + 
-                                      '&format_options=callback:loadFeatures' +
+                                      '&format_options=callback:loadFeatures' + 
+                                      drainage_line_layer_id +
                                       '&PROPERTYNAME=the_geom,' +
                                       layer_info['drainage_line']['contained_attributes'] +
                                       '&CQL_FILTER=Natur_Flow > ' + stream_flow_limit +
@@ -724,7 +726,7 @@ var ERFP_MAP = (function() {
                                 jQuery.ajax({
                                     url: encodeURI(url),
                                     dataType: 'jsonp',
-                                    jsonpCallback: 'loadFeatures',
+                                    jsonpCallback: 'loadFeatures' + drainage_line_layer_id,
                                     success: function(response) {
                                         
                                         drainage_line_vector_source.addFeatures(drainage_line_vector_source.readFeatures(response));
@@ -755,6 +757,7 @@ var ERFP_MAP = (function() {
                             loader: function(extent, resolution, projection) {
                                 var url = layer_info['drainage_line']['geojsonp'] + 
                                       '&format_options=callback:loadFeatures' +
+                                      drainage_line_layer_id +
                                       '&PROPERTYNAME=the_geom,' +
                                       layer_info['drainage_line']['contained_attributes'].join() +
                                       '&BBOX=' + extent.join(',') + 
@@ -763,7 +766,7 @@ var ERFP_MAP = (function() {
                                 jQuery.ajax({
                                     url: encodeURI(url),
                                     dataType: 'jsonp',
-                                    jsonpCallback: 'loadFeatures',
+                                    jsonpCallback: 'loadFeatures' + drainage_line_layer_id,
                                     success: function(response) {
                                         drainage_line_vector_source.addFeatures(drainage_line_vector_source.readFeatures(response));
                                     },
@@ -783,7 +786,7 @@ var ERFP_MAP = (function() {
                     drainage_line.set('extent', ol.proj.transformExtent(layer_info['drainage_line']['latlon_bbox'].map(Number), 
                                                             'EPSG:4326',
                                                             m_map_projection));
-                    drainage_line.set('layer_id', 'layer' + group_index + 0);
+                    drainage_line.set('layer_id', drainage_line_layer_id);
                     drainage_line.set('layer_type', 'geoserver');
                     m_drainage_line_layers.push(drainage_line);
                     layers.push(drainage_line);
@@ -791,16 +794,16 @@ var ERFP_MAP = (function() {
             } else { //assume KML                
                 //add catchment if exists
                 if('catchment' in layer_info) {
-                    layers.push(getKMLLayer(layer_info['catchment'],'layer' + group_index + 1));
+                    layers.push(getKMLLayer(layer_info['catchment'],'layer' + group_index + 'g' + 1));
                 }
                 //add gage if exists
                 if('gage' in layer_info) {
-                    layers.push(getKMLLayer(layer_info['gage'],'layer' + group_index + 2));
+                    layers.push(getKMLLayer(layer_info['gage'],'layer' + group_index + 'g' + 2));
                 }
                 //add drainage line if exists
                 if('drainage_line' in layer_info) {
                     var drainage_line_layer = getKMLLayer(layer_info['drainage_line'],
-                                                          'layer' + group_index + 0, 
+                                                          'layer' + group_index + 'g' + 0, 
                                                           layer_info['watershed'], 
                                                           layer_info['subbasin'])
                     layers.push(drainage_line_layer);
