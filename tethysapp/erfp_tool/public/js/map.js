@@ -463,9 +463,10 @@ var ERFP_MAP = (function() {
                                                 data: time_series,
                                                 dashStyle: 'longdash',
                                             });
+                                $("#erfp-chart").removeClass("hidden");
                             } catch (e) {
                                 if (e instanceof TypeError) {
-                                    console.log(data);
+                                    updateInfoAlert('alert-danger', "Error loading USGS data.");
                                 } 
                             }
                         }
@@ -506,6 +507,7 @@ var ERFP_MAP = (function() {
                                         data: time_series,
                                         dashStyle: 'longdash',
                                     });
+                        $("#erfp-chart").removeClass("hidden");
                     },
                     error: function(request, status, error) {
                         updateInfoAlert('alert-danger', "Error: " + error);
@@ -894,13 +896,13 @@ var ERFP_MAP = (function() {
 
         
         //create function to zoom to layer
-        $('.zoom-to-layer').click(function() {
+        $('.zoom-to-layer').off().click(function() {
             var layer_id = $(this).parent().parent().attr('id');
             zoomToLayer(layer_id);
         });
 
         //function to zoom to feature by id
-        $('#submit-search-reach-id').click(function() {
+        $('#submit-search-reach-id').off().click(function() {
             var watershed_info = $(this).parent().parent().find('#watershed_select').select2('val');
             var reach_id = $(this).parent().parent().find('#reach-id-input').val();
             zoomToFeature(watershed_info, reach_id);
