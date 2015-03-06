@@ -459,7 +459,7 @@ var ERFP_MAP = (function() {
                                 });
                                 var chart = $("#erfp-chart").highcharts();
                                 chart.addSeries({
-                                                name: "USGS",
+                                                name: "USGS (" + m_selected_usgs_id + ")",
                                                 data: time_series,
                                                 dashStyle: 'longdash',
                                             });
@@ -503,7 +503,7 @@ var ERFP_MAP = (function() {
                         });
                         var chart = $("#erfp-chart").highcharts();
                         chart.addSeries({
-                                        name: "NWS",
+                                        name: "NWS (" + m_selected_nws_id + ")",
                                         data: time_series,
                                         dashStyle: 'longdash',
                                     });
