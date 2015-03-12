@@ -862,9 +862,11 @@ def watershed_update(request):
             if(folder_name != watershed.folder_name or file_name != watershed.file_name):
                 delete_old_watershed_prediction_files(watershed.folder_name, 
                                                       main_settings.local_prediction_files)
-            engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
-                                       username=watershed.geoserver.username,
-                                       password=watershed.geoserver.password)
+
+            geoserver  = session.query(Geoserver).get(geoserver_id)
+            engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver.url, 
+                                       username=geoserver.username,
+                                       password=geoserver.password)
             resource_workspace = 'erfp'
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
 
