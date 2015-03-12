@@ -855,6 +855,22 @@ def watershed_update(request):
             elif not watershed.kml_gage_layer:
                 kml_gage_layer = ""
         else:
+            #get desired geoserver
+            try:
+                geoserver  = session.query(Geoserver).get(geoserver_id)
+            except ObjectDeletedError:
+                session.close()
+                return JsonResponse({ 'error': "The geoserver does not exist." })
+            #attempt to get engine
+            try:
+                engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver.url, 
+                                   username=geoserver.username,
+                                   password=geoserver.password)
+            except Exception:
+                session.close()
+                return JsonResponse({ 'error': "The geoserver has errors." })
+                
+
             #remove old kml files           
             delete_old_watershed_kml_files(watershed)
 
@@ -863,10 +879,6 @@ def watershed_update(request):
                 delete_old_watershed_prediction_files(watershed.folder_name, 
                                                       main_settings.local_prediction_files)
 
-            geoserver  = session.query(Geoserver).get(geoserver_id)
-            engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver.url, 
-                                       username=geoserver.username,
-                                       password=geoserver.password)
             resource_workspace = 'erfp'
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
 
