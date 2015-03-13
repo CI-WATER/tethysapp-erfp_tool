@@ -436,50 +436,54 @@ var ERFP_MAP = (function() {
             var date_future_string = datePadString(date_future.getFullYear()) + "-" +
                                   datePadString(1 + date_future.getMonth()) + "-" +
                                   datePadString(date_future.getDate());
-            if(typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) && m_selected_usgs_id.length >= 8) {
-                m_downloading_usgs = true;;
-                //get USGS data
-                var chart_usgs_data_ajax_handle = jQuery.ajax({
-                    type: "GET",
-                    url: "http://waterservices.usgs.gov/nwis/iv/",
-                    dataType: "json",
-                    data: {
-                        format: 'json',
-                        sites: m_selected_usgs_id,
-                        startDT: date_past_string,
-                        endDT:  date_now_string, 
-                        parameterCd: '00060',                    
-                    },
-                    success: function(data) {
-                        if(typeof data != 'undefined') {
-                            var time_series = [];
-                            try {
-                                data.value.timeSeries[0].values[0].value.map(function(data) {
-                                    time_series.push([Date.parse(data.dateTime), 0.0283168*parseFloat(data.value)]);
-                                });
-                                var chart = $("#erfp-chart").highcharts();
-                                chart.addSeries({
-                                                name: "USGS (" + m_selected_usgs_id + ")",
-                                                data: time_series,
-                                                dashStyle: 'longdash',
-                                            });
-                                $("#erfp-chart").removeClass("hidden");
-                            } catch (e) {
-                                if (e instanceof TypeError) {
-                                    updateInfoAlert('alert-danger', "Error loading USGS data.");
-                                } 
+            if(typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) &&
+                m_selected_usgs_id != null) {
+                if(m_selected_usgs_id.length >= 8) {
+                    m_downloading_usgs = true;
+                    //get USGS data
+                    var chart_usgs_data_ajax_handle = jQuery.ajax({
+                        type: "GET",
+                        url: "http://waterservices.usgs.gov/nwis/iv/",
+                        dataType: "json",
+                        data: {
+                            format: 'json',
+                            sites: m_selected_usgs_id,
+                            startDT: date_past_string,
+                            endDT: date_now_string,
+                            parameterCd: '00060',
+                        },
+                        success: function (data) {
+                            if (typeof data != 'undefined') {
+                                var time_series = [];
+                                try {
+                                    data.value.timeSeries[0].values[0].value.map(function (data) {
+                                        time_series.push([Date.parse(data.dateTime), 0.0283168 * parseFloat(data.value)]);
+                                    });
+                                    var chart = $("#erfp-chart").highcharts();
+                                    chart.addSeries({
+                                        name: "USGS (" + m_selected_usgs_id + ")",
+                                        data: time_series,
+                                        dashStyle: 'longdash',
+                                    });
+                                    $("#erfp-chart").removeClass("hidden");
+                                } catch (e) {
+                                    if (e instanceof TypeError) {
+                                        updateInfoAlert('alert-danger', "Error loading USGS data.");
+                                    }
+                                }
                             }
-                        }
-                    },
-                    error: function(request, status, error) {
-                        updateInfoAlert('alert-danger', "Error: " + error);
-                    },
-                })
-                .always(function() {
-                    m_downloading_usgs = false;
-                });
+                        },
+                        error: function (request, status, error) {
+                            updateInfoAlert('alert-danger', "Error: " + error);
+                        },
+                    })
+                        .always(function () {
+                            m_downloading_usgs = false;
+                        });
+                }
             }
-            if(typeof m_selected_nws_id != 'undefined' && !isNaN(m_selected_nws_id)) {
+            if(typeof m_selected_nws_id != 'undefined' && !isNaN(m_selected_nws_id) &&
+                m_selected_nws_id != null) {
                 m_downloading_nws = true;
                 //get NWS data
                 var chart_nws_data_ajax_handle = jQuery.ajax({
@@ -610,8 +614,11 @@ var ERFP_MAP = (function() {
             var subbasin_name = selected_feature.get('subbasin');
         }
 
-        if(typeof usgs_id != 'undefined' && !isNaN(usgs_id) && usgs_id.length < 8) {
-            usgs_id = '0' + usgs_id;
+        if(typeof usgs_id != 'undefined' && !isNaN(usgs_id) && usgs_id != null) {
+            //add zero in case it was removed when converted to a number
+            if(usgs_id.length < 8) {
+                usgs_id = '0' + usgs_id;
+            }
         }
         if(typeof reach_id != 'undefined' &&  
            typeof watershed_name != 'undefined' &&
