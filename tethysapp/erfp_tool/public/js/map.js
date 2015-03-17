@@ -708,12 +708,20 @@ var ERFP_MAP = (function() {
                         var drainage_line_vector_source = new ol.source.ServerVector({
                             format: new ol.format.GeoJSON(),
                             loader: function(extent, resolution, projection) {
-                                var stream_flow_limit = 300;
+                                var stream_flow_limit = 5000;
                                 var map_zoom = m_map.getView().getZoom();
                                 if (map_zoom >= 12) {
                                     stream_flow_limit = 0;
+                                } else if (map_zoom >= 11) {
+                                    stream_flow_limit = 20;
+                                } else if (map_zoom >= 10) {
+                                    stream_flow_limit = 100;
                                 } else if (map_zoom >= 9) {
-                                    stream_flow_limit = 40;
+                                    stream_flow_limit = 1000;
+                                } else if (map_zoom >= 8) {
+                                    stream_flow_limit = 3000;
+                                } else if (map_zoom >= 7) {
+                                    stream_flow_limit = 4000;
                                 }
                                 var url = layer_info['drainage_line']['geojsonp'] + 
                                       '&format_options=callback:loadFeatures' + 
@@ -730,7 +738,7 @@ var ERFP_MAP = (function() {
                                     dataType: 'jsonp',
                                     jsonpCallback: 'loadFeatures' + drainage_line_layer_id,
                                     success: function(response) {
-                                        
+                                        console.log(response.totalFeatures);
                                         drainage_line_vector_source.addFeatures(drainage_line_vector_source.readFeatures(response));
                                     },
                                 });
@@ -741,10 +749,20 @@ var ERFP_MAP = (function() {
                                   var zoom_range = 1;
                                   var map_zoom = m_map.getView().getZoom();
                                   if (map_zoom >= 12) {
-                                      zoom_range = 3;
-                                  } else if (map_zoom >= 9) {
                                       zoom_range = 2;
+                                  } else if (map_zoom >= 11) {
+                                      zoom_range = 3;
+                                  } else if (map_zoom >= 10) {
+                                      zoom_range = 4;
+                                  } else if (map_zoom >= 9) {
+                                      zoom_range = 5;
+                                  } else if (map_zoom >= 8) {
+                                      zoom_range = 6;
+                                  } else if (map_zoom >= 7) {
+                                      zoom_range = 7;
                                   }
+                                  console.log(map_zoom);
+
                                   if(zoom_range != this.zoom_range && typeof this.zoom_range != 'undefined') {
                                       this.clear();  
                                   }
