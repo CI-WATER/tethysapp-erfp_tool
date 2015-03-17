@@ -712,6 +712,7 @@ var ERFP_MAP = (function() {
                     } 
                     //check layer capabilites
                     if(layer_info['drainage_line']['geoserver_method'] == "natur_flow_query") {
+                        var load_features_xhr = null;
                         var drainage_line_vector_source = new ol.source.ServerVector({
                             format: new ol.format.GeoJSON(),
                             loader: function(extent, resolution, projection) {
@@ -739,15 +740,20 @@ var ERFP_MAP = (function() {
                                       ' AND bbox(the_geom,' + extent.join(',') + 
                                       ',\'' + m_map_projection + '\')' +
                                       '&srsname=' + m_map_projection;
+                                //cancel load featues if still active
+                                if(load_features_xhr != null) {
+                                    load_features_xhr.abort();
+                                }
                                 //TODO: ADD LOADING MESSAGE
-                                jQuery.ajax({
+                                load_features_xhr = jQuery.ajax({
                                     url: encodeURI(url),
                                     dataType: 'jsonp',
                                     jsonpCallback: 'loadFeatures' + drainage_line_layer_id,
                                     success: function(response) {
-                                        console.log(response.totalFeatures);
                                         drainage_line_vector_source.addFeatures(drainage_line_vector_source.readFeatures(response));
                                     },
+                                }).always(function() {
+                                   load_features_xhr = null;
                                 });
                                 //ON ERROR ADD MESSAGE
                                 //ALWAYS REMOVE LOADING MESSAGE
@@ -768,7 +774,6 @@ var ERFP_MAP = (function() {
                                   } else if (map_zoom >= 7) {
                                       zoom_range = 7;
                                   }
-                                  console.log(map_zoom);
 
                                   if(zoom_range != this.zoom_range && typeof this.zoom_range != 'undefined') {
                                       this.clear();  

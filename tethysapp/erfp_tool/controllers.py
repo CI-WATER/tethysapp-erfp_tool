@@ -94,6 +94,7 @@ def map(request):
         #add kml urls to list and add their navigation items as well
         group_id = 0
         for watershed in watersheds:
+            #if on the local server
             if watershed.geoserver_id == 1:
                 file_path = os.path.join(kml_file_location, format_name(watershed.watershed_name))
                 kml_info = {'watershed':watershed.folder_name, 
@@ -122,6 +123,7 @@ def map(request):
                 kml_info['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
                 layers_info.append(kml_info)
+            #if geoserver
             else: # (get geoserver info)
                 geoserver_info = {'watershed':watershed.folder_name, 
                             'subbasin':watershed.file_name,
