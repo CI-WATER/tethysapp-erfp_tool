@@ -202,6 +202,12 @@ def map(request):
                     'placeholder': 'Select Watershed',
                     }          
 
+        units_toggle_switch = { 'name': 'units-toggle',
+                                'on_label': 'Metric',
+                                'off_label': 'English',
+                                'size': 'mini',
+                                'initial': True,
+                                }
 
         #Query DB for settings
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
@@ -218,6 +224,7 @@ def map(request):
                     'layers_info': layers_info,
                     'base_layer_info' : json.dumps(base_layer_info),
                     'watershed_select' : watershed_select,
+                    'units_toggle_switch' : units_toggle_switch,
                   }
     
         return render(request, 'erfp_tool/map.html', context)
