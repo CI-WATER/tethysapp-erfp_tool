@@ -27,6 +27,21 @@ In the terminal:
 $ yum install netcdf4-python
 $ yum install hdf5-devel
 $ yum install netcdf-devel
+$ pip install numpy
 $ pip install netCDF4
 ```
 ##Installation:
+Clone the app into the directory you want:
+```
+git clone https://github.com/CI-WATER/tethysapp-erfp_tool.git
+```
+Then install the app in Tethys Platform:
+```
+. /usr/lib/tethys/bin/activate
+cd tethysapp-erfp_tool
+python setup.py install
+tethys syncstores erfp_tool
+python /usr/lib/tethys/src/manage.py collectstatic
+```
+Restart the Apache Server:
+See: http://docs.tethys.ci-water.org/en/latest/production.html#enable-site-and-restart-apache
