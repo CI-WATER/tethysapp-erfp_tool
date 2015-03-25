@@ -42,4 +42,4 @@ $ tethys syncstores erfp_tool
 $ python /usr/lib/tethys/src/manage.py collectstatic
 ```
 Restart the Apache Server:
-See: http://docs.tethys.ci-water.org/en/latest/production.html#enable-site-and-restart-apache
+See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site-and-restart-apache
