@@ -1,7 +1,5 @@
-tethysapp-erfp_tool
-===================
-
 #ECMWF-RAPID Flood Prediction Tool App
+*tethysapp-erfp_tool*
 
 **This app is created to run in the Teyths programming environment.
 See: https://github.com/CI-WATER/tethys and http://tethys-platform.readthedocs.org/en/1.0.0/**
