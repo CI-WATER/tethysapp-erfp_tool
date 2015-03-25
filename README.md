@@ -22,6 +22,7 @@ $ pip install netCDF4
 ```
 ###Install netCDF4-python on Redhat:
 *Note: this app was desgined and tested in Ubuntu*
+
 In the terminal:
 ```
 $ yum install netcdf4-python
