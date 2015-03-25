@@ -10,7 +10,7 @@ See: https://github.com/CI-WATER/tethys and http://tethys-platform.readthedocs.o
 separately. See: https://github.com/CI-WATER/erfp_data_process_ubuntu or https://github.com/CI-WATER/erfp_data_process_ubuntu_aws*
 
 ##Prerequisites:
-- Tethys Platform (CKAN, PostgesQL, GeoServer)
+- Tethys Platform (CKAN, PostgresQL, GeoServer)
 - netCDF4-python (python package)
 
 ###Install netCDF4-python on Ubuntu:
