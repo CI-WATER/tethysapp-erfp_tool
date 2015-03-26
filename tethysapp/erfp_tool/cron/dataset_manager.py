@@ -17,7 +17,6 @@ class ERFPDatasetManager():
             engine_url = engine_url[:-1]
         if not engine_url.endswith('api/action') and not engine_url.endswith('api/3/action'):
             engine_url += '/api/action'
-        print engine_url
         self.dataset_engine = CkanDatasetEngine(endpoint=engine_url, apikey=api_key)
         self.output_files_location = output_files_location
 
@@ -27,7 +26,7 @@ class ERFPDatasetManager():
         returns their attributes
         """
         all_info = []
-        basin_name_search = re.compile(r'Qout_(.+?)_[a-zA-Z\d]+.nc')
+        basin_name_search = re.compile(r'Qout_[a-zA-Z\d-_]+_[a-zA-Z\d]+.nc')
         basin_files = glob(os.path.join(source_dir,'Qout_*.nc'))
         base_path = os.path.dirname(source_dir)
         base_name = os.path.basename(source_dir)
