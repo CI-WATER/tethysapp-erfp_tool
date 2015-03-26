@@ -7,6 +7,8 @@
 {% block app_content %}
     <div id="message" class="alert alert-danger hidden" role="alert"></div>
     <h1>Add a Watershed</h1>
+    <p class="help-block">The format of the dataset name on the data store server 
+    is erfp-[watershed name]-[subbasin name]-[year]-[month]. Ex. erfp-magdalena-el_banco-2015-1.</p>
     {% gizmo text_input watershed_name_input %}
     <p class="help-block">This is the name in the data store server or folder name on local instance</p>
     {% gizmo text_input subbasin_name_input %}
