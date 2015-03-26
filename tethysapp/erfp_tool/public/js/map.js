@@ -667,9 +667,12 @@ var ERFP_MAP = (function() {
                 usgs_id = '0' + usgs_id;
             }
         }
-        if(typeof reach_id != 'undefined' &&  
+        if(typeof reach_id != 'undefined' &&
+           reach_id != null &&  
            typeof watershed_name != 'undefined' &&
-           typeof subbasin_name != 'undefined')
+           watershed_name != null &&  
+           typeof subbasin_name != 'undefined' &&
+           subbasin_name != null)
         {
             displayHydrograph(selected_feature, 
                             reach_id,
