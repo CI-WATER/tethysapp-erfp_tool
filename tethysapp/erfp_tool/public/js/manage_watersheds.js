@@ -118,7 +118,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
         
             //submit if it form is ok
             if(safe_to_submit.val && !m_uploading_data) {
-                if (window.confirm("You Are you sure? You will delete prediction files " +
+                if (window.confirm("Are you sure? You will delete prediction files " +
                     "if the watershed or subbasin name are changed.")) {
 
                     var submit_button = $(this);
