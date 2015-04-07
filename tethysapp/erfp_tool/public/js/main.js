@@ -90,11 +90,15 @@ function addErrorMessage(error) {
     .addClass('alert-danger');
  
 }
-//add error message to #message div
-function addWarningMessage(error) {
-   $('#message').html(
+//add warning message to #message div
+function addWarningMessage(error, div_id) {
+    var div_id_string = '#message';
+    if (typeof div_id != 'undefined') {
+        div_id_string = '#'+div_id;
+    }
+   $(div_id_string).html(
       '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
-      '<span class="sr-only">Error:</span> ' + error
+      '<span class="sr-only">Warning:</span> ' + error
     )
     .removeClass('hidden')
     .removeClass('alert-success')
@@ -104,8 +108,12 @@ function addWarningMessage(error) {
  
 }
 //add information message to #message div
-function addInfoMessage(message) {
-   $('#message').html(
+function addInfoMessage(message, div_id) {
+    var div_id_string = '#message';
+    if (typeof div_id != 'undefined') {
+        div_id_string = '#'+div_id;
+    }
+   $(div_id_string).html(
       '<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>' +
       '<span class="sr-only">Info:</span> ' + message
     )
@@ -117,8 +125,12 @@ function addInfoMessage(message) {
  
 }
 //add success message to #message div
-function addSuccessMessage(message) {
-    $('#message').html(
+function addSuccessMessage(message, div_id) {
+    var div_id_string = '#message';
+    if (typeof div_id != 'undefined') {
+        div_id_string = '#'+div_id;
+    }
+    $(div_id_string).html(
       '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>' +
       '<span class="sr-only">Sucess:</span> ' + message
     ).removeClass('hidden')
@@ -126,6 +138,46 @@ function addSuccessMessage(message) {
     .removeClass('alert-info')
     .removeClass('alert-warning')
     .addClass('alert-success'); 
+}
+
+//add error message to #message div
+function appendErrorMessage(message, div_id) {
+    var div_id_string = '';
+    if (typeof div_id != 'undefined') {
+        div_id_string = 'id = "'+div_id+'"';
+    }
+    $('#message').append(
+      '<div '+ div_id_string +' class="alert alert-danger" role="alert">' +
+      '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
+      '<span class="sr-only">Error:</span> ' + message + '</div>'
+    )
+    .removeClass('hidden');
+}
+//add info message to #message div
+function appendInfoMessage(message, div_id) {
+    var div_id_string = '';
+    if (typeof div_id != 'undefined') {
+        div_id_string = 'id = "'+div_id+'"';
+    }
+    $('#message').append(
+      '<div '+ div_id_string +' class="alert alert-info" role="alert">' +
+      '<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>' +
+      '<span class="sr-only">Info:</span> ' + message + '</div>'
+    )
+    .removeClass('hidden');
+}
+//add success message to #message div
+function appendSuccessMessage(message, div_id) {
+    var div_id_string = '';
+    if (typeof div_id != 'undefined') {
+        div_id_string = 'id = "'+div_id+'"';
+    }
+    $('#message').append(
+      '<div '+ div_id_string +' class="alert alert-success" role="alert">' +
+      '<br><span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>' +
+      '<span class="sr-only">Sucess:</span> ' + message + '</div>'
+    )
+    .removeClass('hidden');
 }
 
 //send data to database with error messages
@@ -181,6 +233,35 @@ function ajax_update_database_with_file(ajax_url, ajax_data) {
             addErrorMessage(error);
             console.log(xhr.responseText);
         },
+    });
+    return xhr;
+}
+
+//send data to database with error messages
+function ajax_update_database_multiple_files(ajax_url, ajax_data, custom_message, div_id) {
+    //backslash at end of url is requred
+    if (ajax_url.substr(-1) !== "/") {
+        ajax_url = ajax_url.concat("/");
+    }
+    //update database
+    var xhr = jQuery.ajax({
+        url: ajax_url,
+        type: "POST",
+        data: ajax_data,
+        dataType: "json",
+        processData: false, // Don't process the files
+        contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+    });
+    xhr.done(function(data){
+        if("success" in data) {
+            addSuccessMessage(custom_message, div_id);
+        } else {
+            addErrorMessage(data['error'], div_id);
+        }
+    })
+    .fail(function(xhr, status, error) {
+            addErrorMessage(error, div_id);
+            console.log(xhr.responseText);
     });
     return xhr;
 }

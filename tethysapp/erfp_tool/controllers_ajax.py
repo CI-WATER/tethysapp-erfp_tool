@@ -651,12 +651,25 @@ def watershed_add(request):
                               )
         session.add(watershed)
         session.commit()
+        
+        #get watershed_id
+        watershed_id = watershed.id
+        
         session.close()
         
         #load prediction datasets for watershed
         load_datasets()
         
-        return JsonResponse({ 'success': "Watershed Sucessfully Added!" })
+        return JsonResponse({
+                            'success': "Watershed Sucessfully Added!",
+                            'watershed_id' : watershed_id,
+                            'geoserver_drainage_line_layer': geoserver_drainage_line_layer,
+                            'geoserver_catchment_layer': geoserver_catchment_layer,
+                            'geoserver_gage_layer': geoserver_gage_layer,
+                            'kml_drainage_line_layer': kml_drainage_line_layer,
+                            'kml_catchment_layer': kml_catchment_layer,
+                            'kml_gage_layer': kml_gage_layer,
+                            })
 
     return JsonResponse({ 'error': "A problem with your request exists." })
 
@@ -954,6 +967,9 @@ def watershed_update(request):
         load_datasets()
         
         return JsonResponse({ 'success': "Watershed sucessfully updated!", 
+                              'geoserver_drainage_line_layer': geoserver_drainage_line_layer,
+                              'geoserver_catchment_layer': geoserver_catchment_layer,
+                              'geoserver_gage_layer': geoserver_gage_layer,
                               'kml_drainage_line_layer': kml_drainage_line_layer,
                               'kml_catchment_layer': kml_catchment_layer,
                               'kml_gage_layer': kml_gage_layer,
