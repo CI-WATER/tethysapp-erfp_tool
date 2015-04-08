@@ -18,7 +18,7 @@ from django.contrib.auth.decorators import user_passes_test
 from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 
 #local imports
-from cron.load_datasets import load_datasets
+from cron.load_datasets import load_watershed
 
 from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
@@ -654,11 +654,10 @@ def watershed_add(request):
         
         #get watershed_id
         watershed_id = watershed.id
-        
-        session.close()
-        
         #load prediction datasets for watershed
-        load_datasets()
+        load_watershed(watershed)
+
+        session.close()
         
         return JsonResponse({
                             'success': "Watershed Sucessfully Added!",
@@ -961,10 +960,10 @@ def watershed_update(request):
         
         #update database
         session.commit()
-        session.close()
-
         #load prediction datasets for watershed
-        load_datasets()
+        load_watershed(watershed)
+
+        session.close()
         
         return JsonResponse({ 'success': "Watershed sucessfully updated!", 
                               'geoserver_drainage_line_layer': geoserver_drainage_line_layer,
