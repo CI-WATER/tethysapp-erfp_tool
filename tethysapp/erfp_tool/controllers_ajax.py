@@ -654,6 +654,7 @@ def watershed_add(request):
         
         #get watershed_id
         watershed_id = watershed.id
+        
         #load prediction datasets for watershed
         load_watershed(watershed)
 

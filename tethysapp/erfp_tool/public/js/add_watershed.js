@@ -22,7 +22,7 @@ var ERFP_ADD_WATERSHED = (function() {
      /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
-    var checkShapefile, finishReset;
+    var checkShapefile, checkKMLfile, finishReset;
 
 
     /************************************************************************
@@ -71,6 +71,15 @@ var ERFP_ADD_WATERSHED = (function() {
         }
         return true;
 
+    }
+    //FUNCTION: Check KML file inputs to make sure required file is there
+    checkKMLfile = function(kml_file, safe_to_submit) {
+        if("kml" != kml_file.name.split('.').pop()) {
+            safe_to_submit.val = false;
+            appendErrorMessage("Problem with KML file")
+            return false;
+        }
+        return true;
     }
 
     /************************************************************************
@@ -123,8 +132,17 @@ var ERFP_ADD_WATERSHED = (function() {
             if(geoserver_id==1){
                 //kml upload
                 drainage_line_kml_file = $('#drainage-line-kml-upload-input')[0].files[0];
+                if(!checkKMLfile(drainage_line_kml_file)) {
+                    $('#drainage-line-kml-upload-input').parent().addClass('has-error');
+                }
                 catchment_kml_file = $('#catchment-kml-upload-input')[0].files[0];
+                if(!checkKMLfile(catchment_kml_file)) {
+                    $('#catchment-kml-upload-input').parent().addClass('has-error');
+                }
                 gage_kml_file = $('#gage-kml-upload-input')[0].files[0];
+                if(!checkKMLfile(gage_kml_file)) {
+                    $('#gage-kml-upload-input').parent().addClass('has-error');
+                }
                 
             } else if (!$('#shp-upload-toggle').bootstrapSwitch('state')) {
                 //geoserver update
@@ -180,13 +198,11 @@ var ERFP_ADD_WATERSHED = (function() {
                     data.append("geoserver_catchment_layer",geoserver_catchment_layer);
                     data.append("geoserver_gage_layer",geoserver_gage_layer);
                     data.append("drainage_line_kml_file",drainage_line_kml_file);
-                    data.append("catchment_kml_file",catchment_kml_file);
-                    data.append("gage_kml_file",gage_kml_file);
                     for(var i = 0; i < drainage_line_shp_files.length; i++) {
                         data.append("drainage_line_shp_file",drainage_line_shp_files[i]);
                     }
                     
-                    if (geoserver_id!=1) {
+                    if (drainage_line_kml_file != null || geoserver_drainage_line_layer != null) {
                         appendInfoMessage("Uploading Drainage Line ...", "message_drainage_line");
                     }
                     xhr = ajax_update_database_multiple_files("submit",data, 
@@ -199,7 +215,7 @@ var ERFP_ADD_WATERSHED = (function() {
                             var xhr_catchment = null;
                             var xhr_gage = null;
                             //upload catchment when  drainage line finishes if exists
-                            if(catchment_shp_files.length >= 4) {
+                            if(catchment_kml_file != null || catchment_shp_files != null) {
                                 appendInfoMessage("Uploading Catchment ...", "message_catchment");
                                 var data = new FormData();
                                 data.append("watershed_id", return_data['watershed_id'])
@@ -209,6 +225,7 @@ var ERFP_ADD_WATERSHED = (function() {
                                 data.append("geoserver_id",geoserver_id);
                                 data.append("geoserver_drainage_line_layer",
                                             return_data['geoserver_drainage_line_layer']);
+                                data.append("catchment_kml_file",catchment_kml_file);
                                 for(var i = 0; i < catchment_shp_files.length; i++) {
                                     data.append("catchment_shp_file",catchment_shp_files[i]);
                                 }
@@ -219,7 +236,7 @@ var ERFP_ADD_WATERSHED = (function() {
 
                             //upload gage when catchment and drainage line finishes if gage exists
                             jQuery.when(xhr_catchment).done(function(catchment_data){
-                                if(gage_shp_files.length >= 4) {
+                                if(gage_kml_file != null || gage_shp_files != null) {
                                     appendInfoMessage("Uploading Gages ...", "message_gages");
                                     var data = new FormData();
                                     data.append("watershed_id", return_data['watershed_id'])
@@ -234,7 +251,12 @@ var ERFP_ADD_WATERSHED = (function() {
                                             data.append("geoserver_catchment_layer",
                                                         catchment_data['geoserver_catchment_layer']);
                                         }
+                                        if('kml_catchment_layer' in catchment_data) {
+                                            data.append("kml_catchment_layer",
+                                                        catchment_data['kml_catchment_layer']);
+                                        }
                                     }
+                                    data.append("gage_kml_file",gage_kml_file);
                                     for(var i = 0; i < gage_shp_files.length; i++) {
                                         data.append("gage_shp_file",gage_shp_files[i]);
                                     }
