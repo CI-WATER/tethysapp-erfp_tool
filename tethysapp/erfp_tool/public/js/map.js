@@ -48,7 +48,7 @@ var ERFP_MAP = (function() {
     var bindInputs, convertTimeSeriesMetricToEnglish, convertTimeSeriesEnglishToMetric,
         isNotLoadingPastRequest, zoomToAll, zoomToLayer, zoomToFeature, toTitleCase, 
         removeInfoDivClases, datePadString, updateInfoAlert, getBaseLayer, 
-        getTileLayer, getKMLLayer, clearMessages, clearOldChart, 
+        getTileLayer, getKMLLayer, clearMessages, clearOldChart, dateToUTCString, 
         clearChartSelect2, getChartData, displayHydrograph, 
         loadHydrographFromFeature;
 
@@ -344,6 +344,12 @@ var ERFP_MAP = (function() {
         }
 
     };
+    //FUNCTION: converts date to UTC string in the format yyyy-mm-dd
+    dateToUTCString = function(date) {
+        return datePadString(date.getUTCFullYear()) + "-" +
+              datePadString(1 + date.getUTCMonth()) + "-" +
+              datePadString(date.getUTCDate());
+    }
 
     //FUNCTION: gets all data for chart
     getChartData = function(start_folder) {
@@ -476,21 +482,48 @@ var ERFP_MAP = (function() {
                 m_downloading_hydrograph = false;
                 m_map.addInteraction(m_select_interaction);
             });
+            
             //get dates
             var date_now = new Date();
-            var date_now_string = datePadString(date_now.getFullYear()) + "-" +
-                                  datePadString(1 + date_now.getMonth()) + "-" +
-                                  datePadString(date_now.getDate());
             var date_past = new Date();
-            date_past.setDate(date_now.getDate()-7);
-            var date_past_string = datePadString(date_past.getFullYear()) + "-" +
-                                  datePadString(1 + date_past.getMonth()) + "-" +
-                                  datePadString(date_past.getDate());
+            date_past.setUTCDate(date_now.getUTCDate()-3);
             var date_future = new Date();
-            date_future.setDate(date_now.getDate()+7);
-            var date_future_string = datePadString(date_future.getFullYear()) + "-" +
-                                  datePadString(1 + date_future.getMonth()) + "-" +
-                                  datePadString(date_future.getDate());
+            date_future.setUTCDate(date_now.getUTCDate()+15);
+            var date_usgs_start = date_past;
+            var date_usgs_end = date_now;
+            var date_nws_start = date_now;
+            var date_nws_end = date_future;       
+
+            //get forcast dates if available
+            if(start_folder != null && typeof start_folder != "undefined" && 
+                start_folder != "most_recent") {
+                var forecast_start_year = parseInt(start_folder.substring(0,4));
+                var forecast_start_month = parseInt(start_folder.substring(4,6));
+                var forecast_start_day = parseInt(start_folder.substring(6,8));
+                var forecast_start_hour = parseInt(start_folder.split(".")[1].substring(0,2));
+                var date_forecast_begin = new Date(Date.UTC(forecast_start_year, forecast_start_month-1,
+                    forecast_start_day, forecast_start_hour));
+                var date_forecast_end = new Date();
+                date_forecast_end.setUTCDate(date_forecast_begin.getUTCDate()+15);
+
+                //make corrections to dates if needed
+                //USGS Dates
+                if (date_forecast_begin<date_usgs_start) {
+                    date_usgs_start = date_forecast_begin;
+                }
+                if (date_forecast_end<date_usgs_end) {
+                    date_usgs_end = date_forecast_end;
+                }
+                //NWS Dates
+                if (date_forecast_begin<date_nws_start) {
+                    date_nws_start = date_forecast_begin;
+                }
+                if (date_forecast_end<date_nws_end) {
+                    date_nws_end = date_forecast_end;
+                }
+                date_future = date_forecast_end;
+            }
+
             if(typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) &&
                 m_selected_usgs_id != null) {
                 if(m_selected_usgs_id.length >= 8) {
@@ -503,8 +536,8 @@ var ERFP_MAP = (function() {
                         data: {
                             format: 'json',
                             sites: m_selected_usgs_id,
-                            startDT: date_past_string,
-                            endDT: date_now_string,
+                            startDT: dateToUTCString(date_usgs_start),
+                            endDT: dateToUTCString(date_usgs_end),
                             parameterCd: '00060',
                         },
                         success: function (data) {
@@ -549,8 +582,8 @@ var ERFP_MAP = (function() {
                         datasource: '0',
                         format: 'json',
                         ts_id: m_selected_nws_id,
-                        from: date_now_string,
-                        to:  date_future_string, 
+                        from: dateToUTCString(date_nws_start),
+                        to:  dateToUTCString(date_nws_end), 
                     },
                     success: function(data) {
                         var chart = $("#erfp-chart").highcharts();
