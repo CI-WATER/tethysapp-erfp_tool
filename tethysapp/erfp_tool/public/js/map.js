@@ -878,7 +878,7 @@ var ERFP_MAP = (function() {
                                       '&format_options=callback:loadFeatures' +
                                       drainage_line_layer_id +
                                       '&PROPERTYNAME=the_geom,' +
-                                      layer_info['drainage_line']['contained_attributes'].join() +
+                                      layer_info['drainage_line']['contained_attributes'] +
                                       '&BBOX=' + extent.join(',') + 
                                       ','+ m_map_projection +
                                       '&srsname=' + m_map_projection;
