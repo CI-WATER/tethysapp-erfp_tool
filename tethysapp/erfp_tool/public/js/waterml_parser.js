@@ -2,7 +2,7 @@
  * FILE:    JavaScript Enclosure Template
  * DATE: April 2015    
  * AUTHOR: Alan Snow
- * COPYRIGHT: (c) XXXX Brigham Young University
+ * COPYRIGHT: (c) 2015 Brigham Young University
  * LICENSE: BSD 2-Clause
  * Code originally from https://github.com/crwr/wmlviewer
  * And modified for use in this app
@@ -528,10 +528,10 @@ var WATERML = (function() {
                     var seriesValues = getValues(observations[i]);
                     if (seriesValues.length > 0){
                         //assume only dealing with flow
-                        if(typeof display_units != undefined && display_units == "metric") {
-                            propertyDefaults.displayUnits = "cms"
-                        } else {
+                        if(typeof display_units != undefined && display_units == "english") {
                             propertyDefaults.displayUnits = "cfs"
+                        } else {
+                            propertyDefaults.displayUnits = "cms"
                         }
                         //Convert series units
                         all_series.push(convertPointUnits(seriesValues,propertyDefaults.dimensions, 
