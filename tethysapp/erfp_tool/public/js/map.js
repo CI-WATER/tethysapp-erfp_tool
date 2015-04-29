@@ -31,11 +31,12 @@ var ERFP_MAP = (function() {
        m_selected_guess_index,
        m_selected_usgs_id,
        m_selected_nws_id,
+       m_selected_hydroserver_url,
        m_downloading_hydrograph,
        m_downloading_select,
        m_downloading_usgs,
        m_downloading_nws,
-       m_downloading_ww,
+       m_downloading_hydroserver,
        m_searching_for_reach,
        m_chart_data_ajax_handle,
        m_chart_data_ajax_load_failed,
@@ -112,7 +113,7 @@ var ERFP_MAP = (function() {
     //FUNCTION: check if loading past request
     isNotLoadingPastRequest = function() {
         return !m_downloading_hydrograph && !m_downloading_select && 
-            !m_downloading_usgs && !m_downloading_nws && !m_downloading_ww;
+            !m_downloading_usgs && !m_downloading_nws && !m_downloading_hydroserver;
     }
     //FUNCTION: zooms to all kml files
     zoomToAll = function() {
@@ -604,13 +605,13 @@ var ERFP_MAP = (function() {
                     m_downloading_nws = false;
                 });
             }
-            //Get WorldWater Data if Available
-            if(true) {
-                m_downloading_ww = true;
+            //Get HydroServer Data if Available
+            if(typeof m_selected_hydroserver_url != 'undefined' && m_selected_hydroserver_url != null) {
+                m_downloading_hydroserver = true;
                 //get WorldWater data
                 var chart_ww_data_ajax_handle = jQuery.ajax({
                     type: "GET",
-                    url: "http://worldwater.byu.edu/app/index.php/dr/services/cuahsi_1_1.asmx/GetValuesObject?location=default:40004&variable=default:Q",
+                    url: m_selected_hydroserver_url,
                     data: {
                         startDate: dateToUTCString(date_observed_start),
                         endDate:  dateToUTCString(date_observed_end), 
@@ -635,7 +636,7 @@ var ERFP_MAP = (function() {
                     },
                 })
                 .always(function() {
-                    m_downloading_ww = false;
+                    m_downloading_hydroserver = false;
                 });
             }
 
@@ -648,7 +649,7 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: displays hydrograph at stream segment
-    displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index, usgs_id, nws_id) {
+    displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index, usgs_id, nws_id, hydroserver_url) {
         //check if old ajax call still running
         if(isNotLoadingPastRequest()) {
             //remove old chart reguardless
@@ -660,6 +661,7 @@ var ERFP_MAP = (function() {
             m_selected_guess_index = guess_index;
             m_selected_usgs_id = usgs_id;
             m_selected_nws_id = nws_id;
+            m_selected_hydroserver_url = hydroserver_url;
             getChartData("most_recent");
             //get the select data
             m_downloading_select = true;
@@ -720,6 +722,7 @@ var ERFP_MAP = (function() {
         var guess_index = selected_feature.get("guess_index");
         var usgs_id = selected_feature.get("usgs_id");
         var nws_id = selected_feature.get("nws_id");
+        var hydroserver_url = selected_feature.get("hydroserver_url");
         
         //in case the reach_id is in a differen location
         if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
@@ -751,7 +754,8 @@ var ERFP_MAP = (function() {
                             subbasin_name, 
                             guess_index,
                             usgs_id,
-                            nws_id); 
+                            nws_id,
+                            hydroserver_url); 
         } else {
             updateInfoAlert('alert-warning', 'The attributes in the file are faulty. Please fix and upload again.');
         }
@@ -796,7 +800,7 @@ var ERFP_MAP = (function() {
         m_downloading_select = false;
         m_downloading_usgs = false;
         m_downloading_nws = false;
-        m_downloading_ww = false;
+        m_downloading_hydroserver = false;
         m_searching_for_reach = false;
         m_chart_data_ajax_handle = null;
         m_chart_data_ajax_load_failed = false;
