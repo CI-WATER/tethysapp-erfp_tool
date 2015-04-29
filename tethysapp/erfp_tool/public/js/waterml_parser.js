@@ -17,7 +17,7 @@ var WATERML = (function() {
     /************************************************************************
     *                      MODULE LEVEL / GLOBAL VARIABLE DECLARATIONS
     *************************************************************************/
-    var m_property_list, m_units_list, 
+    var m_public_interface, m_property_list, m_units_list, 
         m_include_namespace, m_waterml_version, m_sig_figs;
 
     /************************************************************************
@@ -89,7 +89,7 @@ var WATERML = (function() {
                     units: [
                             {
                                 name: "m^3/s",
-                                synonyms: ["m^3/s", "cumec", "m&#179;/s", "m3/s", "m³/s"],
+                                synonyms: ["m^3/s", "cumec", "m&#179;/s", "m3/s", "m³/s", "cms"],
                                 toCommon: 1,
                             },                        
                             {
@@ -174,8 +174,8 @@ var WATERML = (function() {
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
     var log10, roundToSignificantFigures, parseISO8601Date, convertUnits,
-        getWMLVersion, getUnits, getObservations, getSiteName, 
-        getObservedProperty;
+        convertPointUnits, getWMLVersion, getUnits, getObservations,  
+        getSiteName, getObservedProperty, getPropertyDefaults, getValues;
 
     /************************************************************************
     *                    PRIVATE FUNCTION IMPLEMENTATIONS
@@ -302,7 +302,7 @@ var WATERML = (function() {
         }
     };
 
-    ConvertPointUnits = function(series, dimensions, fromUnit, toUnit){
+    convertPointUnits = function(series, dimensions, fromUnit, toUnit){
         //dimensions represents the standard dimensional abbreviation (L for length, M for mass, etc.)
         //fromUnit and toUnit can be any synonym listed in the relevant dimensions in wml-property-library.js 
         var result;
@@ -394,7 +394,7 @@ var WATERML = (function() {
         return result;
     };
     
-    GetPropertyDefaults = function(property, sourceUnits, observation) {
+    getPropertyDefaults = function(property, sourceUnits, observation) {
         //Searches the attached wml-property-library.js for the 
         var query;
         var result = [];
@@ -416,7 +416,7 @@ var WATERML = (function() {
         if (propertyLabel == ""){
             //Unknown property
             propertyLabel = "Unknown Property";
-        }
+        }                
         
         conversionFactor = convertUnits(dimensions, sourceUnits, displayUnits);
         
@@ -437,8 +437,8 @@ var WATERML = (function() {
             dimensions = "";
             displayUnits = "Unknown Units";
             conversionFactor = 1;                        
-        }                 
-        
+        }
+                
         result = {
             'propertyLabel': propertyLabel, 
             'dimensions': dimensions, 
@@ -450,7 +450,7 @@ var WATERML = (function() {
         return result;
     };
     
-    function GetValues(observation) {
+    getValues = function(observation) {
         //For WaterML 2, this currently only supports the Time-Value pair method of encoding
         var query, points, xText, yText, x, y, yRound;
         var result = [];
@@ -498,8 +498,8 @@ var WATERML = (function() {
     * NOTE: The functions in the public interface have access to the private
     * functions of the library because of JavaScript function scope.
     */
-    public_interface = {
-        get_json_from_waterml: function(waterml_doc) {
+    m_public_interface = {
+        get_json_from_waterml: function(waterml_doc, display_units) {
             // Initialize Global Variables
             m_include_namespace = null;
             m_waterml_version = null;
@@ -520,19 +520,28 @@ var WATERML = (function() {
                 var observations = getObservations(xml); 
                 for (var i=0;i<observations.length;i++) {
                     //Get series metadata
-                    seriesName = getSiteName(observations[i]);
-                    observedProperty = getObservedProperty(observations[i]);
-                    sourceUnits = getUnits(observations[i]);
-                    propertyDefaults = GetPropertyDefaults(observedProperty, sourceUnits, observations[i]);
+                    var seriesName = getSiteName(observations[i]);
+                    var observedProperty = getObservedProperty(observations[i]);
+                    var sourceUnits = getUnits(observations[i]);
+                    var propertyDefaults = getPropertyDefaults(observedProperty, sourceUnits, observations[i]);
                     //Get series values
-                    seriesValues = GetValues(observations[i]);
+                    var seriesValues = getValues(observations[i]);
                     if (seriesValues.length > 0){
+                        //assume only dealing with flow
+                        if(typeof display_units != undefined && display_units == "metric") {
+                            propertyDefaults.displayUnits = "cms"
+                        } else {
+                            propertyDefaults.displayUnits = "cfs"
+                        }
                         //Convert series units
-                        all_series.push(ConvertPointUnits(seriesValues,propertyDefaults.dimensions, 
+                        all_series.push(convertPointUnits(seriesValues,propertyDefaults.dimensions, 
                                         propertyDefaults.sourceUnits, propertyDefaults.displayUnits));
-                    } else {
-                        alert("Series " + seriesName + " has no values.");
                     }
+                }
+                if (all_series.length > 0) {
+                    return all_series;
+                } else {
+                    return null;
                 }
             }
         }
@@ -548,5 +557,5 @@ var WATERML = (function() {
         m_sig_figs = 4;
     });
     
-    return public_interface;
+    return m_public_interface;
 }()); // End of package wrapper 

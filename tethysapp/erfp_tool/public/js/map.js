@@ -35,6 +35,7 @@ var ERFP_MAP = (function() {
        m_downloading_select,
        m_downloading_usgs,
        m_downloading_nws,
+       m_downloading_ww,
        m_searching_for_reach,
        m_chart_data_ajax_handle,
        m_chart_data_ajax_load_failed,
@@ -111,7 +112,7 @@ var ERFP_MAP = (function() {
     //FUNCTION: check if loading past request
     isNotLoadingPastRequest = function() {
         return !m_downloading_hydrograph && !m_downloading_select && 
-            !m_downloading_usgs && !m_downloading_nws;
+            !m_downloading_usgs && !m_downloading_nws && !m_downloading_ww;
     }
     //FUNCTION: zooms to all kml files
     zoomToAll = function() {
@@ -489,8 +490,8 @@ var ERFP_MAP = (function() {
             date_past.setUTCDate(date_now.getUTCDate()-3);
             var date_future = new Date();
             date_future.setUTCDate(date_now.getUTCDate()+15);
-            var date_usgs_start = date_past;
-            var date_usgs_end = date_now;
+            var date_observed_start = date_past;
+            var date_observed_end = date_now;
             var date_nws_start = date_now;
             var date_nws_end = date_future;       
 
@@ -508,11 +509,11 @@ var ERFP_MAP = (function() {
 
                 //make corrections to dates if needed
                 //USGS Dates
-                if (date_forecast_begin<date_usgs_start) {
-                    date_usgs_start = date_forecast_begin;
+                if (date_forecast_begin<date_observed_start) {
+                    date_observed_start = date_forecast_begin;
                 }
-                if (date_forecast_end<date_usgs_end) {
-                    date_usgs_end = date_forecast_end;
+                if (date_forecast_end<date_observed_end) {
+                    date_observed_end = date_forecast_end;
                 }
                 //NWS Dates
                 if (date_forecast_begin<date_nws_start) {
@@ -523,7 +524,7 @@ var ERFP_MAP = (function() {
                 }
                 date_future = date_forecast_end;
             }
-
+            //Get USGS data if USGS ID attribute exists
             if(typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) &&
                 m_selected_usgs_id != null) {
                 if(m_selected_usgs_id.length >= 8) {
@@ -536,8 +537,8 @@ var ERFP_MAP = (function() {
                         data: {
                             format: 'json',
                             sites: m_selected_usgs_id,
-                            startDT: dateToUTCString(date_usgs_start),
-                            endDT: dateToUTCString(date_usgs_end),
+                            startDT: dateToUTCString(date_observed_start),
+                            endDT: dateToUTCString(date_observed_end),
                             parameterCd: '00060',
                         },
                         success: function (data) {
@@ -567,6 +568,7 @@ var ERFP_MAP = (function() {
                     });
                 }
             }
+            //Get AHPS data if NWD ID attribute exists
             if(typeof m_selected_nws_id != 'undefined' && !isNaN(m_selected_nws_id) &&
                 m_selected_nws_id != null) {
                 m_downloading_nws = true;
@@ -602,6 +604,42 @@ var ERFP_MAP = (function() {
                     m_downloading_nws = false;
                 });
             }
+            //Get WorldWater Data if Available
+            if(true) {
+                m_downloading_ww = true;
+                //get WorldWater data
+                var chart_ww_data_ajax_handle = jQuery.ajax({
+                    type: "GET",
+                    url: "http://worldwater.byu.edu/app/index.php/dr/services/cuahsi_1_1.asmx/GetValuesObject?location=default:40004&variable=default:Q",
+                    data: {
+                        startDate: dateToUTCString(date_observed_start),
+                        endDate:  dateToUTCString(date_observed_end), 
+                    },
+                    success: function(data) {
+                        var series_data = WATERML.get_json_from_waterml(data, m_units);
+                        console.log(series_data);
+                        if(series_data == null) {
+                            updateInfoAlert('alert-danger', "No data found for WorldWater");
+                        } else {
+                            var chart = $("#erfp-chart").highcharts();
+                            chart.addSeries({
+                                            name: "WorldWater",
+                                            data: series_data[0],
+                                            dashStyle: 'longdash',
+                                        });
+                            $("#erfp-chart").removeClass("hidden");
+                        }
+                    },
+                    error: function(request, status, error) {
+                        updateInfoAlert('alert-danger', "Error: " + error);
+                    },
+                })
+                .always(function() {
+                    m_downloading_ww = false;
+                });
+            }
+
+
         }
         else {
              //updateInfoAlert
@@ -758,6 +796,7 @@ var ERFP_MAP = (function() {
         m_downloading_select = false;
         m_downloading_usgs = false;
         m_downloading_nws = false;
+        m_downloading_ww = false;
         m_searching_for_reach = false;
         m_chart_data_ajax_handle = null;
         m_chart_data_ajax_load_failed = false;
