@@ -187,7 +187,6 @@ var ERFP_MAP = (function() {
                             dataType: 'jsonp',
                             jsonpCallback: 'searchFeatures',
                             success: function(response) {
-                                console.log(response);
                                 if (response.totalFeatures > 0) {
                                     var features = drainage_line_layer.getSource().readFeatures(response);
                                     m_map.getView().fitExtent(features[0].getGeometry().getExtent(), m_map.getSize());
@@ -618,7 +617,6 @@ var ERFP_MAP = (function() {
                     },
                     success: function(data) {
                         var series_data = WATERML.get_json_from_waterml(data, m_units);
-                        console.log(series_data);
                         if(series_data == null) {
                             updateInfoAlert('alert-danger', "No data found for WorldWater");
                         } else {
@@ -796,6 +794,7 @@ var ERFP_MAP = (function() {
         m_selected_guess_index = null;
         m_selected_usgs_id = null;
         m_selected_nws_id = null;
+        m_selected_hydroserver_url = null;
         m_downloading_hydrograph = false;
         m_downloading_select = false;
         m_downloading_usgs = false;
