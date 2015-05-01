@@ -256,7 +256,7 @@ def settings(request):
                 'name': 'base-layer-select',
                 'multiple': False,
                 'options': base_layer_list,
-                'initial': main_settings.base_layer.name
+                'initial': main_settings.base_layer.name,
                 }
 
     base_layer_api_key_input = {
@@ -264,15 +264,15 @@ def settings(request):
                 'name': 'api-key-input',
                 'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9',
                 'icon_append':'glyphicon glyphicon-lock',
-                'initial': main_settings.base_layer.api_key
+                'initial': main_settings.base_layer.api_key,
               }
               
-    ecmwf_rapid_input = {
+    ecmwf_rapid_directory_input = {
                 'display_text': 'Server Folder Location of ECMWF-RAPID files',
                 'name': 'ecmwf-rapid-location-input',
                 'placeholder': 'e.g.: /home/username/work/rapid/output',
                 'icon_append':'glyphicon glyphicon-folder-open',
-                'initial': main_settings.local_prediction_files
+                'initial': main_settings.ecmwf_rapid_prediction_directory,
               }
     morning_hour_select_input = {
                 'display_text': 'Select Morning Data Download Hour',
@@ -304,13 +304,15 @@ def settings(request):
     context = {
                 'base_layer_select_input': base_layer_select_input,
                 'base_layer_api_key_input': base_layer_api_key_input,
-                'ecmwf_rapid_input': ecmwf_rapid_input,
+                'ecmwf_rapid_input': ecmwf_rapid_directory_input,
                 'morning_hour_select_input': morning_hour_select_input,
                 'evening_hour_select_input': evening_hour_select_input,
                 'submit_button': submit_button,
                 'base_layer_api_keys': json.dumps(base_layer_api_keys),
+                'app_instance_uuid': main_settings.app_instance_uuid,
               }
-
+    session.close()
+    
     return render(request, 'erfp_tool/settings.html', context)
 
 
@@ -356,6 +358,7 @@ def add_watershed(request):
     for geoserver in geoservers:
         geoserver_list.append(( "%s (%s)" % (geoserver.name, geoserver.url), 
                                geoserver.id))
+    session.close()
 
     geoserver_select= {
                 'display_text': 'Select a Geoserver',
@@ -436,6 +439,8 @@ def manage_watersheds(request):
               
     # Query DB for geoservers
     geoservers = session.query(Geoserver).all()
+    
+    session.close()
 
     shp_upload_toggle_switch = {
                 'name': 'shp-upload-toggle',
@@ -475,6 +480,8 @@ def add_data_store(request):
     for data_store_type in data_store_types:
         data_store_type_list.append((data_store_type.human_readable_name, 
                                      data_store_type.id))
+
+    session.close()
 
     data_store_type_select_input = {
                 'display_text': 'Data Store Type',
@@ -530,6 +537,7 @@ def manage_data_stores(request):
                         .filter(DataStore.id>1) \
                         .order_by(DataStore.name) \
                         .all()
+    session.close()
 
     context = {
                 'data_stores': data_stores,
@@ -595,6 +603,8 @@ def manage_geoservers(request):
                         .filter(Geoserver.id>1) \
                         .order_by(Geoserver.name, Geoserver.url) \
                         .all()
+    
+    session.close()
 
     context = {
                 'geoservers': geoservers,
@@ -625,7 +635,9 @@ def add_watershed_group(request):
         watershed_list.append(("%s (%s)" % \
                               (watershed.watershed_name, watershed.subbasin_name),
                               watershed.id))
- 
+                              
+    session.close()
+    
     watershed_select = {
                 'display_text': 'Select Watershed(s) to Add to Group',
                 'name': 'watershed_select',
@@ -668,7 +680,8 @@ def manage_watershed_groups(request):
                         .order_by(Watershed.watershed_name,
                                   Watershed.subbasin_name)\
                         .all()
-
+    
+    session.close()
     context = {
                 'watershed_groups': watershed_groups,
                 'watersheds' : watersheds,

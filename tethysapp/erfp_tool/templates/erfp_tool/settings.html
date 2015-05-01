@@ -12,6 +12,7 @@
 {% block app_content %}
     <div id="message" class="alert alert-danger hidden" role="alert"></div>
     <h1>Settings</h1>
+    <div id="message" class="alert alert-info" role="alert">App ID: {{ app_instance_uuid }}</div>
     {% gizmo select_input base_layer_select_input %}
     {% gizmo text_input base_layer_api_key_input %}
     <input id="base-layer-api-keys" type="hidden" base-layer-api-keys="{{base_layer_api_keys}}"/>

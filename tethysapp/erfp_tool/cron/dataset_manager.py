@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#coding: utf-8 
 import datetime
 from glob import glob
 import os
@@ -6,11 +7,17 @@ import re
 import requests
 from shutil import rmtree
 import tarfile
+import zipfile
+
 from tethys_dataset_services.engines import CkanDatasetEngine
+import traceback
+#local imports
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tethys_apps.settings")
+from tethys_apps.tethysapp.erfp_tool.model import SettingsSessionMaker, MainSettings
 
 class ERFPDatasetManager():
     """
-    This class is used to find, zip and upload files to a data server
+    This class is used to find and download, zip and upload prediction files from/to a data server
     """
     def __init__(self, engine_url, api_key, output_files_location):
         if engine_url.endswith('/'):
@@ -26,7 +33,7 @@ class ERFPDatasetManager():
         returns their attributes
         """
         all_info = []
-        basin_name_search = re.compile(r'Qout_[a-zA-Z\d-_]+_[a-zA-Z\d]+.nc')
+        basin_name_search = re.compile(r'Qout_(\w+)_[a-zA-Z\d]+.nc')
         basin_files = glob(os.path.join(source_dir,'Qout_*.nc'))
         base_path = os.path.dirname(source_dir)
         base_name = os.path.basename(source_dir)
@@ -232,3 +239,206 @@ class ERFPDatasetManager():
                 os.remove(local_tar_file_path)
             except OSError:
                 pass
+            
+#-----------------------------------------------------------------------------
+#Class RAPIDInputDatasetManager
+#-----------------------------------------------------------------------------            
+class RAPIDInputDatasetManager():
+    """
+    This class is used to find and download, zip and upload prediction files from/to a data server
+    """
+    def __init__(self, engine_url, api_key, model_name, input_files_location, app_instance_uuid):
+        if engine_url.endswith('/'):
+            engine_url = engine_url[:-1]
+        if not engine_url.endswith('api/action') and not engine_url.endswith('api/3/action'):
+            engine_url += '/api/action'
+        self.dataset_engine = CkanDatasetEngine(endpoint=engine_url, apikey=api_key)
+        self.model_name = model_name
+        self.input_files_location = input_files_location
+        self.app_instance_uuid = app_instance_uuid
+
+    def zip_upload_resource(self, watershed):
+        """
+        This function adds RAPID files in to zip files and
+        uploads files to data store
+        """
+        watershed_input_files_path = os.path.join(self.input_files_location, watershed)
+        #get info for waterhseds
+        basin_name_search = re.compile(r'rapid_namelist_(\w+).dat')
+        basin_file = glob(os.path.join(watershed_input_files_path,'rapid_namelist_*.dat'))[0]
+        basin_name = basin_name_search.search(basin_file).group(1)
+        try:
+            output_filename =  os.path.join(self.input_files_location, "%s-%s-rapid-input.zip" % (watershed, basin_name))
+        except AttributeError:
+            # basin name not found - do nothing
+            pass
+ 
+        #zip RAPID files
+        print "Zipping files for watershed: %s" % watershed
+        zip_file = zipfile.ZipFile(output_filename, 'w')
+        for root, dirs, files in os.walk(watershed_input_files_path):
+            for file in files:
+                zip_file.write(os.path.join(root, file), os.path.join(watershed, file))
+            
+        zip_file.close()
+        print "Finished zipping files"
+        
+        #upload dataset
+        print "Uploading datasets"
+
+        self.upload_resource(watershed, basin_name, output_filename)
+        
+        print "Finished uploading datasets"
+    
+    def get_dataset_id(self, watershed, subbasin):
+        """
+        This function gets the id of a dataset
+        """
+        find_dataset_dict = {
+            'name': '%s-rapid-input-%s' % (self.model_name, self.app_instance_uuid),
+        }
+    
+        # Use the json module to load CKAN's response into a dictionary.
+        response_dict = self.dataset_engine.search_datasets(find_dataset_dict)
+        
+        if response_dict['success']:
+            if int(response_dict['result']['count']) > 0:
+                return response_dict['result']['results'][0]['id']
+            return None
+        else:
+            return None
+
+    def create_dataset(self, watershed, subbasin):
+        """
+        This function creates a dataset if it does not exist
+        """
+        dataset_id = self.get_dataset_id(watershed, subbasin)
+        #check if dataset exists
+        if not dataset_id:
+            #if it does not exist, create the dataset
+            result = self.dataset_engine.create_dataset(name='%s-rapid-input-%s' % (self.model_name,
+                                                                                    self.app_instance_uuid),
+                                          notes=('This dataset contians files for input %s ' % self.model_name) + \
+                                                  'with RAPID', 
+                                          version='1.0', 
+                                          tethys_app='erfp_tool', 
+                                          app_instance_uuid=self.app_instance_uuid,
+                                          waterhsed=watershed,
+                                          subbasin=subbasin)
+            dataset_id = result['result']['id']
+        return dataset_id
+       
+    def upload_resource(self, watershed, subbasin, file_to_upload):
+        """
+        This function uploads a resource to a dataset if it does not exist
+        """
+        #create dataset for each watershed-subbasin combo if needed
+        dataset_id = self.create_dataset(watershed, subbasin)
+        if dataset_id:
+            #check if dataset already exists
+            resource_name = '%s-rapid-input-%s-%s' % (self.model_name, watershed, subbasin)
+                                               
+            resource_results = self.dataset_engine.search_resources({'name':resource_name},
+                                                                    datset_id=dataset_id)
+            try:
+                if resource_results['result']['count'] > 0:
+                    """
+                    CKAN API CURRENTLY DOES NOT WORK FOR UPDATE - bug = needs file or url, 
+                    but requres both and to have only one ...
+
+                    #update existing resource
+                    print resource_results['result']['results'][0]
+                    update_results = self.dataset_engine.update_resource(resource_results['result']['results'][0]['id'], 
+                                                        file=file_to_upload,
+                                                        url="",
+                                                        date_uploaded=datetime.datetime.utcnow().strftime("%Y%m%d%H%M"))
+                    print update_results
+                    """
+                    self.dataset_engine.delete_resource(resource_results['result']['results'][0]['id'])
+                #upload resources to the dataset
+                self.dataset_engine.create_resource(dataset_id, 
+                                                name=resource_name, 
+                                                file=file_to_upload,
+                                                format="zip", 
+                                                tethys_app="erfp_tool",
+                                                watershed=watershed,
+                                                subbasin=subbasin,
+                                                date_uploaded=datetime.datetime.utcnow().strftime("%Y%m%d%H%M"),
+                                                description="ECMWF-RAPID Input Files")
+
+            except Exception,e:
+                print e
+                traceback.print_exc()
+                pass
+         
+            
+    def get_resource_info(self, watershed, subbasin):
+        """
+        This function gets the info of a resource
+        """
+        dataset_id = self.get_dataset_id(watershed, subbasin)
+        if dataset_id:
+            #check if dataset already exists
+            resource_name = '%s-rapid-input-%s-%s' % (self.model_name, watershed, subbasin),
+            resource_results = self.dataset_engine.search_resources({'name':resource_name},
+                                                                    datset_id=dataset_id)
+            try:
+                if resource_results['result']['count'] > 0:
+                    #upload resources to the dataset
+                    return resource_results['result']['results'][0]
+            except Exception,e:
+                print e
+                pass
+        return None
+    
+    def download_resource(self, watershed, subbasin):
+        resource_info = self.get_resource_info(watershed, subbasin)
+        if resource_info and self.input_files_location and os.path.exists(self.input_files_location):
+            extract_dir = os.path.join(self.input_files_location, watershed)
+            #create directory
+            try:
+                os.makedirs(extract_dir)
+            except OSError:
+                pass
+            local_zip_file = "%s.zip" % watershed
+            local_zip_file_path = os.path.join(self.input_files_location, watershed,
+                                          local_zip_file)
+            try: 
+                #download file
+                r = requests.get(resource_info['url'], stream=True)
+                with open(local_zip_file_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024): 
+                        if chunk: # filter out keep-alive new chunks
+                            f.write(chunk)
+                            f.flush()
+                zip_file = zipfile.open(local_zip_file_path)
+                zip_file.extractall(extract_dir)
+                zip_file.close()
+            except IOError:
+                #remove directory
+                try:
+                    rmtree(extract_dir)
+                except OSError:
+                    pass                
+                pass
+            #clean up downloaded zip file
+            try:
+                os.remove(local_zip_file_path)
+            except OSError:
+                pass
+            
+if __name__ == "__main__":
+    engine_url = 'http://ciwckan.chpc.utah.edu'  
+    api_key = '8dcc1b34-0e09-4ddc-8356-df4a24e5be87'
+    model_name = 'ecmwf'
+    input_files_location = '/home/alan/work/rapid/input'
+    session = SettingsSessionMaker()
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    app_instance_uuid = main_settings.app_instance_uuid
+    session.close()
+    rapid_dataset_manager = RAPIDInputDatasetManager(engine_url, 
+                                                     api_key, 
+                                                     model_name, 
+                                                     input_files_location, 
+                                                     app_instance_uuid)
+    rapid_dataset_manager.zip_upload_resource('nicaragua')

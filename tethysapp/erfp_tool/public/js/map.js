@@ -622,7 +622,7 @@ var ERFP_MAP = (function() {
                         } else {
                             var chart = $("#erfp-chart").highcharts();
                             chart.addSeries({
-                                            name: "WorldWater",
+                                            name: "HydroServer",
                                             data: series_data[0],
                                             dashStyle: 'longdash',
                                         });
