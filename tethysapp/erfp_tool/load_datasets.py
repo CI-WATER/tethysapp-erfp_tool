@@ -113,7 +113,7 @@ def load_watershed(watershed):
     
         
 if __name__ == "__main__":
-    #load_datasets()
+    load_datasets()
     """
     engine_url = 'http://ciwckan.chpc.utah.edu'
     api_key = '8dcc1b34-0e09-4ddc-8356-df4a24e5be87'
