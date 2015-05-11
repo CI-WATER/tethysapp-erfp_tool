@@ -30,6 +30,8 @@ $ pip install netCDF4
 Clone the app into the directory you want:
 ```
 $ git clone https://github.com/CI-WATER/tethysapp-erfp_tool.git
+$ gii submodule init
+$ git submodule update
 ```
 Then install the app in Tethys Platform:
 ```
