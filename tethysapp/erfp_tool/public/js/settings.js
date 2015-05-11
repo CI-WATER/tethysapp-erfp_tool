@@ -14,6 +14,7 @@ $('#submit-changes-settings').click(function(){
     var api_key = checkInputWithError($('#api-key-input'),safe_to_submit);
     //check output rapid-ecmwf files location
     var ecmwf_rapid_location = checkInputWithError($('#ecmwf-rapid-location-input'),safe_to_submit);
+    var wrf_hydro_rapid_location = checkInputWithError($('#wrf-hydro-rapid-location-input'),safe_to_submit);
     var morning_hour = checkInputWithError($('#morning-hour-select'),safe_to_submit, true, true);
     var evening_hour = checkInputWithError($('#evening-hour-select'),safe_to_submit, true, true);
 
@@ -30,7 +31,8 @@ $('#submit-changes-settings').click(function(){
         data = {
                 base_layer_id: base_layer_id,
                 api_key: api_key,
-                ecmwf_rapid_location: ecmwf_rapid_location,                    
+                ecmwf_rapid_location: ecmwf_rapid_location,
+                wrf_hydro_rapid_location: wrf_hydro_rapid_location,                    
                 morning_hour: morning_hour,                    
                 evening_hour: evening_hour,                    
                 };

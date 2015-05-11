@@ -31,10 +31,12 @@ var ERFP_MAP = (function() {
        m_selected_guess_index,
        m_selected_usgs_id,
        m_selected_nws_id,
+       m_selected_hydroserver_url,
        m_downloading_hydrograph,
        m_downloading_select,
        m_downloading_usgs,
        m_downloading_nws,
+       m_downloading_hydroserver,
        m_searching_for_reach,
        m_chart_data_ajax_handle,
        m_chart_data_ajax_load_failed,
@@ -111,7 +113,7 @@ var ERFP_MAP = (function() {
     //FUNCTION: check if loading past request
     isNotLoadingPastRequest = function() {
         return !m_downloading_hydrograph && !m_downloading_select && 
-            !m_downloading_usgs && !m_downloading_nws;
+            !m_downloading_usgs && !m_downloading_nws && !m_downloading_hydroserver;
     }
     //FUNCTION: zooms to all kml files
     zoomToAll = function() {
@@ -185,7 +187,6 @@ var ERFP_MAP = (function() {
                             dataType: 'jsonp',
                             jsonpCallback: 'searchFeatures',
                             success: function(response) {
-                                console.log(response);
                                 if (response.totalFeatures > 0) {
                                     var features = drainage_line_layer.getSource().readFeatures(response);
                                     m_map.getView().fitExtent(features[0].getGeometry().getExtent(), m_map.getSize());
@@ -489,8 +490,8 @@ var ERFP_MAP = (function() {
             date_past.setUTCDate(date_now.getUTCDate()-3);
             var date_future = new Date();
             date_future.setUTCDate(date_now.getUTCDate()+15);
-            var date_usgs_start = date_past;
-            var date_usgs_end = date_now;
+            var date_observed_start = date_past;
+            var date_observed_end = date_now;
             var date_nws_start = date_now;
             var date_nws_end = date_future;       
 
@@ -508,11 +509,11 @@ var ERFP_MAP = (function() {
 
                 //make corrections to dates if needed
                 //USGS Dates
-                if (date_forecast_begin<date_usgs_start) {
-                    date_usgs_start = date_forecast_begin;
+                if (date_forecast_begin<date_observed_start) {
+                    date_observed_start = date_forecast_begin;
                 }
-                if (date_forecast_end<date_usgs_end) {
-                    date_usgs_end = date_forecast_end;
+                if (date_forecast_end<date_observed_end) {
+                    date_observed_end = date_forecast_end;
                 }
                 //NWS Dates
                 if (date_forecast_begin<date_nws_start) {
@@ -523,7 +524,7 @@ var ERFP_MAP = (function() {
                 }
                 date_future = date_forecast_end;
             }
-
+            //Get USGS data if USGS ID attribute exists
             if(typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) &&
                 m_selected_usgs_id != null) {
                 if(m_selected_usgs_id.length >= 8) {
@@ -536,8 +537,8 @@ var ERFP_MAP = (function() {
                         data: {
                             format: 'json',
                             sites: m_selected_usgs_id,
-                            startDT: dateToUTCString(date_usgs_start),
-                            endDT: dateToUTCString(date_usgs_end),
+                            startDT: dateToUTCString(date_observed_start),
+                            endDT: dateToUTCString(date_observed_end),
                             parameterCd: '00060',
                         },
                         success: function (data) {
@@ -567,6 +568,7 @@ var ERFP_MAP = (function() {
                     });
                 }
             }
+            //Get AHPS data if NWD ID attribute exists
             if(typeof m_selected_nws_id != 'undefined' && !isNaN(m_selected_nws_id) &&
                 m_selected_nws_id != null) {
                 m_downloading_nws = true;
@@ -602,6 +604,41 @@ var ERFP_MAP = (function() {
                     m_downloading_nws = false;
                 });
             }
+            //Get HydroServer Data if Available
+            if(typeof m_selected_hydroserver_url != 'undefined' && m_selected_hydroserver_url != null) {
+                m_downloading_hydroserver = true;
+                //get WorldWater data
+                var chart_ww_data_ajax_handle = jQuery.ajax({
+                    type: "GET",
+                    url: m_selected_hydroserver_url,
+                    data: {
+                        startDate: dateToUTCString(date_observed_start),
+                        endDate:  dateToUTCString(date_observed_end), 
+                    },
+                    success: function(data) {
+                        var series_data = WATERML.get_json_from_waterml(data, m_units);
+                        if(series_data == null) {
+                            updateInfoAlert('alert-danger', "No data found for WorldWater");
+                        } else {
+                            var chart = $("#erfp-chart").highcharts();
+                            chart.addSeries({
+                                            name: "HydroServer",
+                                            data: series_data[0],
+                                            dashStyle: 'longdash',
+                                        });
+                            $("#erfp-chart").removeClass("hidden");
+                        }
+                    },
+                    error: function(request, status, error) {
+                        updateInfoAlert('alert-danger', "Error: " + error);
+                    },
+                })
+                .always(function() {
+                    m_downloading_hydroserver = false;
+                });
+            }
+
+
         }
         else {
              //updateInfoAlert
@@ -610,7 +647,7 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: displays hydrograph at stream segment
-    displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index, usgs_id, nws_id) {
+    displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index, usgs_id, nws_id, hydroserver_url) {
         //check if old ajax call still running
         if(isNotLoadingPastRequest()) {
             //remove old chart reguardless
@@ -622,6 +659,7 @@ var ERFP_MAP = (function() {
             m_selected_guess_index = guess_index;
             m_selected_usgs_id = usgs_id;
             m_selected_nws_id = nws_id;
+            m_selected_hydroserver_url = hydroserver_url;
             getChartData("most_recent");
             //get the select data
             m_downloading_select = true;
@@ -682,6 +720,7 @@ var ERFP_MAP = (function() {
         var guess_index = selected_feature.get("guess_index");
         var usgs_id = selected_feature.get("usgs_id");
         var nws_id = selected_feature.get("nws_id");
+        var hydroserver_url = selected_feature.get("hydroserver_url");
         
         //in case the reach_id is in a differen location
         if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
@@ -713,7 +752,8 @@ var ERFP_MAP = (function() {
                             subbasin_name, 
                             guess_index,
                             usgs_id,
-                            nws_id); 
+                            nws_id,
+                            hydroserver_url); 
         } else {
             updateInfoAlert('alert-warning', 'The attributes in the file are faulty. Please fix and upload again.');
         }
@@ -754,10 +794,12 @@ var ERFP_MAP = (function() {
         m_selected_guess_index = null;
         m_selected_usgs_id = null;
         m_selected_nws_id = null;
+        m_selected_hydroserver_url = null;
         m_downloading_hydrograph = false;
         m_downloading_select = false;
         m_downloading_usgs = false;
         m_downloading_nws = false;
+        m_downloading_hydroserver = false;
         m_searching_for_reach = false;
         m_chart_data_ajax_handle = null;
         m_chart_data_ajax_load_failed = false;

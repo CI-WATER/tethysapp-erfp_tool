@@ -2,17 +2,17 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker
-
+from uuid import uuid5, NAMESPACE_DNS
+from datetime import datetime
 from .utilities import get_persistent_store_engine
 # DB Engine, sessionmaker and base
 settingsEngine = get_persistent_store_engine('settings_db')
 SettingsSessionMaker = sessionmaker(bind=settingsEngine)
 Base = declarative_base()
 
-# SQLAlchemy ORM definition for the main_settings table
 class MainSettings(Base):
     '''
-    Main Settings DB Model
+    Main Settings SQLAlchemy DB Model
     '''
     __tablename__ = 'main_settings'
 
@@ -20,24 +20,26 @@ class MainSettings(Base):
     id = Column(Integer, primary_key=True)
     base_layer_id = Column(Integer,ForeignKey('base_layer.id'))
     base_layer = relationship("BaseLayer")
-    local_prediction_files = Column(String)
+    ecmwf_rapid_prediction_directory = Column(String)
+    wrf_hydro_rapid_prediction_directory = Column(String)
     morning_hour = Column(Integer)
     evening_hour = Column(Integer)
+    app_instance_uuid = Column(String)
 
-    def __init__(self, base_layer_id, local_prediction_files, morning_hour,
+    def __init__(self, base_layer_id, ecmwf_rapid_prediction_directory, 
+                 wrf_hydro_rapid_prediction_directory, morning_hour,
                  evening_hour):
-        """
-        Constructor for settings
-        """
+
         self.base_layer_id = base_layer_id
-        self.local_prediction_files = local_prediction_files
+        self.ecmwf_rapid_prediction_directory = ecmwf_rapid_prediction_directory
+        self.wrf_hydro_rapid_prediction_directory = wrf_hydro_rapid_prediction_directory
         self.morning_hour = morning_hour
         self.evening_hour = evening_hour
+        self.app_instance_uuid = uuid5(NAMESPACE_DNS, '%s%s' % ("sfpt", datetime.now())).hex
         
-# SQLAlchemy ORM definition for the data_store_type table
 class BaseLayer(Base):
     '''
-    DataStore DB Model
+    BaseLayer SQLAlchemy DB Model
     '''
     __tablename__ = 'base_layer'
 
@@ -47,16 +49,12 @@ class BaseLayer(Base):
     api_key = Column(String)
 
     def __init__(self, name, api_key):
-        """
-        Constructor for settings
-        """
         self.name = name
         self.api_key = api_key
 
-# SQLAlchemy ORM definition for the data_store table
 class DataStore(Base):
     '''
-    DataStore DB Model
+    DataStore SQLAlchemy DB Model
     '''
     __tablename__ = 'data_store'
 
@@ -69,18 +67,14 @@ class DataStore(Base):
     api_key = Column(String)
 
     def __init__(self, server_name, data_store_type_id, api_endpoint, api_key):
-        """
-        Constructor for settings
-        """
         self.name = server_name
         self.data_store_type_id = data_store_type_id
         self.api_endpoint = api_endpoint
         self.api_key = api_key
 
-# SQLAlchemy ORM definition for the data_store_type table
 class DataStoreType(Base):
     '''
-    DataStore DB Model
+    DataStoreType SQLAlchemy DB Model
     '''
     __tablename__ = 'data_store_type'
 
@@ -90,16 +84,12 @@ class DataStoreType(Base):
     human_readable_name = Column(String)
 
     def __init__(self, code_name, human_readable_name):
-        """
-        Constructor for settings
-        """
         self.code_name = code_name
         self.human_readable_name = human_readable_name
 
-# SQLAlchemy ORM definition for the data_store table
 class Geoserver(Base):
     '''
-    DataStore DB Model
+    Geoserver SQLAlchemy DB Model
     '''
     __tablename__ = 'geoserver'
 
@@ -111,18 +101,14 @@ class Geoserver(Base):
     password = Column(String)
     
     def __init__(self, name, url, username, password):
-        """
-        Constructor for settings
-        """
         self.name = name
         self.url = url
         self.username = username
         self.password = password
 
-# SQLAlchemy ORM definition for the data_store table
 class Watershed(Base):
     '''
-    DataStore DB Model
+    Watershed SQLAlchemy DB Model
     '''
     __tablename__ = 'watershed'
 
@@ -154,9 +140,7 @@ class Watershed(Base):
                  geoserver_drainage_line_uploaded, geoserver_catchment_uploaded,
                  geoserver_gage_uploaded, kml_drainage_line_layer,
                  kml_catchment_layer, kml_gage_layer):
-        """
-        Constructor for settings
-        """
+
         self.watershed_name = watershed_name
         self.subbasin_name = subbasin_name
         self.folder_name = folder_name
@@ -174,13 +158,16 @@ class Watershed(Base):
         self.kml_gage_layer = kml_gage_layer
 
 class WatershedWatershedGroupLink(Base):
+    '''
+    SQLAlchemy many-to-many link between watershed and watershed_group
+    '''
     __tablename__ = 'watershed_watershed_group_link'
     watershed_group_id = Column(Integer, ForeignKey('watershed_group.id'), primary_key=True)
     watershed_id = Column(Integer, ForeignKey('watershed.id'), primary_key=True)
 
 class WatershedGroup(Base):
     '''
-    DataStore DB Model
+    WatershedGroup SQLAlchemy DB Model
     '''
     __tablename__ = 'watershed_group'
 
@@ -191,7 +178,5 @@ class WatershedGroup(Base):
                               secondary='watershed_watershed_group_link')
 
     def __init__(self, name):
-        """
-        Constructor for settings
-        """
         self.name = name
+        

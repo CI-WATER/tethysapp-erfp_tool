@@ -18,7 +18,7 @@ from django.contrib.auth.decorators import user_passes_test
 from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 
 #local imports
-from cron.load_datasets import load_watershed
+from load_datasets import load_watershed
 
 from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
@@ -282,7 +282,7 @@ def get_avaialable_dates(request):
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         session.close()
 
-        path_to_rapid_output = main_settings.local_prediction_files
+        path_to_rapid_output = main_settings.ecmwf_rapid_prediction_directory
         if not os.path.exists(path_to_rapid_output):
             return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})    
     
@@ -333,14 +333,14 @@ def get_avaialable_dates(request):
      
 def get_hydrograph(request):
     """""
-    Plots all 52 ensembles with min, max, avg
+    Plots 52 ECMWF ensembles analysis with min., max., avg. ,std. dev.
     """""
     if request.method == 'GET':
         #Query DB for path to rapid output
         session = SettingsSessionMaker()
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         session.close()
-        path_to_rapid_output = main_settings.local_prediction_files
+        path_to_rapid_output = main_settings.ecmwf_rapid_prediction_directory
         if not os.path.exists(path_to_rapid_output):
             return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})    
     
@@ -369,9 +369,7 @@ def get_hydrograph(request):
         all_data_first_half = []
         all_data_second_half = []
         high_res_data = []
-        hrrr_data = []
         erfp_time = []
-        hrrr_time = []
         for in_nc in basin_files:
             try:
                 index_str = os.path.basename(in_nc)[:-3].split("_")[-1]
@@ -393,17 +391,7 @@ def get_hydrograph(request):
                     if(index == 52):
                         high_res_data = dataValues
                 except ValueError:
-                    if index_str.lower() == "hrrr":
-                        #WRF-Hydro Ensemble
-                        data_nc = NET.Dataset(in_nc, mode="r")
-                        #convert data from cfs to cms
-                        hrrr_data = data_nc.variables['Qout'][:,reach_index] * 0.0283168 
-                        data_nc.close()
-                        if not hrrr_time:
-                            for i in range(0,len(hrrr_data)):
-                                next_time = int((start_date+datetime.timedelta(0,i*1*60*60)) \
-                                                .strftime('%s'))*1000
-                                hrrr_time.append(next_time)
+                    print "Error reading ECMWF File"    
                     pass
             except Exception, e:
                 print e
@@ -441,8 +429,6 @@ def get_hydrograph(request):
             return_data["mean_minus_std"] = zip(erfp_time, mean_mins_std.tolist())
             if len(high_res_data) > 0:
                 return_data["high_res"] = zip(erfp_time,high_res_data.tolist())
-        if hrrr_time:
-            return_data["hrrr_data"] = zip(hrrr_time,hrrr_data.tolist())
         return_data["success"] = "Data analysis complete!"
         return JsonResponse(return_data)
                     
@@ -456,7 +442,8 @@ def settings_update(request):
         post_info = request.POST
         base_layer_id = post_info.get('base_layer_id')
         api_key = post_info.get('api_key')
-        local_prediction_files = post_info.get('ecmwf_rapid_location')
+        ecmwf_rapid_prediction_directory = post_info.get('ecmwf_rapid_location')
+        wrf_hydro_rapid_prediction_directory = post_info.get('wrf_hydro_rapid_location')
 
         #update cron jobs
         try:
@@ -490,7 +477,8 @@ def settings_update(request):
         #update main settings
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         main_settings.base_layer_id = base_layer_id
-        main_settings.local_prediction_files = local_prediction_files    
+        main_settings.ecmwf_rapid_prediction_directory = ecmwf_rapid_prediction_directory    
+        main_settings.wrf_hydro_rapid_prediction_directory = wrf_hydro_rapid_prediction_directory    
         main_settings.base_layer.api_key = api_key
         main_settings.morning_hour = morning_hour
         main_settings.evening_hour = evening_hour
@@ -698,7 +686,7 @@ def watershed_delete(request):
                 return JsonResponse({ 'error': "The watershed to delete does not exist." })
             main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
             #remove watershed geoserver, kml, and prediction files
-            delete_old_watershed_files(watershed, main_settings.local_prediction_files)
+            delete_old_watershed_files(watershed, main_settings.ecmwf_rapid_prediction_directory)
             #delete watershed from database
             session.delete(watershed)
             session.commit()
@@ -852,7 +840,7 @@ def watershed_update(request):
                         pass
                 #remove local prediction files
                 delete_old_watershed_prediction_files(watershed.folder_name, 
-                                                      main_settings.local_prediction_files)
+                                                      main_settings.ecmwf_rapid_prediction_directory)
             #upload new files if they exist
             if(drainage_line_kml_file):
                 handle_uploaded_file(drainage_line_kml_file, new_kml_file_location, kml_drainage_line_layer)
@@ -890,7 +878,7 @@ def watershed_update(request):
             #remove old prediction files if not on local server
             if(folder_name != watershed.folder_name or file_name != watershed.file_name):
                 delete_old_watershed_prediction_files(watershed.folder_name, 
-                                                      main_settings.local_prediction_files)
+                                                      main_settings.ecmwf_rapid_prediction_directory)
 
             resource_workspace = 'erfp'
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')

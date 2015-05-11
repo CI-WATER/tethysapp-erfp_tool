@@ -174,9 +174,7 @@ def get_cron_command():
     if delimiter and local_directory:
         virtual_env_path = delimiter.join(local_directory.split(delimiter)[:-4])
         command = '%s %s' % (os.path.join(virtual_env_path,'bin','python'), 
-                              os.path.join(local_directory, 
-                              'cron', 
-                              'load_datasets.py'))
+                              os.path.join(local_directory, 'load_datasets.py'))
         return command
     else:
         return None
