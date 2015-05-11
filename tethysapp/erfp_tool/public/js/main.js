@@ -60,7 +60,7 @@ function checkInputWithError(input, safe_to_submit, one_parent, select_two) {
     }
 }
 //form submission check function
-function checkTableCellInputWithError(input, safe_to_submit) {
+function checkTableCellInputWithError(input, safe_to_submit, error_msg) {
     var data_value = input.text();
     if(data_value == "") {
         data_value = input.val();
@@ -68,11 +68,16 @@ function checkTableCellInputWithError(input, safe_to_submit) {
     var parent = input.parent();
 
     if(data_value) {
-        parent.removeClass('danger');
+        if (safe_to_submit.val) {
+            parent.removeClass('danger');
+        }
         return data_value;
     } else {
         safe_to_submit.val = false;
         safe_to_submit.error = "Data missing in input";
+        if (typeof error_msg != 'undefined' && error_msg != null) {
+            safe_to_submit.error = error_msg;
+        }
         parent.addClass('danger');
         return null;
     }
@@ -239,7 +244,7 @@ function ajax_update_database_with_file(ajax_url, ajax_data) {
 
 //send data to database with error messages
 function ajax_update_database_multiple_files(ajax_url, ajax_data, custom_message, div_id) {
-    //backslash at end of url is requred
+    //backslash at end of url is required
     if (ajax_url.substr(-1) !== "/") {
         ajax_url = ajax_url.concat("/");
     }
@@ -250,7 +255,7 @@ function ajax_update_database_multiple_files(ajax_url, ajax_data, custom_message
         data: ajax_data,
         dataType: "json",
         processData: false, // Don't process the files
-        contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+        contentType: false, // Set content type to false as jQuery will tell the server it's a query string request
     });
     xhr.done(function(data){
         if("success" in data) {
