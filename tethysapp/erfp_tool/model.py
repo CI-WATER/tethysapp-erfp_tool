@@ -180,23 +180,3 @@ class WatershedGroup(Base):
     def __init__(self, name):
         self.name = name
         
-class MasterComputeNode(Base):
-    '''
-    MasterComputeNode SQLAlchemy DB Model
-    '''
-    __tablename__ = 'master_compute_node'
-
-    # Columns
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    ip_address = Column(String)
-    ssh_key = Column(String)
-    username = Column(String)
-    password = Column(String)
-
-    def __init__(self, name, ip_address, ssh_key, username, password):
-        self.name = name
-        self.ip_address = ip_address
-        self.ssh_key = ssh_key
-        self.username = username
-        self.password = password

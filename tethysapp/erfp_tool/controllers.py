@@ -270,10 +270,19 @@ def settings(request):
     ecmwf_rapid_directory_input = {
                 'display_text': 'Server Folder Location of ECMWF-RAPID files',
                 'name': 'ecmwf-rapid-location-input',
-                'placeholder': 'e.g.: /home/username/work/rapid/output',
+                'placeholder': 'e.g.: /home/username/work/rapid/ecmwf_output',
                 'icon_append':'glyphicon glyphicon-folder-open',
                 'initial': main_settings.ecmwf_rapid_prediction_directory,
               }
+              
+    wrf_hydro_rapid_directory_input = {
+                'display_text': 'Server Folder Location of WRF-Hydro RAPID files',
+                'name': 'wrf-hydro-rapid-location-input',
+                'placeholder': 'e.g.: /home/username/work/rapid/wrf_output',
+                'icon_append':'glyphicon glyphicon-folder-open',
+                'initial': main_settings.wrf_hydro_rapid_prediction_directory,
+              }
+              
     morning_hour_select_input = {
                 'display_text': 'Select Morning Data Download Hour',
                 'name': 'morning-hour-select',
@@ -305,6 +314,7 @@ def settings(request):
                 'base_layer_select_input': base_layer_select_input,
                 'base_layer_api_key_input': base_layer_api_key_input,
                 'ecmwf_rapid_input': ecmwf_rapid_directory_input,
+                'wrf_hydro_rapid_input':wrf_hydro_rapid_directory_input,
                 'morning_hour_select_input': morning_hour_select_input,
                 'evening_hour_select_input': evening_hour_select_input,
                 'submit_button': submit_button,
@@ -537,13 +547,16 @@ def manage_data_stores(request):
                         .filter(DataStore.id>1) \
                         .order_by(DataStore.name) \
                         .all()
-    session.close()
 
     context = {
                 'data_stores': data_stores,
               }
+
+    render_request = render(request, 'erfp_tool/manage_data_stores.html', context)
+    #in order to close the session, the request needed to be rendered first
+    session.close()
               
-    return render(request, 'erfp_tool/manage_data_stores.html', context)
+    return render_request
     
 @user_passes_test(user_permission_test)
 def add_geoserver(request):        
@@ -588,6 +601,7 @@ def add_geoserver(request):
                 'geoserver_username_input': geoserver_username_input,
                 'add_button': add_button,
               }
+              
     return render(request, 'erfp_tool/add_geoserver.html', context)
  
 @user_passes_test(user_permission_test)
@@ -604,11 +618,13 @@ def manage_geoservers(request):
                         .order_by(Geoserver.name, Geoserver.url) \
                         .all()
     
-    session.close()
 
     context = {
                 'geoservers': geoservers,
               }
+
+    session.close()
+
     return render(request, 'erfp_tool/manage_geoservers.html', context)
 
 @user_passes_test(user_permission_test)
