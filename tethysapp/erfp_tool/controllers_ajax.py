@@ -814,10 +814,6 @@ def watershed_update(request):
         catchment_kml_file = request.FILES.get('catchment_kml_file')
         gage_kml_file = request.FILES.get('gage_kml_file')
         
-        geoserver_drainage_line_uploaded = False
-        geoserver_catchment_uploaded = False
-        geoserver_gage_uploaded = False
-
         #CHECK INPUT
         #check if variables exist
         if not watershed_id or not watershed_name or not subbasin_name or not data_store_id \
@@ -882,6 +878,9 @@ def watershed_update(request):
         kml_gage_layer = ""
         #upload files to local server if ready
         if(int(geoserver_id) == 1):
+            geoserver_drainage_line_uploaded = False
+            geoserver_catchment_uploaded = False
+            geoserver_gage_uploaded = False
             #remove old geoserver files
             delete_old_watershed_geoserver_files(watershed)
             #move/rename kml files
@@ -963,6 +962,9 @@ def watershed_update(request):
                 return JsonResponse({ 'error': "The geoserver has errors." })
                 
 
+            geoserver_drainage_line_uploaded = watershed.geoserver_drainage_line_uploaded
+            geoserver_catchment_uploaded = watershed.geoserver_catchment_uploaded
+            geoserver_gage_uploaded = watershed.geoserver_gage_uploaded
             resource_workspace = 'erfp'
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
             
