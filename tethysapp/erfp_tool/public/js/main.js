@@ -186,7 +186,7 @@ function appendSuccessMessage(message, div_id) {
 }
 
 //send data to database with error messages
-function ajax_update_database(ajax_url, ajax_data) {
+function ajax_update_database(ajax_url, ajax_data, div_id) {
     //backslash at end of url is requred
     if (ajax_url.substr(-1) !== "/") {
         ajax_url = ajax_url.concat("/");
@@ -199,13 +199,13 @@ function ajax_update_database(ajax_url, ajax_data) {
         data: ajax_data,
         success: function(data) {
             if("success" in data) {
-                addSuccessMessage(data['success']);
+                addSuccessMessage(data['success'], div_id);
             } else {
-                addErrorMessage(data['error']);
+                addErrorMessage(data['error'], div_id);
             }
         }, 
         error: function(xhr, status, error) {
-            addErrorMessage(error);
+            addErrorMessage(error, div_id);
             console.log(xhr.responseText);
         },
     });
@@ -214,7 +214,7 @@ function ajax_update_database(ajax_url, ajax_data) {
 
 //ajax file submit
 //send data to database with error messages
-function ajax_update_database_with_file(ajax_url, ajax_data) {
+function ajax_update_database_with_file(ajax_url, ajax_data, div_id) {
     //backslash at end of url is requred
     if (ajax_url.substr(-1) !== "/") {
         ajax_url = ajax_url.concat("/");
@@ -229,13 +229,13 @@ function ajax_update_database_with_file(ajax_url, ajax_data) {
         contentType: false, // Set content type to false as jQuery will tell the server its a query string request
         success: function(data) {
             if("success" in data) {
-                addSuccessMessage(data['success']);
+                addSuccessMessage(data['success'], div_id);
             } else {
-                addErrorMessage(data['error']);
+                addErrorMessage(data['error'], div_id);
             }
         }, 
         error: function(xhr, status, error) {
-            addErrorMessage(error);
+            addErrorMessage(error, div_id);
             console.log(xhr.responseText);
         },
     });
@@ -265,8 +265,8 @@ function ajax_update_database_multiple_files(ajax_url, ajax_data, custom_message
         }
     })
     .fail(function(xhr, status, error) {
-            addErrorMessage(error, div_id);
-            console.log(xhr.responseText);
+        addErrorMessage(error, div_id);
+        console.log(xhr.responseText);
     });
     return xhr;
 }

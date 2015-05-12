@@ -493,59 +493,6 @@ def settings_update(request):
         return JsonResponse({ 'success': "Settings Sucessfully Updated!" })
 
 @user_passes_test(user_permission_test)    
-def ecmwf_rapid_file_upload(request):
-    """
-    Controller AJAX for uploading RAPID input files for a watershed.
-    """
-    if request.is_ajax() and request.method == 'POST':
-        watershed_id = request.POST.get('watershed_id')
-        ecmwf_rapid_input_file = request.FILES.get('ecmwf_rapid_input_file')
-
-        #make sure id is int
-        try:
-            int(watershed_id)
-        except ValueError:
-            return JsonResponse({'error' : 'Watershed ID need to be an integer.'})
-        print "FILE UPLOAD", watershed_id, ecmwf_rapid_input_file
-        #initialize session
-        session = SettingsSessionMaker()
-        watershed = session.query(Watershed).get(watershed_id)
-
-        #Upload file to Data Store Server
-        if int(watershed.data_store_id) > 1 and ecmwf_rapid_input_file:
-            #temporarily upload to Tethys Plarform server
-            tmp_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                             'tmp')
-
-            ecmwf_rapid_input_zip = "%s-%s-rapid.zip" % (watershed.file_name, watershed.folder_name)
-            handle_uploaded_file(ecmwf_rapid_input_file,
-                                 tmp_file_location, 
-                                 ecmwf_rapid_input_zip)
-            #upload file to CKAN server
-            main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
-            #get dataset manager
-            data_manager = RAPIDInputDatasetManager(watershed.data_store.api_endpoint,
-                                                    watershed.data_store.api_key,
-                                                    "ecmwf",
-                                                    main_settings.app_instance_id)
-            #upload file to CKAN
-            upload_file = os.path.join(tmp_file_location, ecmwf_rapid_input_zip)
-            resource_info = data_manager.upload_model_resource(upload_file, 
-                                               watershed.folder_name, 
-                                               watershed.file_name)
-            
-            #update watershed
-            watershed.ecmwf_rapid_input_resource_id = resource_info['result']['id']
-            session.commit()
-        else:
-            session.close()
-            return JsonResponse({'error' : 'Watershed datastore ID or upload file invalid.'})
-        session.close()
-        return JsonResponse({'success' : 'ECMWF RAPID Input Upload Success'})
-        
-
-        
-@user_passes_test(user_permission_test)    
 def watershed_add(request):
     """
     Controller for ading a watershed.
@@ -628,8 +575,8 @@ def watershed_add(request):
 
         #COMMIT
         #upload files if files present
+        #LOCAL UPLOAD
         if(int(geoserver_id) == 1):
-            #LOCAL UPLOAD
             if drainage_line_kml_file:
                 kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                                  'public','kml',folder_name)
@@ -649,38 +596,48 @@ def watershed_add(request):
             else:
                 session.close()
                 return JsonResponse({ 'error': "Drainage line KML file missing." })
+
+        #GEOSERVER UPLOAD
         elif drainage_line_shp_file:
-            #GEOSERVER UPLOAD
             geoserver = session.query(Geoserver).get(geoserver_id)
             engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver.url, 
                                        username=geoserver.username,
                                        password=geoserver.password)
             resource_workspace = 'erfp'
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+            
+            #DRAINAGE LINE
             resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
             geoserver_drainage_line_layer = '{0}:{1}'.format(resource_workspace, resource_name)
-            # Do create shapefile
+            #create shapefile
             rename_shapefile_input_files(drainage_line_shp_file, resource_name)
-            engine.create_shapefile_resource(geoserver_drainage_line_layer, shapefile_upload=drainage_line_shp_file,
-                                                  overwrite=True)
+            engine.create_shapefile_resource(geoserver_drainage_line_layer, 
+                                             shapefile_upload=drainage_line_shp_file,
+                                             overwrite=True)
             geoserver_drainage_line_uploaded = True
+
+            #CATCHMENT
             if catchment_shp_file:
                 #upload file
                 resource_name = "%s-%s-%s" % (folder_name, file_name, 'catchment')
                 geoserver_catchment_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
                 rename_shapefile_input_files(catchment_shp_file, resource_name)
-                engine.create_shapefile_resource(geoserver_catchment_layer, shapefile_upload=catchment_shp_file,
-                                                      overwrite=True)
+                engine.create_shapefile_resource(geoserver_catchment_layer, 
+                                                 shapefile_upload=catchment_shp_file,
+                                                 overwrite=True)
                 geoserver_catchment_uploaded = True
+                
+            #GAGE
             if gage_shp_file:
                 #upload file
                 resource_name = "%s-%s-%s" % (folder_name, file_name, 'gage')
                 geoserver_gage_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
                 rename_shapefile_input_files(gage_shp_file, resource_name)
-                engine.create_shapefile_resource(geoserver_gage_layer, shapefile_upload=gage_shp_file,
-                                                      overwrite=True)
+                engine.create_shapefile_resource(geoserver_gage_layer, 
+                                                 shapefile_upload=gage_shp_file,
+                                                 overwrite=True)
                 geoserver_gage_uploaded = True
         
         #add watershed
@@ -706,10 +663,6 @@ def watershed_add(request):
         
         #get watershed_id
         watershed_id = watershed.id
-        
-        #load prediction datasets for watershed
-        load_watershed(watershed)
-
         session.close()
         
         return JsonResponse({
@@ -724,6 +677,78 @@ def watershed_add(request):
                             })
 
     return JsonResponse({ 'error': "A problem with your request exists." })
+
+@user_passes_test(user_permission_test)    
+def watershed_ecmwf_rapid_file_upload(request):
+    """
+    Controller AJAX for uploading RAPID input files for a watershed.
+    """
+    if request.is_ajax() and request.method == 'POST':
+        watershed_id = request.POST.get('watershed_id')
+        ecmwf_rapid_input_file = request.FILES.get('ecmwf_rapid_input_file')
+
+        #make sure id is int
+        try:
+            int(watershed_id)
+        except ValueError:
+            return JsonResponse({'error' : 'Watershed ID need to be an integer.'})
+        #initialize session
+        session = SettingsSessionMaker()
+        watershed = session.query(Watershed).get(watershed_id)
+
+        #Upload file to Data Store Server
+        if int(watershed.data_store_id) > 1 and ecmwf_rapid_input_file:
+            #temporarily upload to Tethys Plarform server
+            tmp_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                             'tmp')
+
+            ecmwf_rapid_input_zip = "%s-%s-rapid.zip" % (watershed.file_name, watershed.folder_name)
+            handle_uploaded_file(ecmwf_rapid_input_file,
+                                 tmp_file_location, 
+                                 ecmwf_rapid_input_zip)
+            #upload file to CKAN server
+            main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+            #get dataset manager
+            data_manager = RAPIDInputDatasetManager(watershed.data_store.api_endpoint,
+                                                    watershed.data_store.api_key,
+                                                    "ecmwf",
+                                                    main_settings.app_instance_id)
+            #upload file to CKAN
+            upload_file = os.path.join(tmp_file_location, ecmwf_rapid_input_zip)
+            resource_info = data_manager.upload_model_resource(upload_file, 
+                                               watershed.folder_name, 
+                                               watershed.file_name)
+            
+            #update watershed
+            watershed.ecmwf_rapid_input_resource_id = resource_info['result']['id']
+            session.commit()
+        else:
+            session.close()
+            return JsonResponse({'error' : 'Watershed datastore ID or upload file invalid.'})
+        session.close()
+        return JsonResponse({'success' : 'ECMWF RAPID Input Upload Success!'})
+
+@user_passes_test(user_permission_test)    
+def watershed_download_predicitons(request):
+    """
+    Controller AJAX for downloading prediction files for watershed
+    """
+    if request.is_ajax() and request.method == 'POST':
+        watershed_id = request.POST.get('watershed_id')
+        #make sure id is int
+        try:
+            int(watershed_id)
+        except ValueError:
+            return JsonResponse({'error' : 'Watershed ID need to be an integer.'})
+
+        #initialize session
+        session = SettingsSessionMaker()
+        watershed = session.query(Watershed).get(watershed_id)
+
+        #load prediction datasets for watershed
+        load_watershed(watershed)
+        session.close()
+        return JsonResponse({'success' : 'Watershed Prediction Download Success!'})
 
 @user_passes_test(user_permission_test)
 def watershed_delete(request):
@@ -902,9 +927,6 @@ def watershed_update(request):
                         os.rmdir(old_kml_file_location)
                     except OSError:
                         pass
-                #remove local prediction files
-                delete_old_watershed_prediction_files(watershed.folder_name, 
-                                                      main_settings.ecmwf_rapid_prediction_directory)
             #upload new files if they exist
             if(drainage_line_kml_file):
                 handle_uploaded_file(drainage_line_kml_file, new_kml_file_location, kml_drainage_line_layer)
@@ -920,6 +942,11 @@ def watershed_update(request):
             elif not watershed.kml_gage_layer:
                 kml_gage_layer = ""
         else:
+            #if no drainage line name or shapefile upload, throw error
+            if not geoserver_drainage_line_layer and not drainage_line_shp_file:
+                session.close()
+                return JsonResponse({ 'error': "Must have drainage line layer name or file." })
+
             #get desired geoserver
             try:
                 geoserver  = session.query(Geoserver).get(geoserver_id)
@@ -929,26 +956,17 @@ def watershed_update(request):
             #attempt to get engine
             try:
                 engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver.url, 
-                                   username=geoserver.username,
-                                   password=geoserver.password)
+                                                       username=geoserver.username,
+                                                       password=geoserver.password)
             except Exception:
                 session.close()
                 return JsonResponse({ 'error': "The geoserver has errors." })
                 
 
-            #remove old kml files           
-            delete_old_watershed_kml_files(watershed)
-
-            #remove old prediction files if not on local server
-            if(folder_name != watershed.folder_name or file_name != watershed.file_name):
-                delete_old_watershed_prediction_files(watershed.folder_name, 
-                                                      main_settings.ecmwf_rapid_prediction_directory)
-
             resource_workspace = 'erfp'
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
-
-            if geoserver_drainage_line_layer is None:
-                geoserver_drainage_line_layer = watershed.geoserver_drainage_line_layer
+            
+            #UPDATE DRAINAGE LINE
             if drainage_line_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_drainage_line_uploaded \
@@ -963,8 +981,13 @@ def watershed_update(request):
                                                       overwrite=True)
                 geoserver_drainage_line_uploaded = True
 
-            if geoserver_catchment_layer is None:
-                geoserver_catchment_layer = watershed.geoserver_catchment_layer
+            #UPDATE CATCHMENT
+            #delete old layer from geoserver if removed
+            geoserver_catchment_layer = "" if not geoserver_catchment_layer else geoserver_catchment_layer
+            if not geoserver_catchment_layer and watershed.geoserver_catchment_layer:
+                if watershed.geoserver_catchment_uploaded:
+                    engine.delete_layer(watershed.geoserver_catchment_layer)
+                
             if catchment_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_catchment_uploaded \
@@ -978,8 +1001,14 @@ def watershed_update(request):
                 engine.create_shapefile_resource(geoserver_catchment_layer, shapefile_upload=catchment_shp_file,
                                                       overwrite=True)
                 geoserver_catchment_uploaded = True
-            if geoserver_gage_layer is None:
-                geoserver_gage_layer = watershed.geoserver_gage_layer
+
+            #UPDATE GAGE
+            #delete old layer from geoserver if removed
+            geoserver_gage_layer = "" if not geoserver_gage_layer else geoserver_gage_layer
+            if not geoserver_gage_layer and watershed.geoserver_gage_layer:
+                if watershed.geoserver_gage_uploaded:
+                    engine.delete_layer(watershed.geoserver_gage_layer)
+                    
             if gage_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_gage_uploaded \
@@ -994,6 +1023,14 @@ def watershed_update(request):
                                                       overwrite=True)
                 geoserver_gage_uploaded = True
             
+            #remove old kml files           
+            delete_old_watershed_kml_files(watershed)
+
+        #remove old prediction files if watershed/subbasin name changed
+        if(folder_name != watershed.folder_name or file_name != watershed.file_name):
+            delete_old_watershed_prediction_files(watershed.folder_name, 
+                                                  main_settings.ecmwf_rapid_prediction_directory)
+
         #change watershed attributes
         watershed.watershed_name = watershed_name.strip()
         watershed.subbasin_name = subbasin_name.strip()

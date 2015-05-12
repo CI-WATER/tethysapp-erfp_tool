@@ -133,10 +133,10 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                     "This may take a few minutes due to downloading prediction datasets.");
                     submit_button.text('Submitting ...');
                     //update database
-                    if ((geoserver_id == 1 && !parent_row.find('#shp-upload-toggle').bootstrapSwitch('state')) ||
-                        (geoserver_id > 1 && parent_row.find('#shp-upload-toggle').bootstrapSwitch('state'))) {
+                    if (geoserver_id == 1 || parent_row.find('#shp-upload-toggle').bootstrapSwitch('state')) {
                         //file upload
-                        if (drainage_line_kml_file != null || drainage_line_shp_files.length >= 4) {
+                        if (drainage_line_kml_file != null || drainage_line_shp_files.length >= 4 ||
+                            geoserver_drainage_line_layer.length > 0) {
                             var data = new FormData();
                             data.append("watershed_id", watershed_id);
                             data.append("watershed_name", watershed_name);
@@ -152,12 +152,18 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                             for (var i = 0; i < drainage_line_shp_files.length; i++) {
                                 data.append("drainage_line_shp_file", drainage_line_shp_files[i]);
                             }
-                            if (drainage_line_kml_file != null || geoserver_drainage_line_layer != null) {
+                            var drainage_success_message = "Drainage Line Upload Success!";
+                            if (drainage_line_kml_file != null || drainage_line_shp_files.length>=4) {
                                 appendInfoMessage("Uploading Drainage Line ...", "message_drainage_line");
+                            } else {
+                                appendInfoMessage("Uploading Watershed Data ...", "message_drainage_line");
+                                drainage_success_message = "Watershed Data Upload Success!"
                             }
                             //needs to be outside
-                            xhr = ajax_update_database_multiple_files("submit", data,
-                                "Drainage Line Upload Success!", "message_drainage_line");
+                            xhr = ajax_update_database_multiple_files("submit", 
+                                                                      data,
+                                                                      drainage_success_message, 
+                                                                      "message_drainage_line");
 
                             //upload catchment when drainage line finishes if catchment exist
                             jQuery.when(xhr).done(function (return_data) {
