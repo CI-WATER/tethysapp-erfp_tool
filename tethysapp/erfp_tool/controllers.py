@@ -157,12 +157,12 @@ def map(request):
                         
                     latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
                     geoserver_info['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
-                                                 'geojsonp': drainage_line_info['result']['wfs']['geojsonp'],
-                                                 'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
-                                                 'projection': drainage_line_info['result']['projection'],
-                                                 'contained_attributes': ",".join(contained_attributes),
-                                                 'missing_attributes': ", ".join(missing_attributes),
-                                                }
+                                                       'geojsonp': drainage_line_info['result']['wfs']['geojsonp'],
+                                                       'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                                       'projection': drainage_line_info['result']['projection'],
+                                                       'contained_attributes': ",".join(contained_attributes),
+                                                       'missing_attributes': ", ".join(missing_attributes),
+                                                       }
                     #check if needed attribute is there to perfrom query based rendering of layer
                     if 'Natur_Flow' not in layer_attributes:
                         geoserver_info['drainage_line']['geoserver_method'] = "simple"
@@ -174,17 +174,17 @@ def map(request):
                 if catchment_info['success']: 
                     latlon_bbox = catchment_info['result']['latlon_bbox'][:4]
                     geoserver_info['catchment'] = {'name': watershed.geoserver_catchment_layer,
-                                             'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
-                                             'projection': catchment_info['result']['projection'],
-                                            }
+                                                   'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                                   'projection': catchment_info['result']['projection'],
+                                                  }
                 #load gage layer if exists
                 gage_info = engine.get_resource(resource_id=watershed.geoserver_gage_layer.strip())
                 if gage_info['success']: 
                     latlon_bbox = gage_info['result']['latlon_bbox'][:4]
                     geoserver_info['gage'] = {'name': watershed.geoserver_gage_layer,
-                                             'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
-                                             'projection': gage_info['result']['projection'],
-                                            }
+                                              'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                              'projection': gage_info['result']['projection'],
+                                             }
                 geoserver_info['title'] = format_watershed_title(watershed.watershed_name,
                                                             watershed.subbasin_name)
                 layers_info.append(geoserver_info)
@@ -196,18 +196,19 @@ def map(request):
             watershed_list.append(("%s (%s)" % (watershed.watershed_name, watershed.subbasin_name),
                                    "%s:%s" % (watershed.folder_name, watershed.file_name)))
         watershed_select = {
-                    'display_text': 'Select Watershed',
-                    'name': 'watershed_select',
-                    'options': watershed_list,
-                    'placeholder': 'Select Watershed',
-                    }          
+                            'display_text': 'Select Watershed',
+                            'name': 'watershed_select',
+                            'options': watershed_list,
+                            'placeholder': 'Select Watershed',
+                           }          
 
-        units_toggle_switch = { 'name': 'units-toggle',
+        units_toggle_switch = { 
+                                'name': 'units-toggle',
                                 'on_label': 'Metric',
                                 'off_label': 'English',
                                 'size': 'mini',
                                 'initial': True,
-                                }
+                              }
 
         #Query DB for settings
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
@@ -217,7 +218,7 @@ def map(request):
         base_layer_info = {
                             'name': base_layer.name,
                             'api_key':base_layer.api_key,
-                            }
+                          }
     
         context = {
                     'layers_info_json' : json.dumps(layers_info),
@@ -319,7 +320,7 @@ def settings(request):
                 'evening_hour_select_input': evening_hour_select_input,
                 'submit_button': submit_button,
                 'base_layer_api_keys': json.dumps(base_layer_api_keys),
-                'app_instance_uuid': main_settings.app_instance_uuid,
+                'app_instance_id': main_settings.app_instance_id,
               }
     session.close()
     
@@ -412,7 +413,7 @@ def add_watershed(request):
                                   'attributes': 'id=submit-add-watershed',
                                   'type': 'submit'
                                   }
-                                ],
+                             ],
                  }
 
     context = {

@@ -24,7 +24,7 @@ class MainSettings(Base):
     wrf_hydro_rapid_prediction_directory = Column(String)
     morning_hour = Column(Integer)
     evening_hour = Column(Integer)
-    app_instance_uuid = Column(String)
+    app_instance_id = Column(String)
 
     def __init__(self, base_layer_id, ecmwf_rapid_prediction_directory, 
                  wrf_hydro_rapid_prediction_directory, morning_hour,
@@ -35,7 +35,7 @@ class MainSettings(Base):
         self.wrf_hydro_rapid_prediction_directory = wrf_hydro_rapid_prediction_directory
         self.morning_hour = morning_hour
         self.evening_hour = evening_hour
-        self.app_instance_uuid = uuid5(NAMESPACE_DNS, '%s%s' % ("sfpt", datetime.now())).hex
+        self.app_instance_id = uuid5(NAMESPACE_DNS, '%s%s' % ("sfpt", datetime.now())).hex
         
 class BaseLayer(Base):
     '''
@@ -120,6 +120,7 @@ class Watershed(Base):
     file_name = Column(String)
     data_store_id = Column(Integer,ForeignKey('data_store.id'))
     data_store = relationship("DataStore")
+    ecmwf_rapid_input_resource_id = Column(String)
     geoserver_id = Column(Integer,ForeignKey('geoserver.id'))
     geoserver = relationship("Geoserver")
     geoserver_drainage_line_layer = Column(String)
@@ -132,10 +133,10 @@ class Watershed(Base):
     kml_catchment_layer = Column(String)
     kml_gage_layer = Column(String)
     watershed_groups = relationship("WatershedGroup", 
-                              secondary='watershed_watershed_group_link')
+                                    secondary='watershed_watershed_group_link')
                               
     def __init__(self, watershed_name, subbasin_name, folder_name, file_name,
-                 data_store_id, geoserver_id, geoserver_drainage_line_layer, 
+                 data_store_id, ecmwf_rapid_input_resource_id, geoserver_id, geoserver_drainage_line_layer, 
                  geoserver_catchment_layer, geoserver_gage_layer, 
                  geoserver_drainage_line_uploaded, geoserver_catchment_uploaded,
                  geoserver_gage_uploaded, kml_drainage_line_layer,
@@ -146,6 +147,7 @@ class Watershed(Base):
         self.folder_name = folder_name
         self.file_name = file_name
         self.data_store_id = data_store_id
+        self.ecmwf_rapid_input_resource_id = ecmwf_rapid_input_resource_id
         self.geoserver_id = geoserver_id
         self.geoserver_drainage_line_layer = geoserver_drainage_line_layer
         self.geoserver_catchment_layer = geoserver_catchment_layer

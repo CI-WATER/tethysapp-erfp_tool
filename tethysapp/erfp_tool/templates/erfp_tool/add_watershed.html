@@ -19,6 +19,11 @@
     <em>This is where the predictions are stored.</em><br/><br/>
     {% gizmo select_input data_store_select %}
     <p class="help-block">Don't see the data store you want? Add one <a href="{% url 'erfp_tool:add-data-store' %}">here</a>.</p>
+    <div class="form-group rapid-input hidden">
+        <label class="control-label" for="ecmwf-rapid-files-upload-input">ECMWF RAPID Input Files (Optional)</label>
+        <input id="ecmwf-rapid-files-upload-input" name="ecmwf-rapid-files-upload-input" type="file" accept=".zip">
+        <p class="help-block">These files are used on the computatonal node to run the simulation.</p>
+    </div>
 
     <h3>Geoserver Location</h3> 
     <em>Where the reach and catchbasin files are stored.</em><br/><br/>
@@ -42,24 +47,24 @@
     <!-- Catchments !-->
     {% gizmo text_input geoserver_catchment_input %}
     <div class="form-group kml">
-        <label class="control-label" for="catchment-kml-upload-input">Catchment KML File</label>
+        <label class="control-label" for="catchment-kml-upload-input">Catchment KML File (Optional)</label>
         <input id="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept=".kml">
     </div>
     <p class="help-block kml">This is the KML file representing the watershed basin.</p>
     <div class="form-group shapefile upload hidden">
-        <label class="control-label" for="catchment-shp-upload-input">Catchment Shapefile</label>
+        <label class="control-label" for="catchment-shp-upload-input">Catchment Shapefile (Optional)</label>
         <input id="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the watershed basin. Need .shp, .shx, .prj, .dbf files.</p>
     <!-- gage Stations !-->
     {% gizmo text_input geoserver_gage_input %}
     <div class="form-group kml">
-        <label class="control-label" for="gage-kml-upload-input">Gage KML File</label>
+        <label class="control-label" for="gage-kml-upload-input">Gage KML File (Optional)</label>
         <input id="gage-kml-upload-input" name="gage-kml-upload-input" type="file" accept=".kml">
     </div>
     <p class="help-block kml">This is the KML file representing the gage stations.</p>
     <div class="form-group shapefile upload hidden">
-        <label class="control-label" for="gage-shp-upload-input">Gage Shapefile</label>
+        <label class="control-label" for="gage-shp-upload-input">Gage Shapefile (Optional)</label>
         <input id="gage-shp-upload-input" name="gage-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the gage stations. Need .shp, .shx, .prj, .dbf files.</p>

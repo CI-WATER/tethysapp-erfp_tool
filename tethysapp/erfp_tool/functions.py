@@ -7,6 +7,8 @@ import re
 from shutil import rmtree
 #tethys imports
 from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
+#local import
+from sfpt_dataset_manager.dataset_manager import CKANDatasetManager
 
 def check_shapefile_input_files(shp_files):
     """
@@ -100,7 +102,16 @@ def delete_old_watershed_files(watershed, local_prediction_files_location):
     #remove old prediction files
     delete_old_watershed_prediction_files(watershed.folder_name, 
                                           local_prediction_files_location)
-   
+    #remove RAPID input files on CKAN
+    data_store = watershed.data_store
+    if 'ckan' == data_store.data_store_type.code_name:
+        #get dataset managers
+        data_manager = CKANDatasetManager(data_store.api_endpoint,
+                                          data_store.api_key,
+                                          "ecmwf"
+                                          )
+        data_manager.dataset_engine.delete_resource(watershed.ecmwf_rapid_input_resource_id)
+
 def find_most_current_files(path_to_watershed_files, basin_name, start_folder):
     """""
     Finds the current output from downscaled ECMWF forecasts

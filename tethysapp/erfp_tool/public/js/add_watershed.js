@@ -22,7 +22,7 @@ var ERFP_ADD_WATERSHED = (function() {
      /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
-    var checkShapefile, checkKMLfile, finishReset;
+    var checkShapefile, checkKMLfile, finishReset, upload_AJAX_ECMWF_RAPID_input;
 
 
     /************************************************************************
@@ -46,10 +46,11 @@ var ERFP_ADD_WATERSHED = (function() {
             $('#drainage-line-shp-upload-input').val('');
             $('#catchment-shp-upload-input').val('');
             $('#gage-shp-upload-input').val('');
+            $('#ecmwf-rapid-files-upload-input').val('');
             $('.kml').removeClass('hidden');
             $('.shapefile').addClass('hidden');
         }
-     }
+     };
 
     //FUNCTION: Check shapefile inputs to make sure required files are attached
     checkShapefile = function(shapefile, safe_to_submit) {
@@ -71,7 +72,8 @@ var ERFP_ADD_WATERSHED = (function() {
         }
         return true;
 
-    }
+    };
+
     //FUNCTION: Check KML file inputs to make sure required file is there
     checkKMLfile = function(kml_file, safe_to_submit) {
         if("kml" != kml_file.name.split('.').pop()) {
@@ -80,7 +82,28 @@ var ERFP_ADD_WATERSHED = (function() {
             return false;
         }
         return true;
-    }
+    };
+
+    //FUNCTION: AJAX upload of ECMWF RAPID Input
+    upload_AJAX_ECMWF_RAPID_input = function(watershed_id, data_store_id) {
+        var xhr_ecmwf_rapid = null;
+        var ecmwf_rapid_input_file = null;
+        if(data_store_id>1) {
+            ecmwf_rapid_input_file = $('#ecmwf-rapid-files-upload-input')[0].files[0]
+            if(ecmwf_rapid_input_file != null) {
+                appendInfoMessage("Uploading ECMWF RAPID Input Data ...", 
+                                  "message_ecmwf_rapid_input");
+                var data = new FormData();
+                data.append("watershed_id", watershed_id)
+                data.append("ecmwf_rapid_input_file",ecmwf_rapid_input_file);
+                xhr_ecmwf_rapid = ajax_update_database_multiple_files("upload_ecmwf_rapid",
+                                                                      data,
+                                                                      "ECMWF RAPID Input Upload Success!",
+                                                                      "message_ecmwf_rapid_input");
+            }
+        }
+        return xhr_ecmwf_rapid
+    };
 
     /************************************************************************
     *                  INITIALIZATION / CONSTRUCTOR
@@ -189,6 +212,7 @@ var ERFP_ADD_WATERSHED = (function() {
                 var xhr = null;
                 var xhr_catchment = null;
                 var xhr_gage = null;
+                var xhr_ecmwf_rapid = null;
                 //give user information
                 addInfoMessage("Submiting data. Please be patient! " +
                                "This may take a few minutes due to downloading prediction datasets.");
@@ -216,11 +240,8 @@ var ERFP_ADD_WATERSHED = (function() {
                             "Drainage Line Upload Success!", "message_drainage_line");
                     
                     //upload catchment when drainage line finishes if catchment exists
-                    //TODO: Add shaphefile checker (Shp, shx, dbf, prj)
                     xhr.done(function(return_data){
                         if('watershed_id' in return_data) {
-                            var xhr_catchment = null;
-                            var xhr_gage = null;
                             //upload catchment when  drainage line finishes if exists
                             if(catchment_kml_file != null || catchment_shp_files.length >= 4) {
                                 appendInfoMessage("Uploading Catchment ...", "message_catchment");
@@ -253,6 +274,7 @@ var ERFP_ADD_WATERSHED = (function() {
                                     data.append("geoserver_id",geoserver_id);
                                     data.append("geoserver_drainage_line_layer",
                                                 return_data['geoserver_drainage_line_layer']);
+
                                     if(catchment_data != null && typeof catchment_data != 'undefined') {
                                         if('geoserver_catchment_layer' in catchment_data) {
                                             data.append("geoserver_catchment_layer",
@@ -263,6 +285,7 @@ var ERFP_ADD_WATERSHED = (function() {
                                                         catchment_data['kml_catchment_layer']);
                                         }
                                     }
+
                                     data.append("gage_kml_file",gage_kml_file);
                                     for(var i = 0; i < gage_shp_files.length; i++) {
                                         data.append("gage_shp_file",gage_shp_files[i]);
@@ -271,19 +294,18 @@ var ERFP_ADD_WATERSHED = (function() {
                                                                                    "Gages Upload Success!",
                                                                                     "message_gages");
                                 }
-                                //when everything is finished
+                                //upload gage when catchment and drainage line finishes if gage exists
                                 jQuery.when(xhr_gage).done(function(){
-                                    finishReset(return_data);
-                                })
-                                .always(function() {
-                                    submit_button.html(submit_button_html);
-                                    m_uploading_data = false;
+                                    xhr_ecmwf_rapid = upload_AJAX_ECMWF_RAPID_input(return_data['watershed_id'],
+                                                                                    data_store_id);
+                                    //when everything is finished
+                                    jQuery.when(xhr_ecmwf_rapid).done(function(){
+                                        finishReset(return_data);
+                                    });
                                 });
                             });
-
                         }
                     });
-
                 } else {
                     var data = {
                             watershed_name: watershed_name,
@@ -299,15 +321,20 @@ var ERFP_ADD_WATERSHED = (function() {
 
                     //when everything finishes uploading
                     xhr.done(function(return_data){
-                        finishReset(return_data);
+                        xhr_ecmwf_rapid = upload_AJAX_ECMWF_RAPID_input(return_data['watershed_id'],
+                                                                        data_store_id);
+                        //when everything is finished
+                        jQuery.when(xhr_ecmwf_rapid).done(function(){
+                            finishReset(return_data);
+                        })
                     })
-                    .always(function() {
-                        submit_button.html(submit_button_html);
-                        m_uploading_data = false;
-                    });
                 }
                 m_uploading_data = true;
 
+                jQuery.when(xhr, xhr_catchment, xhr_gage, xhr_ecmwf_rapid).always(function(){
+                    submit_button.html(submit_button_html);
+                    m_uploading_data = false;
+                });
 
             } else if (m_uploading_data) {
                 //give user information
@@ -318,6 +345,19 @@ var ERFP_ADD_WATERSHED = (function() {
         
         });
         
+        //show/hide elements based on data store selection
+        $('#data-store-select').change(function() {
+            var select_val = $(this).val();
+            if(select_val == 1) {
+                //local upload
+                $('.rapid-input').addClass('hidden');
+            } else {
+                //file located on geoserver
+                $('.rapid-input').removeClass('hidden');
+            }
+        
+        });
+
         //show/hide elements based on geoserver selection
         $('#geoserver-select').change(function() {
             var select_val = $(this).val();
