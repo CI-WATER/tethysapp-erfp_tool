@@ -1040,15 +1040,15 @@ def watershed_update(request):
         watershed.file_name = file_name.strip()
         watershed.data_store_id = data_store_id
         watershed.geoserver_id = geoserver_id
-        watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer.strip()
-        watershed.geoserver_catchment_layer = geoserver_catchment_layer.strip()
-        watershed.geoserver_gage_layer = geoserver_gage_layer.strip()
+        watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer.strip() if geoserver_drainage_line_layer else ""
+        watershed.geoserver_catchment_layer = geoserver_catchment_layer.strip() if geoserver_catchment_layer else ""
+        watershed.geoserver_gage_layer = geoserver_gage_layer.strip() if geoserver_gage_layer else ""
         watershed.geoserver_drainage_line_uploaded = geoserver_drainage_line_uploaded
         watershed.geoserver_catchment_uploaded = geoserver_catchment_uploaded
         watershed.geoserver_gage_uploaded = geoserver_gage_uploaded
-        watershed.kml_drainage_line_layer = kml_drainage_line_layer.strip()
-        watershed.kml_catchment_layer = kml_catchment_layer.strip()
-        watershed.kml_gage_layer = kml_gage_layer.strip()
+        watershed.kml_drainage_line_layer = kml_drainage_line_layer.strip() if kml_drainage_line_layer else ""
+        watershed.kml_catchment_layer = kml_catchment_layer.strip() if kml_catchment_layer else ""
+        watershed.kml_gage_layer = kml_gage_layer.strip() if kml_gage_layer else ""
         
         #update database
         session.commit()
