@@ -715,22 +715,26 @@ var ERFP_MAP = (function() {
     loadHydrographFromFeature = function(selected_feature) {
         //get attributes
         var reach_id = selected_feature.get('COMID'); 
-        var watershed_name = selected_feature.get("watershed_name");
-        var subbasin_name = selected_feature.get("subbasin_name");
+        var watershed_name = selected_feature.get("watershed");
+        var subbasin_name = selected_feature.get("subbasin");
         var guess_index = selected_feature.get("guess_index");
         var usgs_id = selected_feature.get("usgs_id");
         var nws_id = selected_feature.get("nws_id");
-        var hydroserver_url = selected_feature.get("hydroserver_url");
+        var hydroserver_url = selected_feature.get("hydroserve");
         
         //in case the reach_id is in a differen location
         if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
+            var reach_id = selected_feature.get('hydroid');
+        }
+        if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
             var reach_id = selected_feature.get('name');
         }
+
         if(typeof watershed_name == 'undefined') {
-            var watershed_name = selected_feature.get('watershed');
+            var watershed_name = selected_feature.get('watershed_name');
         }
         if(typeof subbasin_name == 'undefined') {
-            var subbasin_name = selected_feature.get('subbasin');
+            var subbasin_name = selected_feature.get('subbasin_name');
         }
 
         if(typeof usgs_id != 'undefined' && !isNaN(usgs_id) && usgs_id != null) {
