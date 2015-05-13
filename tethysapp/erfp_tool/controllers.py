@@ -137,7 +137,7 @@ def map(request):
                 if drainage_line_info['success']:
                     #check layers attributes to see if valid
                     layer_attributes = drainage_line_info['result']['attributes']
-                    optional_attributes = ['usgs_id', 'nws_id', 'hydroserver_url']
+                    optional_attributes = ['usgs_id', 'nws_id', 'hydroserve']
                     missing_attributes = []
                     contained_attributes = []
                     #check required attributes
