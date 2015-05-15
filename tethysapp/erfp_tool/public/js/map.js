@@ -47,10 +47,11 @@ var ERFP_MAP = (function() {
     /************************************************************************
     *                    PRIVATE FUNCTION DECLARATIONS
     *************************************************************************/
-    var bindInputs, convertTimeSeriesMetricToEnglish, convertTimeSeriesEnglishToMetric,
-        isNotLoadingPastRequest, zoomToAll, zoomToLayer, zoomToFeature, toTitleCase, 
-        removeInfoDivClases, datePadString, updateInfoAlert, getBaseLayer, 
-        getTileLayer, getKMLLayer, clearMessages, clearOldChart, dateToUTCString, 
+    var bindInputs, convertTimeSeriesMetricToEnglish, getCI, 
+        convertTimeSeriesEnglishToMetric,isNotLoadingPastRequest, zoomToAll,
+        zoomToLayer, zoomToFeature, toTitleCase, removeInfoDivClases, 
+        datePadString,updateInfoAlert, getBaseLayer, getTileLayer,
+        getKMLLayer, clearMessages, clearOldChart, dateToUTCString, 
         clearChartSelect2, getChartData, displayHydrograph, 
         loadHydrographFromFeature;
 
@@ -110,11 +111,23 @@ var ERFP_MAP = (function() {
         }
         return new_time_series;
     };
+
+    //FUNCTION: ol case insensitive get feature property
+    getCI = function(obj,prop){
+      prop = prop.toLowerCase();
+      for(var key in obj.getProperties()){
+         if(prop == key.toLowerCase()){
+               return obj.get(key);
+          }
+       }
+    }
+
     //FUNCTION: check if loading past request
     isNotLoadingPastRequest = function() {
         return !m_downloading_hydrograph && !m_downloading_select && 
             !m_downloading_usgs && !m_downloading_nws && !m_downloading_hydroserver;
     }
+
     //FUNCTION: zooms to all kml files
     zoomToAll = function() {
         m_map.getView().fitExtent(m_map_extent, m_map.getSize());
@@ -714,27 +727,27 @@ var ERFP_MAP = (function() {
     //FUNCTION: Loads Hydrograph from Selected feature
     loadHydrographFromFeature = function(selected_feature) {
         //get attributes
-        var reach_id = selected_feature.get('COMID'); 
-        var watershed_name = selected_feature.get("watershed");
-        var subbasin_name = selected_feature.get("subbasin");
-        var guess_index = selected_feature.get("guess_index");
-        var usgs_id = selected_feature.get("usgs_id");
-        var nws_id = selected_feature.get("nws_id");
-        var hydroserver_url = selected_feature.get("hydroserve");
+        var reach_id = getCI(selected_feature, 'COMID'); 
+        var watershed_name = getCI(selected_feature, "watershed");
+        var subbasin_name = getCI(selected_feature, "subbasin");
+        var guess_index = getCI(selected_feature, "guess_index");
+        var usgs_id = getCI(selected_feature, "usgs_id");
+        var nws_id = getCI(selected_feature, "nws_id");
+        var hydroserver_url = getCI(selected_feature, "hydroserve");
         
         //in case the reach_id is in a differen location
         if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
-            var reach_id = selected_feature.get('hydroid');
+            var reach_id = getCI(selected_feature, 'hydroid');
         }
         if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
-            var reach_id = selected_feature.get('name');
+            var reach_id = getCI(selected_feature, 'name');
         }
 
         if(typeof watershed_name == 'undefined') {
-            var watershed_name = selected_feature.get('watershed_name');
+            var watershed_name = getCI(selected_feature, 'watershed_name');
         }
         if(typeof subbasin_name == 'undefined') {
-            var subbasin_name = selected_feature.get('subbasin_name');
+            var subbasin_name = getCI(selected_feature, 'subbasin_name');
         }
 
         if(typeof usgs_id != 'undefined' && !isNaN(usgs_id) && usgs_id != null) {

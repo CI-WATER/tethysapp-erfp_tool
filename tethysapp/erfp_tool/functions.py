@@ -190,11 +190,11 @@ def get_cron_command():
     else:
         return None
 
-def get_reach_index(reach_id, guess_index, basin_files):
+def get_reach_index(reach_id, prediction_file, guess_index=None):
     """
     Gets the index of the reach from the COMID 
     """
-    data_nc = NET.Dataset(basin_files[0], mode="r")
+    data_nc = NET.Dataset(prediction_file, mode="r")
     com_ids = data_nc.variables['COMID'][:]
     data_nc.close()
     try:
