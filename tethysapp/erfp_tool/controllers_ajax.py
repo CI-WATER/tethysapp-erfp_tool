@@ -277,7 +277,7 @@ def geoserver_update(request):
         return JsonResponse({ 'error': "Cannot change this geoserver." })
     return JsonResponse({ 'error': "A problem with your request exists." })
     
-def get_avaialable_dates(request):
+def ecmwf_get_avaialable_dates(request):
     """""
     Finds a list of directories with valid data and returns dates in select2 format
     """""
@@ -336,7 +336,7 @@ def get_avaialable_dates(request):
         else:
             return JsonResponse({'error' : 'Recent forecasts for reach with id: %s not found.' % reach_id})    
      
-def get_hydrograph(request):
+def ecmwf_get_hydrograph(request):
     """""
     Plots 52 ECMWF ensembles analysis with min., max., avg. ,std. dev.
     """""

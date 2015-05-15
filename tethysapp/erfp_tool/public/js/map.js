@@ -401,7 +401,7 @@ var ERFP_MAP = (function() {
             //get ecmwf data
             m_chart_data_ajax_handle = jQuery.ajax({
                 type: "GET",
-                url: "get-hydrograph",
+                url: "ecmwf-get-hydrograph",
                 dataType: "json",
                 data: {
                     watershed_name: m_selected_watershed,
@@ -665,7 +665,7 @@ var ERFP_MAP = (function() {
             m_downloading_select = true;
             m_select_data_ajax_handle = jQuery.ajax({
                 type: "GET",
-                url: "get-avaialable-dates",
+                url: "ecmwf-get-avaialable-dates",
                 dataType: "json",
                 data: {
                     watershed_name: m_selected_watershed,
