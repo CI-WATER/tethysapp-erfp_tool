@@ -283,7 +283,7 @@ def ecmwf_get_avaialable_dates(request):
     """""
     Finds a list of directories with valid data and returns dates in select2 format
     """""
-    if request.is_ajax() and request.method == 'GET':
+    if request.method == 'GET':
         #Query DB for path to rapid output
         session = SettingsSessionMaker()
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
@@ -338,6 +338,60 @@ def ecmwf_get_avaialable_dates(request):
         else:
             return JsonResponse({'error' : 'Recent forecasts for reach with id: %s not found.' % reach_id})    
      
+def wrf_hydro_get_avaialable_dates(request):
+    """""
+    Finds a list of directories with valid data and returns dates in select2 format
+    """""
+    if request.method == 'GET':
+        #Query DB for path to rapid output
+        session = SettingsSessionMaker()
+        main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+        session.close()
+
+        path_to_rapid_output = main_settings.wrf_hydro_rapid_prediction_directory
+        if not os.path.exists(path_to_rapid_output):
+            return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})
+
+        #get/check information from AJAX request
+        get_info = request.GET
+        watershed_name = format_name(get_info['watershed_name']) if 'watershed_name' in get_info else None
+        subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
+        reach_id = get_info.get('reach_id')
+        if not reach_id or not watershed_name or not subbasin_name:
+            return JsonResponse({'error' : 'AJAX request input faulty'})
+
+        #find/check current output datasets
+        path_to_watershed_files = os.path.join(path_to_rapid_output, watershed_name, subbasin_name)
+
+        if not os.path.exists(path_to_watershed_files):
+            return JsonResponse({'error' : 'Forecast for %s (%s) not found.' % (watershed_name, subbasin_name) })
+
+        prediction_files = sorted([d for d in os.listdir(path_to_watershed_files) \
+                                if not os.path.isdir(os.path.join(path_to_watershed_files, d))],
+                                reverse=True)
+        output_files = []
+        directory_count = 0
+        for prediction_file in prediction_files:
+            date_string = prediction_file.split("_")[1]
+            date = datetime.datetime.strptime(date_string,"%Y%m%dT%H%MZ")
+            path_to_file = os.path.join(path_to_watershed_files, prediction_file)
+            if os.path.exists(path_to_file):
+                output_files.append({
+                    'id' : date_string,
+                    'text' : str(date)
+                })
+                directory_count += 1
+                #limit number of directories
+                if(directory_count>64):
+                    break
+        if len(output_files)>0:
+            return JsonResponse({
+                        "success" : "File search complete!",
+                        "output_files" : output_files,
+                    })
+        else:
+            return JsonResponse({'error' : 'Recent forecasts for reach with id: %s not found.' % reach_id})
+
 def ecmwf_get_hydrograph(request):
     """""
     Plots 52 ECMWF ensembles analysis with min., max., avg. ,std. dev.
@@ -468,8 +522,20 @@ def wrf_hydro_get_hydrograph(request):
             return JsonResponse({'error' : 'Forecast for %s (%s) not found.' % (watershed_name, subbasin_name)})
 
         #get/check the index of the reach
+        reach_index = get_reach_index(reach_id, forecast_file)
+        if reach_index == None:
+            return JsonResponse({'error' : 'Reach with id: %s not found.' % reach_id})
 
         #get information from dataset
+        data_nc = NET.Dataset(forecast_file, mode="r")
+        time = data_nc.variables['time'][:]
+        data_values = data_nc.variables['Qout'][reach_index,:]
+        data_nc.close()
+
+        return JsonResponse({
+                "success" : "Data analysis complete!",
+                "wrf_hydro" : zip(time.tolist(), data_values.tolist()),
+        })
 
 
 @user_passes_test(user_permission_test)
