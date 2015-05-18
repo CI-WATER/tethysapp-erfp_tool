@@ -118,7 +118,7 @@ def delete_old_watershed_files(watershed, local_prediction_files_location):
                                           )
         data_manager.dataset_engine.delete_resource(watershed.ecmwf_rapid_input_resource_id)
 
-def find_most_current_files(path_to_watershed_files, basin_name, start_folder):
+def ecmwf_find_most_current_files(path_to_watershed_files, basin_name, start_folder):
     """""
     Finds the current output from downscaled ECMWF forecasts
     """""
@@ -126,7 +126,7 @@ def find_most_current_files(path_to_watershed_files, basin_name, start_folder):
         if not os.path.exists(path_to_watershed_files):
             return None, None
         directories = sorted([d for d in os.listdir(path_to_watershed_files) \
-                            if os.path.isdir(os.path.join(path_to_watershed_files, d))],
+                             if os.path.isdir(os.path.join(path_to_watershed_files, d))],
                              reverse=True)
     else:
         directories = [start_folder]
@@ -146,6 +146,30 @@ def find_most_current_files(path_to_watershed_files, basin_name, start_folder):
             pass
     #there are no files found
     return None, None
+
+def wrf_hydro_find_most_current_file(path_to_watershed_files, date_string):
+    """""
+    Finds the current output from downscaled WRF-Hydro forecasts
+    """""
+    if(date_string=="most_recent"):
+        if not os.path.exists(path_to_watershed_files):
+            return None
+        prediction_files = sorted([d for d in os.listdir(path_to_watershed_files) \
+                        if not os.path.isdir(os.path.join(path_to_watershed_files, d))],
+                        reverse=True)
+    else:
+        #RapidResult_20150405T2300Z_CF.nc
+        prediction_files = ["RapidResult_%s_CF.nc" % date_string]
+    for prediction_file in prediction_files:
+        try:
+            path_to_file = os.path.join(path_to_watershed_files, prediction_file)
+            if os.path.exists(path_to_file):
+                return path_to_file
+        except Exception as ex:
+            print ex
+            pass
+    #there are no files found
+    return None
 
 def format_name(string):
     """
