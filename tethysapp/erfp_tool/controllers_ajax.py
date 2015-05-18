@@ -368,7 +368,7 @@ def ecmwf_get_hydrograph(request):
             return JsonResponse({'error' : 'Forecast for %s (%s) not found.' % (watershed_name, subbasin_name)})
     
         #get/check the index of the reach
-        reach_index = get_reach_index(reach_id, guess_index, basin_files)
+        reach_index = get_reach_index(reach_id, basin_files[0], guess_index)
         if reach_index == None:
             return JsonResponse({'error' : 'Reach with id: %s not found.' % reach_id})
 
