@@ -85,11 +85,17 @@ def delete_old_watershed_geoserver_files(watershed):
                            password=watershed.geoserver.password)
 
     if watershed.geoserver_drainage_line_uploaded:
-        engine.delete_layer(watershed.geoserver_drainage_line_layer)
+        engine.delete_store(watershed.geoserver_drainage_line_layer, 
+                            purge=True, 
+                            recurse=True)
     if watershed.geoserver_catchment_uploaded:
-        engine.delete_layer(watershed.geoserver_catchment_layer)
+        engine.delete_store(watershed.geoserver_catchment_layer, 
+                            purge=True, 
+                            recurse=True)
     if watershed.geoserver_gage_uploaded:
-        engine.delete_layer(watershed.geoserver_gage_layer)
+        engine.delete_store(watershed.geoserver_gage_layer, 
+                            purge=True, 
+                            recurse=True)
 
 def delete_old_watershed_files(watershed, local_prediction_files_location):
     """

@@ -974,13 +974,16 @@ def watershed_update(request):
                 if watershed.geoserver_drainage_line_uploaded \
                     and (watershed.folder_name != folder_name
                     or watershed.file_name != file_name):
-                    engine.delete_layer(watershed.geoserver_drainage_line_layer)
+                    engine.delete_store(watershed.geoserver_drainage_line_layer, 
+                                        purge=True, 
+                                        recurse=True)
                 resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
                 geoserver_drainage_line_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
                 rename_shapefile_input_files(drainage_line_shp_file, resource_name)
-                engine.create_shapefile_resource(geoserver_drainage_line_layer, shapefile_upload=drainage_line_shp_file,
-                                                      overwrite=True)
+                engine.create_shapefile_resource(geoserver_drainage_line_layer, 
+                                                 shapefile_upload=drainage_line_shp_file,
+                                                 overwrite=True)
                 geoserver_drainage_line_uploaded = True
 
             #UPDATE CATCHMENT
@@ -988,20 +991,25 @@ def watershed_update(request):
             geoserver_catchment_layer = "" if not geoserver_catchment_layer else geoserver_catchment_layer
             if not geoserver_catchment_layer and watershed.geoserver_catchment_layer:
                 if watershed.geoserver_catchment_uploaded:
-                    engine.delete_layer(watershed.geoserver_catchment_layer)
+                    engine.delete_store(watershed.geoserver_catchment_layer,
+                                        purge=True, 
+                                        recurse=True)
                 
             if catchment_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_catchment_uploaded \
                     and (watershed.folder_name != folder_name
                     or watershed.file_name != file_name):
-                    engine.delete_layer(watershed.geoserver_catchment_layer)
+                    engine.delete_store(watershed.geoserver_catchment_layer,
+                                        purge=True, 
+                                        recurse=True)
                 resource_name = "%s-%s-%s" % (folder_name, file_name, 'catchment')
                 geoserver_catchment_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
                 rename_shapefile_input_files(catchment_shp_file, resource_name)
-                engine.create_shapefile_resource(geoserver_catchment_layer, shapefile_upload=catchment_shp_file,
-                                                      overwrite=True)
+                engine.create_shapefile_resource(geoserver_catchment_layer, 
+                                                 shapefile_upload=catchment_shp_file,
+                                                 overwrite=True)
                 geoserver_catchment_uploaded = True
 
             #UPDATE GAGE
@@ -1009,14 +1017,18 @@ def watershed_update(request):
             geoserver_gage_layer = "" if not geoserver_gage_layer else geoserver_gage_layer
             if not geoserver_gage_layer and watershed.geoserver_gage_layer:
                 if watershed.geoserver_gage_uploaded:
-                    engine.delete_layer(watershed.geoserver_gage_layer)
+                    engine.delete_store(watershed.geoserver_gage_layer,
+                                        purge=True, 
+                                        recurse=True)
                     
             if gage_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_gage_uploaded \
                     and (watershed.folder_name != folder_name
                     or watershed.file_name != file_name):
-                    engine.delete_layer(watershed.geoserver_gage_layer)
+                    engine.delete_store(watershed.geoserver_gage_layer,
+                                        purge=True, 
+                                        recurse=True)
                 resource_name = "%s-%s-%s" % (folder_name, file_name, 'gage')
                 geoserver_gage_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
