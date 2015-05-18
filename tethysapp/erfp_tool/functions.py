@@ -76,6 +76,14 @@ def delete_old_watershed_kml_files(watershed):
     except OSError:
         pass
 
+def purge_remove_geoserver_layer(layer_id, engine):
+    """
+    completely remove geoserver layer
+    """
+    engine.delete_layer(layer_id, purge=True, recurse=True)
+    engine.delete_resource(layer_id, purge=True, recurse=True)
+    engine.delete_store(layer_id, purge=True, recurse=True)
+
 def delete_old_watershed_geoserver_files(watershed):
     """
     Removes old watershed geoserver files from system
@@ -85,17 +93,13 @@ def delete_old_watershed_geoserver_files(watershed):
                            password=watershed.geoserver.password)
 
     if watershed.geoserver_drainage_line_uploaded:
-        engine.delete_store(watershed.geoserver_drainage_line_layer, 
-                            purge=True, 
-                            recurse=True)
+        purge_remove_geoserver_layer(watershed.geoserver_drainage_line_layer, 
+                                     engine)
     if watershed.geoserver_catchment_uploaded:
-        engine.delete_store(watershed.geoserver_catchment_layer, 
-                            purge=True, 
-                            recurse=True)
+        purge_remove_geoserver_layer(watershed.geoserver_catchment_layer,
+                                     engine)
     if watershed.geoserver_gage_uploaded:
-        engine.delete_store(watershed.geoserver_gage_layer, 
-                            purge=True, 
-                            recurse=True)
+        purge_remove_geoserver_layer(watershed.geoserver_gage_layer, engine) 
 
 def delete_old_watershed_files(watershed, local_prediction_files_location):
     """
@@ -277,7 +281,6 @@ def handle_uploaded_file(f, file_path, file_name):
     with open(os.path.join(file_path,file_name), 'wb+') as destination:
         for chunk in f.chunks():
             destination.write(chunk)
-            
 
 def user_permission_test(user):
     """

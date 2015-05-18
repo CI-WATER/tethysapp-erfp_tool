@@ -29,6 +29,7 @@ from .functions import (check_shapefile_input_files,
                         delete_old_watershed_files, 
                         delete_old_watershed_kml_files,
                         delete_old_watershed_geoserver_files,
+                        purge_remove_geoserver_layer,
                         ecmwf_find_most_current_files,
                         wrf_hydro_find_most_current_file,
                         format_name,
@@ -1076,9 +1077,8 @@ def watershed_update(request):
                 if watershed.geoserver_drainage_line_uploaded \
                     and (watershed.folder_name != folder_name
                     or watershed.file_name != file_name):
-                    engine.delete_store(watershed.geoserver_drainage_line_layer, 
-                                        purge=True, 
-                                        recurse=True)
+                   purge_remove_geoserver_layer(watershed.geoserver_drainage_line_layer, 
+                                                engine)
                 resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
                 geoserver_drainage_line_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
@@ -1093,18 +1093,16 @@ def watershed_update(request):
             geoserver_catchment_layer = "" if not geoserver_catchment_layer else geoserver_catchment_layer
             if not geoserver_catchment_layer and watershed.geoserver_catchment_layer:
                 if watershed.geoserver_catchment_uploaded:
-                    engine.delete_store(watershed.geoserver_catchment_layer,
-                                        purge=True, 
-                                        recurse=True)
+                    purge_remove_geoserver_layer(watershed.geoserver_catchment_layer,
+                                                 engine)
                 
             if catchment_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_catchment_uploaded \
                     and (watershed.folder_name != folder_name
                     or watershed.file_name != file_name):
-                    engine.delete_store(watershed.geoserver_catchment_layer,
-                                        purge=True, 
-                                        recurse=True)
+                    purge_remove_geoserver_layer(watershed.geoserver_catchment_layer,
+                                                 engine)
                 resource_name = "%s-%s-%s" % (folder_name, file_name, 'catchment')
                 geoserver_catchment_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
@@ -1119,18 +1117,17 @@ def watershed_update(request):
             geoserver_gage_layer = "" if not geoserver_gage_layer else geoserver_gage_layer
             if not geoserver_gage_layer and watershed.geoserver_gage_layer:
                 if watershed.geoserver_gage_uploaded:
-                    engine.delete_store(watershed.geoserver_gage_layer,
-                                        purge=True, 
-                                        recurse=True)
+                    purge_remove_geoserver_layer(watershed.geoserver_gage_layer, 
+                                                 engine)
+
                     
             if gage_shp_file:
                 #remove old geoserver layer if uploaded
                 if watershed.geoserver_gage_uploaded \
                     and (watershed.folder_name != folder_name
                     or watershed.file_name != file_name):
-                    engine.delete_store(watershed.geoserver_gage_layer,
-                                        purge=True, 
-                                        recurse=True)
+                    purge_remove_geoserver_layer(watershed.geoserver_gage_layer,
+                                                 engine)
                 resource_name = "%s-%s-%s" % (folder_name, file_name, 'gage')
                 geoserver_gage_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
