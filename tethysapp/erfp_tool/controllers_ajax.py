@@ -1077,8 +1077,8 @@ def watershed_update(request):
                 if watershed.geoserver_drainage_line_uploaded \
                     and (watershed.folder_name != folder_name
                     or watershed.file_name != file_name):
-                   purge_remove_geoserver_layer(watershed.geoserver_drainage_line_layer, 
-                                                engine)
+                    purge_remove_geoserver_layer(watershed.geoserver_drainage_line_layer, 
+                                                 engine)
                 resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
                 geoserver_drainage_line_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
@@ -1132,8 +1132,9 @@ def watershed_update(request):
                 geoserver_gage_layer = '{0}:{1}'.format(resource_workspace, resource_name)
                 # Do create shapefile
                 rename_shapefile_input_files(gage_shp_file, resource_name)
-                engine.create_shapefile_resource(geoserver_gage_layer, shapefile_upload=gage_shp_file,
-                                                      overwrite=True)
+                engine.create_shapefile_resource(geoserver_gage_layer, 
+                                                 shapefile_upload=gage_shp_file,
+                                                 overwrite=True)
                 geoserver_gage_uploaded = True
             
             #remove old kml files           

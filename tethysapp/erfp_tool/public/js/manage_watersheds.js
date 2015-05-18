@@ -182,6 +182,8 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                         }
                                     }
                                     data.append("geoserver_drainage_line_layer", geoserver_drainage_line_layer);
+                                    data.append("geoserver_catchment_layer", geoserver_catchment_layer);
+                                    data.append("geoserver_gage_layer", geoserver_gage_layer);
                                     data.append("catchment_kml_file", catchment_kml_file);
                                     for (var i = 0; i < catchment_shp_files.length; i++) {
                                         data.append("catchment_shp_file", catchment_shp_files[i]);
@@ -200,7 +202,6 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                         data.append("subbasin_name", subbasin_name);
                                         data.append("data_store_id", data_store_id);
                                         data.append("geoserver_id", geoserver_id);
-                                        //throws error when drainage not uploaded
                                         if (return_data != null && typeof return_data != 'undefined') {
                                             if ('geoserver_drainage_line_layer' in return_data) {
                                                 geoserver_drainage_line_layer = return_data['geoserver_drainage_line_layer'];
@@ -209,14 +210,13 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                         data.append("geoserver_drainage_line_layer", geoserver_drainage_line_layer);
                                         if (catchment_data != null && typeof catchment_data != 'undefined') {
                                             if ('geoserver_catchment_layer' in catchment_data) {
-                                                data.append("geoserver_catchment_layer",
-                                                    catchment_data['geoserver_catchment_layer']);
+                                                geoserver_catchment_layer = catchment_data['geoserver_catchment_layer'];
                                             }
                                             if ('kml_catchment_layer' in catchment_data) {
-                                                data.append("kml_catchment_layer",
-                                                    catchment_data['kml_catchment_layer']);
+                                                kml_catchment_layer = catchment_data['kml_catchment_layer'];
                                             }
                                         }
+                                        data.append("geoserver_catchment_layer", geoserver_catchment_layer);
                                         data.append("gage_kml_file", gage_kml_file);
                                         for (var i = 0; i < gage_shp_files.length; i++) {
                                             data.append("gage_shp_file", gage_shp_files[i]);
