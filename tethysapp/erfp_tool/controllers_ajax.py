@@ -529,12 +529,13 @@ def wrf_hydro_get_hydrograph(request):
         #get information from dataset
         data_nc = NET.Dataset(forecast_file, mode="r")
         time = data_nc.variables['time'][:]
+        time = [t*1000 for t in time]
         data_values = data_nc.variables['Qout'][reach_index,:]
         data_nc.close()
 
         return JsonResponse({
                 "success" : "Data analysis complete!",
-                "wrf_hydro" : zip(time.tolist(), data_values.tolist()),
+                "wrf_hydro" : zip(time, data_values.tolist()),
         })
 
 
