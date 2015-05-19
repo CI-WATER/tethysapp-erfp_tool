@@ -60,6 +60,7 @@ var ERFP_ADD_WATERSHED = (function() {
             $('#catchment-shp-upload-input').val('');
             $('#gage-shp-upload-input').val('');
             $('#ecmwf-rapid-files-upload-input').val('');
+            $('.rapid-input').addClass('hidden');
             $('.kml').removeClass('hidden');
             $('.shapefile').addClass('hidden');
         } else {
