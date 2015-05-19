@@ -1,6 +1,5 @@
 from crontab import CronTab
 import datetime
-from getpass import getuser
 from glob import glob
 import netCDF4 as NET
 import numpy as np
@@ -567,7 +566,7 @@ def settings_update(request):
 
         #update cron jobs
         try:
-            cron_manager = CronTab(user=getuser())
+            cron_manager = CronTab(user=True)
             cron_manager.remove_all(comment="erfp-dataset-download")
             cron_command = get_cron_command()
             if cron_command:
