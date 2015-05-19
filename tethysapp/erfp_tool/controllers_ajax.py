@@ -17,25 +17,26 @@ from django.contrib.auth.decorators import user_passes_test
 from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 
 #local imports
+from functions import (check_shapefile_input_files,
+                       rename_shapefile_input_files,
+                       delete_old_watershed_prediction_files,
+                       delete_old_watershed_files, 
+                       delete_old_watershed_kml_files,
+                       delete_old_watershed_geoserver_files,
+                       purge_remove_geoserver_layer,
+                       ecmwf_find_most_current_files,
+                       wrf_hydro_find_most_current_file,
+                       format_name,
+                       get_cron_command,
+                       get_reach_index, 
+                       handle_uploaded_file, 
+                       user_permission_test)
+
 from load_datasets import load_watershed
 
-from .model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
+from model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
 
-from .functions import (check_shapefile_input_files,
-                        rename_shapefile_input_files,
-                        delete_old_watershed_prediction_files,
-                        delete_old_watershed_files, 
-                        delete_old_watershed_kml_files,
-                        delete_old_watershed_geoserver_files,
-                        purge_remove_geoserver_layer,
-                        ecmwf_find_most_current_files,
-                        wrf_hydro_find_most_current_file,
-                        format_name,
-                        get_cron_command,
-                        get_reach_index, 
-                        handle_uploaded_file, 
-                        user_permission_test)
 from sfpt_dataset_manager.dataset_manager import RAPIDInputDatasetManager
                         
 @user_passes_test(user_permission_test)
