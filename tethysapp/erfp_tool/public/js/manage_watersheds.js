@@ -180,8 +180,8 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                         if ('geoserver_drainage_line_layer' in return_data) {
                                             geoserver_drainage_line_layer = return_data['geoserver_drainage_line_layer'];
                                         }
-                                        if ('drainage_line_kml_file' in catchment_data) {
-                                            drainage_line_kml_file = catchment_data['drainage_line_kml_file'];
+                                        if ('drainage_line_kml_file' in return_data) {
+                                            drainage_line_kml_file = return_data['drainage_line_kml_file'];
                                         }
                                     }
                                     data.append("geoserver_drainage_line_layer", geoserver_drainage_line_layer);
@@ -247,14 +247,14 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                         parent_row.find('.catchment-shp-upload-input').val('');
                                         parent_row.find('.gage-shp-upload-input').val('');
                                         //2) Change toggle to No
-                                        $('#shp-upload-toggle').bootstrapSwitch('toggleState');
+                                        $('#shp-upload-toggle').bootstrapSwitch('state', false);
                                         //update the input boxes to reflect change
                                         addSuccessMessage("Watershed Upload Complete!");
                                     })
-                                        .always(function () {
-                                            submit_button.html(submit_button_html);
-                                            m_uploading_data = false;
-                                        });
+                                    .always(function () {
+                                        submit_button.html(submit_button_html);
+                                        m_uploading_data = false;
+                                    });
                                 });
 
                             });
