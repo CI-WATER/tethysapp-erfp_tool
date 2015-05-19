@@ -284,24 +284,6 @@ def settings(request):
                 'initial': main_settings.wrf_hydro_rapid_prediction_directory,
               }
               
-    morning_hour_select_input = {
-                'display_text': 'Select Morning Data Download Hour',
-                'name': 'morning-hour-select',
-                'options': [(0,0),(1,1),(2,2),(3,3),(4,4),
-                            (5,5),(6,6),(7,7),(8,8),(9,9),
-                            (10,10),(11,11)],
-                'initial': [main_settings.morning_hour],
-                }          
-
-    evening_hour_select_input = {
-                'display_text': 'Select Evening  Data Download Hour',
-                'name': 'evening-hour-select',
-                'options': [(12,12),(13,13),(14,14),(15,15),(16,16),
-                            (17,17),(18,18),(19,19),(20,20),(21,21),
-                            (22,22),(23,23),],
-                'initial': [main_settings.evening_hour],
-                }          
-             
     submit_button = {'buttons': [
                                  {'display_text': 'Submit',
                                   'name': 'submit-changes-settings',
@@ -316,8 +298,6 @@ def settings(request):
                 'base_layer_api_key_input': base_layer_api_key_input,
                 'ecmwf_rapid_input': ecmwf_rapid_directory_input,
                 'wrf_hydro_rapid_input':wrf_hydro_rapid_directory_input,
-                'morning_hour_select_input': morning_hour_select_input,
-                'evening_hour_select_input': evening_hour_select_input,
                 'submit_button': submit_button,
                 'base_layer_api_keys': json.dumps(base_layer_api_keys),
                 'app_instance_id': main_settings.app_instance_id,

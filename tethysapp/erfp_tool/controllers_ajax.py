@@ -435,26 +435,39 @@ def ecmwf_get_hydrograph(request):
         for in_nc in basin_files:
             try:
                 index_str = os.path.basename(in_nc)[:-3].split("_")[-1]
-                try:
-                    #ECMWF Ensembles
-                    index = int(index_str)
-                    data_nc = NET.Dataset(in_nc, mode="r")
-                    dataValues = data_nc.variables['Qout'][:,reach_index]
+                index = int(index_str)
+
+                #Get hydrograph data from ECMWF Ensemble
+                data_nc = NET.Dataset(in_nc, mode="r")
+                qout_dimensions = data_nc.variables['Qout'].dimensions
+                if qout_dimensions[0] == 'Time' and qout_dimensions[1] == 'COMID':
+                    data_values = data_nc.variables['Qout'][:,reach_index]
+                elif qout_dimensions[0] == 'COMID' and qout_dimensions[1] == 'Time':
+                    data_values = data_nc.variables['Qout'][reach_index,:]
+                else:
+                    print "Invalid ECMWF forecast file", in_nc
                     data_nc.close()
-                    if (len(dataValues)>len(erfp_time)):
+                    continue
+
+                #get time
+                if (len(data_values)>len(erfp_time)):
+                    variables = data_nc.variables.keys()
+                    if 'time' in variables:
+                        erfp_time = [t*1000 for t in data_nc.variables['time'][:]]
+                    else:
                         erfp_time = []
-                        for i in range(0,len(dataValues)):
+                        for i in range(0,len(data_values)):
                             next_time = int((start_date+datetime.timedelta(0,i*6*60*60)) \
                                             .strftime('%s'))*1000
                             erfp_time.append(next_time)
-                    all_data_first_half.append(dataValues[:40].clip(min=0))
-                    if(index < 52):
-                        all_data_second_half.append(dataValues[40:].clip(min=0))
-                    if(index == 52):
-                        high_res_data = dataValues
-                except ValueError:
-                    print "Error reading ECMWF File"    
-                    pass
+
+                data_nc.close()
+
+                all_data_first_half.append(data_values[:40].clip(min=0))
+                if(index < 52):
+                    all_data_second_half.append(data_values[40:].clip(min=0))
+                if(index == 52):
+                    high_res_data = data_values
             except Exception, e:
                 print e
                 pass
@@ -529,8 +542,7 @@ def wrf_hydro_get_hydrograph(request):
 
         #get information from dataset
         data_nc = NET.Dataset(forecast_file, mode="r")
-        time = data_nc.variables['time'][:]
-        time = [t*1000 for t in time]
+        time = [t*1000 for t in data_nc.variables['time'][:]]
         data_values = data_nc.variables['Qout'][reach_index,:]
         data_nc.close()
 
@@ -555,28 +567,20 @@ def settings_update(request):
 
         #update cron jobs
         try:
-            morning_hour = int(post_info.get('morning_hour'))
-            evening_hour = int(post_info.get('evening_hour'))
             cron_manager = CronTab(user=getuser())
             cron_manager.remove_all(comment="erfp-dataset-download")
             cron_command = get_cron_command()
             if cron_command:
-                #add new times   
-                cron_job_morning = cron_manager.new(command=cron_command, 
-                                           comment="erfp-dataset-download")
-                cron_job_morning.minute.on(0)
-                cron_job_morning.hour.on(morning_hour)
-                cron_job_evening = cron_manager.new(command=cron_command, 
-                                           comment="erfp-dataset-download")
-                cron_job_evening.minute.on(0)
-                cron_job_evening.hour.on(evening_hour)
+                #create job to run every hour  
+                cron_job = cron_manager.new(command=cron_command, 
+                                            comment="erfp-dataset-download")
+                cron_job.every(1).hours()
+                print cron_job
             else:
                JsonResponse({ 'error': "Location of virtual environment not found. No changes made." }) 
        
             #writes content to crontab
-            cron_manager.write()
-        except (TypeError, ValueError):
-            return JsonResponse({ 'error': "Error with unput for time." })
+            cron_manager.write_to_user(user=True)
         except Exception:
             return JsonResponse({ 'error': "CRON setup error." })
 
@@ -588,8 +592,6 @@ def settings_update(request):
         main_settings.ecmwf_rapid_prediction_directory = ecmwf_rapid_prediction_directory    
         main_settings.wrf_hydro_rapid_prediction_directory = wrf_hydro_rapid_prediction_directory    
         main_settings.base_layer.api_key = api_key
-        main_settings.morning_hour = morning_hour
-        main_settings.evening_hour = evening_hour
         session.commit()
         session.close()
 

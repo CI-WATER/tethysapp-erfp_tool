@@ -22,19 +22,14 @@ class MainSettings(Base):
     base_layer = relationship("BaseLayer")
     ecmwf_rapid_prediction_directory = Column(String)
     wrf_hydro_rapid_prediction_directory = Column(String)
-    morning_hour = Column(Integer)
-    evening_hour = Column(Integer)
     app_instance_id = Column(String)
 
     def __init__(self, base_layer_id, ecmwf_rapid_prediction_directory, 
-                 wrf_hydro_rapid_prediction_directory, morning_hour,
-                 evening_hour):
+                 wrf_hydro_rapid_prediction_directory):
 
         self.base_layer_id = base_layer_id
         self.ecmwf_rapid_prediction_directory = ecmwf_rapid_prediction_directory
         self.wrf_hydro_rapid_prediction_directory = wrf_hydro_rapid_prediction_directory
-        self.morning_hour = morning_hour
-        self.evening_hour = evening_hour
         self.app_instance_id = uuid5(NAMESPACE_DNS, '%s%s' % ("sfpt", datetime.now())).hex
         
 class BaseLayer(Base):

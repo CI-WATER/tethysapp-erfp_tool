@@ -28,7 +28,7 @@ def init_erfp_settings_db(first_time):
         session.add(Geoserver("Local Server", "media", "", ""))
 
         #add main settings
-        session.add(MainSettings(1, "", "", 3, 15))
+        session.add(MainSettings(1, "", ""))
         
         session.commit()
         session.close()

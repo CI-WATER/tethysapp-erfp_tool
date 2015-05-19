@@ -51,7 +51,7 @@ def download_single_watershed_wrf_hydro_data(watershed,
         #load current datasets
         data_manager.download_recent_resource(watershed.folder_name, 
                                               watershed.file_name,
-                                              wrf_hydro_rapid_prediction_directory)
+                                              os.path.join(wrf_hydro_rapid_prediction_directory, watershed.folder_name, watershed.file_name))
 
     #remove oldest datasets if more than 24 exist
     path_to_watershed_files = os.path.join(wrf_hydro_rapid_prediction_directory,
