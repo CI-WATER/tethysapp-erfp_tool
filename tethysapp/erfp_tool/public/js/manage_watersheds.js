@@ -247,7 +247,9 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                         parent_row.find('.catchment-shp-upload-input').val('');
                                         parent_row.find('.gage-shp-upload-input').val('');
                                         //2) Change toggle to No
-                                        $('#shp-upload-toggle').bootstrapSwitch('state', false);
+                                        if (parent_row.find('#shp-upload-toggle').bootstrapSwitch('state')) {
+                                            parent_row.find('#shp-upload-toggle').bootstrapSwitch('toggleState');
+                                        }
                                         //update the input boxes to reflect change
                                         addSuccessMessage("Watershed Upload Complete!");
                                     })
