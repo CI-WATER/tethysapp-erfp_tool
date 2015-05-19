@@ -51,7 +51,7 @@ function checkInputWithError(input, safe_to_submit, one_parent, select_two) {
     if(data_value) {
         parent.removeClass('has-error');
         parent.find('.help-block').addClass('hidden');
-        return data_value;
+        return data_value.trim();
     } else {
         safe_to_submit.val = false;
         parent.addClass('has-error');
@@ -71,7 +71,7 @@ function checkTableCellInputWithError(input, safe_to_submit, error_msg) {
         if (safe_to_submit.val) {
             parent.removeClass('danger');
         }
-        return data_value;
+        return data_value.trim();
     } else {
         safe_to_submit.val = false;
         safe_to_submit.error = "Data missing in input";
