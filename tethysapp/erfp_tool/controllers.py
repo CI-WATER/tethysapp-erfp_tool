@@ -203,10 +203,23 @@ def map(request):
                            }          
 
         units_toggle_switch = { 
+                                'display_text': 'Units',
                                 'name': 'units-toggle',
                                 'on_label': 'Metric',
                                 'off_label': 'English',
-                                'size': 'mini',
+                                'initial': True,
+                              }
+
+        ecmwf_toggle_switch = {
+                                'display_text' : "ECMWF",
+                                'name': 'ecmwf-toggle',
+                                'on_style': 'success',
+                                'initial': True,
+                              }
+        wrf_toggle_switch = {
+                                'display_text' : "WRF-Hydro",
+                                'name': 'wrf-toggle',
+                                'on_style': 'warning',
                                 'initial': True,
                               }
 
@@ -226,6 +239,8 @@ def map(request):
                     'base_layer_info' : json.dumps(base_layer_info),
                     'watershed_select' : watershed_select,
                     'units_toggle_switch' : units_toggle_switch,
+                    'ecmwf_toggle_switch' : ecmwf_toggle_switch,
+                    'wrf_toggle_switch' : wrf_toggle_switch,
                   }
     
         return render(request, 'erfp_tool/map.html', context)

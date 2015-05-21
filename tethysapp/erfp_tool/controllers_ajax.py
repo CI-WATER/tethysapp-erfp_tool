@@ -300,13 +300,13 @@ def ecmwf_get_avaialable_dates(request):
         subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
         reach_id = get_info.get('reach_id')
         if not reach_id or not watershed_name or not subbasin_name:
-            return JsonResponse({'error' : 'AJAX request input faulty'})
+            return JsonResponse({'error' : 'ECMWF AJAX request input faulty'})
     
         #find/check current output datasets    
         path_to_watershed_files = os.path.join(path_to_rapid_output, watershed_name)
 
         if not os.path.exists(path_to_watershed_files):
-            return JsonResponse({'error' : 'Forecast for %s (%s) not found.' % (watershed_name, subbasin_name) })    
+            return JsonResponse({'error' : 'ECMWF forecast for %s (%s) not found.' % (watershed_name, subbasin_name) })
        
         directories = sorted([d for d in os.listdir(path_to_watershed_files) \
                             if os.path.isdir(os.path.join(path_to_watershed_files, d))],
@@ -337,7 +337,7 @@ def ecmwf_get_avaialable_dates(request):
                         "output_directories" : output_directories,                   
                     })
         else:
-            return JsonResponse({'error' : 'Recent forecasts for reach with id: %s not found.' % reach_id})    
+            return JsonResponse({'error' : 'Recent ECMWF forecasts for reach with id: %s not found.' % reach_id})
      
 def wrf_hydro_get_avaialable_dates(request):
     """""
@@ -351,21 +351,20 @@ def wrf_hydro_get_avaialable_dates(request):
 
         path_to_rapid_output = main_settings.wrf_hydro_rapid_prediction_directory
         if not os.path.exists(path_to_rapid_output):
-            return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})
+            return JsonResponse({'error' : 'Location of WRF-Hydro RAPID output files faulty. Please check settings.'})
 
         #get/check information from AJAX request
         get_info = request.GET
         watershed_name = format_name(get_info['watershed_name']) if 'watershed_name' in get_info else None
         subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
-        reach_id = get_info.get('reach_id')
-        if not reach_id or not watershed_name or not subbasin_name:
+        if not watershed_name or not subbasin_name:
             return JsonResponse({'error' : 'AJAX request input faulty'})
 
         #find/check current output datasets
         path_to_watershed_files = os.path.join(path_to_rapid_output, watershed_name, subbasin_name)
 
         if not os.path.exists(path_to_watershed_files):
-            return JsonResponse({'error' : 'Forecast for %s (%s) not found.' % (watershed_name, subbasin_name) })
+            return JsonResponse({'error' : 'WRF-Hydro forecast for %s (%s) not found.' % (watershed_name, subbasin_name) })
 
         prediction_files = sorted([d for d in os.listdir(path_to_watershed_files) \
                                 if not os.path.isdir(os.path.join(path_to_watershed_files, d))],
@@ -391,7 +390,7 @@ def wrf_hydro_get_avaialable_dates(request):
                         "output_files" : output_files,
                     })
         else:
-            return JsonResponse({'error' : 'Recent forecasts for reach with id: %s not found.' % reach_id})
+            return JsonResponse({'error' : 'Recent WRF-Hydro forecasts for reach with id: %s not found.' % reach_id})
 
 def ecmwf_get_hydrograph(request):
     """""
@@ -414,18 +413,18 @@ def ecmwf_get_hydrograph(request):
         guess_index = get_info.get('guess_index')
         start_folder = get_info.get('start_folder')
         if not reach_id or not watershed_name or not subbasin_name or not start_folder:
-            return JsonResponse({'error' : 'AJAX request input faulty.'})
+            return JsonResponse({'error' : 'ECMWF AJAX request input faulty.'})
     
         #find/check current output datasets
         path_to_output_files = os.path.join(path_to_rapid_output, watershed_name)
         basin_files, start_date = ecmwf_find_most_current_files(path_to_output_files, subbasin_name, start_folder)
         if not basin_files or not start_date:
-            return JsonResponse({'error' : 'Forecast for %s (%s) not found.' % (watershed_name, subbasin_name)})
+            return JsonResponse({'error' : 'ECMWF forecast for %s (%s) not found.' % (watershed_name, subbasin_name)})
     
         #get/check the index of the reach
         reach_index = get_reach_index(reach_id, basin_files[0], guess_index)
         if reach_index == None:
-            return JsonResponse({'error' : 'Reach with id: %s not found.' % reach_id})
+            return JsonResponse({'error' : 'ECMWF reach with id: %s not found.' % reach_id})
 
         #get information from datasets
         all_data_first_half = []
@@ -504,7 +503,7 @@ def ecmwf_get_hydrograph(request):
             return_data["mean_minus_std"] = zip(erfp_time, mean_mins_std.tolist())
             if len(high_res_data) > 0:
                 return_data["high_res"] = zip(erfp_time,high_res_data.tolist())
-        return_data["success"] = "Data analysis complete!"
+        return_data["success"] = "ECMWF Data analysis complete!"
         return JsonResponse(return_data)
                     
 def wrf_hydro_get_hydrograph(request):
@@ -518,7 +517,7 @@ def wrf_hydro_get_hydrograph(request):
         session.close()
         path_to_rapid_output = main_settings.wrf_hydro_rapid_prediction_directory
         if not os.path.exists(path_to_rapid_output):
-            return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})
+            return JsonResponse({'error' : 'Location of WRF-Hydro RAPID output files faulty. Please check settings.'})
 
         #get information from GET request
         get_info = request.GET
@@ -527,18 +526,18 @@ def wrf_hydro_get_hydrograph(request):
         reach_id = get_info.get('reach_id')
         date_string = get_info.get('date_string')
         if not reach_id or not watershed_name or not subbasin_name or not date_string:
-            return JsonResponse({'error' : 'AJAX request input faulty.'})
+            return JsonResponse({'error' : 'WRF-Hydro AJAX request input faulty.'})
         #find/check current output datasets
         #20150405T2300Z
         path_to_output_files = os.path.join(path_to_rapid_output, watershed_name, subbasin_name)
         forecast_file = wrf_hydro_find_most_current_file(path_to_output_files, date_string)
         if not forecast_file:
-            return JsonResponse({'error' : 'Forecast for %s (%s) not found.' % (watershed_name, subbasin_name)})
+            return JsonResponse({'error' : 'WRF-Hydro forecast for %s (%s) not found.' % (watershed_name, subbasin_name)})
 
         #get/check the index of the reach
         reach_index = get_reach_index(reach_id, forecast_file)
         if reach_index == None:
-            return JsonResponse({'error' : 'Reach with id: %s not found.' % reach_id})
+            return JsonResponse({'error' : 'WRF-Hydro reach with id: %s not found.' % reach_id})
 
         #get information from dataset
         data_nc = NET.Dataset(forecast_file, mode="r")
@@ -547,7 +546,7 @@ def wrf_hydro_get_hydrograph(request):
         data_nc.close()
 
         return JsonResponse({
-                "success" : "Data analysis complete!",
+                "success" : "WRF-Hydro data analysis complete!",
                 "wrf_hydro" : zip(time, data_values.tolist()),
         })
 
@@ -977,7 +976,6 @@ def watershed_update(request):
             
         #COMMIT    
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
-
         kml_drainage_line_layer = ""
         kml_catchment_layer = ""
         kml_gage_layer = ""

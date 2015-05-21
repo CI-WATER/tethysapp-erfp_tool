@@ -1,6 +1,10 @@
 /* MAP STYLES */
 #app-content-wrapper #app-content {
-    padding: 120px 0 0 5px;
+    padding: 120px 5px 0 5px;
+    height: 100%;
+}
+#inner-app-content {
+    height: 100%
 }
 
 #app-navigation li {
@@ -12,17 +16,12 @@
     height: 100%;
 }
 
-#erfp-info {
-    width: 40%;
-    top: 50px;
-    right: 5px;
-    text-align:center;
-    background: white;
+.sfpt-chart {
+    width:100%;
 }
 
-#erfp-reset {
-    display: inline-block;
-    float: right;
+.container{
+    padding: 0;
 }
 
 .units-toggle {
@@ -30,10 +29,8 @@
     right: 40px;
 }
 
-.erfp-select {
-    margin-left: 5%;
-    display: inline-block;
-    width: 60%;
+.sfpt-select {
+    width: 100%;
 }
 
 .collapse-control a:after {

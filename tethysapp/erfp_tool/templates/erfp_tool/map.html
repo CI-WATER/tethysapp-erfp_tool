@@ -20,28 +20,47 @@
 {% endblock %}
 
 {% block app_content %}
-    <div id="map_top_navigation">
-        {% gizmo select_input watershed_select %}
-        <div class="form-group inline-block">
-            <label class="control-label" for="reach-id-input">Reach ID</label>
-            <input class="form-control" id="reach-id-input" type="input">
-            <p class="help-block" id="reach-id-help-message"></p>
+
+    <div class="container" style="height:80%;">
+        <div id="map_top_navigation">
+            {% gizmo select_input watershed_select %}
+            <div class="form-group inline-block">
+                <label class="control-label" for="reach-id-input">Reach ID</label>
+                <input class="form-control" id="reach-id-input" type="input">
+                <p class="help-block" id="reach-id-help-message"></p>
+            </div>
+            <div class="btn-group inline-block">
+                <a class="btn btn-success" role="button" id="submit-search-reach-id">
+                    <span class="glyphicon glyphicon-play"></span> Search for Reach
+                </a>
+            </div>
         </div>
-        <div class="btn-group inline-block">
-            <a class="btn btn-success" role="button" id="submit-search-reach-id">
-                <span class="glyphicon glyphicon-play"></span> Search for Reach
-            </a>
+        <div class="col-md-5" style="height:100%">
+            <div id="map" class="map" base-layer-info="{{base_layer_info}}" layers-info="{{layers_info_json}}"></div>
         </div>
-    </div>
-    <div id="map" class="map" base-layer-info="{{base_layer_info}}" layers-info="{{layers_info_json}}"></div>
-    {% gizmo toggle_switch units_toggle_switch %}
-    <div id="erfp-info" class="ol-control alert alert-info" role="alert">
-        <div id="erfp-message">
-            <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Click on a reach to view flow predictions.
+        <div class="col-md-7" style="height: 100%:">
+            <div class="row" id="toggle-row">
+                <div class="col-sm-4">{% gizmo toggle_switch units_toggle_switch %}</div>
+                <div class="col-sm-4">{% gizmo toggle_switch ecmwf_toggle_switch %}</div>
+                <div class="col-sm-4">{% gizmo toggle_switch wrf_toggle_switch %}</div>
+            </div>
+            <div id="erfp-message" class="alert alert-info" role="alert">
+                <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Click on a reach to view flow predictions.
+            </div>
+            <div class="row" id="long-term-chart-row">
+                <div class="col-md-12">
+                    <div class="row">
+                        <label class="long-term-select hidden" for="long-term-select">ECMWF Available Dates</label>
+                        <div id="long-term-select" class="hidden long-term-select sfpt-select"></div>
+                    </div>
+                    <div class="row">
+                        <label class="short-term-select hidden" for="short-term-select">WRF-Hydro Available Dates</label>
+                        <div id="short-term-select" class="hidden short-term-select sfpt-select"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="long-term-chart" class="sfpt-chart" style="height: 50%;"></div>
         </div>
-        <div id="erfp-reset" class="hidden"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></div>
-        <div id="erfp-select" class="hidden erfp-select"></div>
-        <div id="erfp-chart"></div>
     </div>
 {% endblock %}
 
@@ -107,7 +126,7 @@
                     </ul>
                 </div> <!-- div: {{watershed.watershed}}-{{watershed.subbasin}}-layers -->
             </div><!-- div: {{watershed.watershed}}-{{watershed.subbasin}}-control -->
-            </li>  
+            </li>
         {% endfor%}
         </ul></div> <!-- div: map-navigation -->
 
