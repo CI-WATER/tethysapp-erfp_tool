@@ -47,8 +47,7 @@ var ERFP_MAP = (function() {
         m_wrf_hydro_date_string,
         m_units,
         m_ecmwf_show,
-        m_wrf_show,
-        m_redraw_check;
+        m_wrf_show;
 
 
 
@@ -62,7 +61,7 @@ var ERFP_MAP = (function() {
         getKMLLayer, clearMessages, clearOldChart, dateToUTCString,
         clearChartSelect2, getChartData, displayHydrograph,
         loadHydrographFromFeature,resetChart, addECMWFSeriesToCharts,
-        addSeriesToCharts, checkRedraw;
+        addSeriesToCharts, isThereDataToLoad;
 
 
     /************************************************************************
@@ -105,8 +104,11 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: check to see if there is data to redraw on chart
-    checkRedraw = function(){
-
+    isThereDataToLoad = function(){
+        return (m_ecmwf_show || m_wrf_show
+               || (typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) && m_selected_usgs_id != null)
+               || (typeof m_selected_nws_id != 'undefined' && !isNaN(m_selected_nws_id) && m_selected_nws_id != null)
+               || (typeof m_selected_hydroserver_url != 'undefined' && m_selected_hydroserver_url != null));
     };
     
     //FUNCTION: convert units from metric to english
@@ -424,15 +426,22 @@ var ERFP_MAP = (function() {
 
     //FUNCTION: gets all data for chart
     getChartData = function() {
-        m_long_term_chart_data_ajax_load_failed = false;
-        if(isNotLoadingPastRequest() && checkRedraw()) {
-            //make sure old chart is removed
-            clearOldChart('long-term');
+        $('.short-term-select').addClass('hidden');
+        $('.long-term-select').addClass('hidden');
+        //make sure old chart is removed
+        clearOldChart('long-term');
+       if(!isNotLoadingPastRequest()) {
+            //updateInfoAlert
+            updateInfoAlert('alert-warning', "Please wait for datasets to download before making another selection.");
+
+        } else if (!isThereDataToLoad()) {
+            //updateInfoAlert
+            updateInfoAlert('alert-warning', "No data found to load. Please toggle on a dataset.");
+        } else {
+            m_long_term_chart_data_ajax_load_failed = false;
             //turn off select interaction
             m_map.removeInteraction(m_select_interaction);
             updateInfoAlert('alert-info', "Retrieving Data ...");
-            $('.short-term-select').addClass('hidden');
-            $('.long-term-select').addClass('hidden');
             var y_axis_title = "Flow (cms)";
             if (m_units == "english") {
                 y_axis_title = "Flow (cfs)";
@@ -730,18 +739,24 @@ var ERFP_MAP = (function() {
 
 
         }
-        else {
-             //updateInfoAlert
-            updateInfoAlert('alert-warning', "Please wait for datasets to download before making another selection.");
-       }
     };
 
     //FUNCTION: displays hydrograph at stream segment
     displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index, usgs_id, nws_id, hydroserver_url) {
+         //remove old chart reguardless
+        clearOldChart('long-term');
+        $('.short-term-select').addClass('hidden');
+        $('.long-term-select').addClass('hidden');
         //check if old ajax call still running
-        if(isNotLoadingPastRequest()) {
-            //remove old chart reguardless
-            clearOldChart('long-term');
+        if(!isNotLoadingPastRequest()) {
+            //updateInfoAlert
+            updateInfoAlert('alert-warning', "Please wait for datasets to download before making another selection.");
+
+        } else if (!isThereDataToLoad()) {
+            //updateInfoAlert
+            updateInfoAlert('alert-warning', "No data found to load. Please toggle on a dataset.");
+            m_selected_feature = feature;
+        } else {
             m_selected_feature = feature;
             m_selected_reach_id = reach_id;
             m_selected_watershed = watershed;
@@ -844,11 +859,6 @@ var ERFP_MAP = (function() {
             }
 
         }
-        else {
-            //updateInfoAlert
-            updateInfoAlert('alert-warning', "Please wait for datasets to download before making another selection.");
-        }
-
     };
     //FUNCTION: Loads Hydrograph from Selected feature
     loadHydrographFromFeature = function(selected_feature) {
@@ -865,9 +875,6 @@ var ERFP_MAP = (function() {
         if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
             var reach_id = getCI(selected_feature, 'hydroid');
         }
-        if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
-            var reach_id = getCI(selected_feature, 'name');
-        }
 
         if(typeof watershed_name == 'undefined') {
             var watershed_name = getCI(selected_feature, 'watershed_name');
@@ -875,13 +882,35 @@ var ERFP_MAP = (function() {
         if(typeof subbasin_name == 'undefined') {
             var subbasin_name = getCI(selected_feature, 'subbasin_name');
         }
-
+        //clean up usgs_id
         if(typeof usgs_id != 'undefined' && !isNaN(usgs_id) && usgs_id != null) {
+            usgs_id = usgs_id.trim();
             //add zero in case it was removed when converted to a number
-            if(usgs_id.length < 8) {
+            if(usgs_id.length < 8 && usgs_id.length > 0) {
                 usgs_id = '0' + usgs_id;
             }
+            //set to null if it is empty string
+            if (usgs_id.length <= 0) {
+                usgs_id = null;
+            }
         }
+        //clean up nws_id
+        if(typeof nws_id != 'undefined' && !isNaN(nws_id) && nws_id != null) {
+            nws_id = nws_id.trim();
+            //set to null if it is empty string
+            if (nws_id.length <= 0) {
+                nws_id = null;
+            }
+        }
+        //clean up hydroserver_url
+        if(typeof hydroserver_url != 'undefined' && hydroserver_url != null) {
+            hydroserver_url = hydroserver_url.trim();
+            //set to null if it is empty string
+            if (hydroserver_url.length <= 0) {
+                hydroserver_url = null;
+            }
+        }
+
         if(typeof reach_id != 'undefined' &&
            reach_id != null &&  
            typeof watershed_name != 'undefined' &&
@@ -951,10 +980,14 @@ var ERFP_MAP = (function() {
         m_long_term_select_data_ajax_handle = null;
         m_ecmwf_start_folder = "most_recent";
         m_wrf_hydro_date_string = "most_recent";
+        //Init from toggle
         m_units = "metric";
-        m_wrf_show = true;
-        m_ecmwf_show = true;
-        m_redraw_check = true;
+        if(!$('#units-toggle').bootstrapSwitch('state')) {
+            m_units = "english";
+        }
+        m_wrf_show = $('#wrf-toggle').bootstrapSwitch('state');
+        m_ecmwf_show = $('#ecmwf-toggle').bootstrapSwitch('state');
+
         //load base layer
         var base_layer_info = JSON.parse($("#map").attr('base-layer-info'));
         
@@ -1234,41 +1267,16 @@ var ERFP_MAP = (function() {
         });
 
          $('#ecmwf-toggle').on('switchChange.bootstrapSwitch', function(event, state) {
-            if(state) {
-                //ecmwf map on
-                m_ecmwf_show = true;
-            } else {
-                //ecmwf map off
-                m_ecmwf_show = false;
-            }
-             checkRedraw();
-            if (m_selected_feature != null && m_redraw_check) {
-                loadHydrographFromFeature(m_selected_feature);
-            }else{
-                updateInfoAlert('alert-info','Please select a feature or toggle dataset on');
-                $('.short-term-select').addClass('hidden');
-                $('.long-term-select').addClass('hidden');
-                $('#long-term-chart').addClass('hidden');
-
-            }
+             m_ecmwf_show = state;
+             if (m_selected_feature != null) {
+                 loadHydrographFromFeature(m_selected_feature);
+             }
         });
 
         $('#wrf-toggle').on('switchChange.bootstrapSwitch', function(event, state) {
-            if(state) {
-                //wrf map on
-                m_wrf_show = true;
-            } else {
-                //wrf map off
-                m_wrf_show = false;
-            }
-            checkRedraw();
-            if (m_selected_feature != null && m_redraw_check) {
+            m_wrf_show = state;
+            if (m_selected_feature != null) {
                 loadHydrographFromFeature(m_selected_feature);
-            }else{
-                updateInfoAlert('alert-info','Please select a feature or toggle dataset on');
-                $('.short-term-select').addClass('hidden');
-                $('.long-term-select').addClass('hidden');
-                $('#long-term-chart').addClass('hidden');
             }
         });
 
