@@ -161,7 +161,9 @@ function appendErrorMessage(message, div_id, message_div_id) {
     }
     $('#'+div_id).remove();
     $(message_div_id_string).append(
-      '<div '+ div_id_string +' class="alert alert-danger" role="alert">' +
+      '<div '+ div_id_string +' class="alert alert-danger alert-dissmissible" role="alert">' +
+      '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+      '<span aria-hidden="true">&times;</span></button>' +
       '<span class="glyphicon glyphicon-fire" aria-hidden="true"></span>' +
       '<span class="sr-only">Error:</span> ' + message + '</div>'
     )
@@ -179,7 +181,9 @@ function appendWarningMessage(message, div_id, message_div_id) {
     }
     $('#'+div_id).remove();
     $(message_div_id_string).append(
-      '<div '+ div_id_string +' class="alert alert-warning" role="alert">' +
+      '<div '+ div_id_string +' class="alert alert-warning alert-dissmissible" role="alert">' +
+      '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+      '<span aria-hidden="true">&times;</span></button>' +
       '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
       '<span class="sr-only">Error:</span> ' + message + '</div>'
     )
@@ -192,7 +196,9 @@ function appendInfoMessage(message, div_id) {
         div_id_string = 'id = "'+div_id+'"';
     }
     $('#message').append(
-      '<div '+ div_id_string +' class="alert alert-info" role="alert">' +
+      '<div '+ div_id_string +' class="alert alert-info alert-dissmissible" role="alert">' +
+      '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+      '<span aria-hidden="true">&times;</span></button>' +
       '<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>' +
       '<span class="sr-only">Info:</span> ' + message + '</div>'
     )
