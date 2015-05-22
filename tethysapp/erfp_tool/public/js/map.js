@@ -67,16 +67,6 @@ var ERFP_MAP = (function() {
     /************************************************************************
      *                    PRIVATE FUNCTION IMPLEMENTATIONS
      *************************************************************************/
-    resetChart =  function(model_name){
-        clearOldChart(model_name);
-        clearChartSelect2(model_name);
-        updateInfoAlert('alert-info', 'Click on a reach to view flow predictions.');
-        $("#" + model_name + "-reset").addClass('hidden');
-        $("#" + model_name + "-select").addClass('hidden');
-        m_selected_feature = null;
-    };
-
-
     resizeAppContent = function() {
         var nav_open = $('#app-content-wrapper').hasClass('show-nav');
         if (nav_open) {
@@ -275,33 +265,6 @@ var ERFP_MAP = (function() {
         return (i < 10) ? "0" + i : "" + i; 
     }
 
-    //FUNCTION: resets info div css
-    removeInfoDivClasses = function() {
-        $("#erfp-info").removeClass('alert-info');
-        $("#erfp-info").removeClass('alert-warning');
-        $("#erfp-info").removeClass('alert-danger');
-    };
-
-    //FUNCTION: displays alert to user
-    updateInfoAlert = function(css_alert_class, alert_message) {
-        removeInfoDivClasses();
-        var glyphycon = '';
-        if(css_alert_class == 'alert-info') {
-            $("#erfp-info").addClass(css_alert_class);
-            glyphycon = '<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> ';
-        }
-        else if(css_alert_class == 'alert-warning') {
-            $("#erfp-info").addClass(css_alert_class);
-            glyphycon = '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> ';
-        }
-        else if(css_alert_class == 'alert-danger') {
-            $("#erfp-info").addClass(css_alert_class);
-            glyphycon = '<span class="glyphicon glyphicon-fire" aria-hidden="true"></span> ';
-        }
-        $("#erfp-message").removeClass('hidden');
-        $("#erfp-message").html(glyphycon + alert_message);
-    };
-
     //FUNCTION: adds appropriate base layer based on name
     getBaseLayer = function(base_layer_name, api_key) {
         if(base_layer_name == "BingMaps") {
@@ -484,7 +447,6 @@ var ERFP_MAP = (function() {
             };
 
             $("#long-term-chart").highcharts(default_chart_settings);
-            //$('#long-term-chart').addClass('hidden');
 
             //get ecmwf data
             if (m_ecmwf_show) {
