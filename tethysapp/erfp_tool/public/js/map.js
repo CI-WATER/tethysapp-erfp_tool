@@ -56,17 +56,27 @@ var ERFP_MAP = (function() {
      *************************************************************************/
     var resizeAppContent, bindInputs, convertTimeSeriesMetricToEnglish, getCI,
         convertTimeSeriesEnglishToMetric, isNotLoadingPastRequest, zoomToAll,
-        zoomToLayer, zoomToFeature, toTitleCase, removeInfoDivClasses,
-        datePadString, updateInfoAlert, getBaseLayer, getTileLayer,
-        getKMLLayer, clearAllMessages, clearInfoMessages, clearOldChart, dateToUTCString,
-        clearChartSelect2, getChartData, displayHydrograph,
-        loadHydrographFromFeature,resetChart, addECMWFSeriesToCharts,
-        addSeriesToCharts, isThereDataToLoad;
+        zoomToLayer, zoomToFeature, toTitleCase, datePadString, getBaseLayer,
+        getTileLayer, getKMLLayer, clearAllMessages, clearInfoMessages,
+        clearOldChart, dateToUTCString, clearChartSelect2, getChartData,
+        displayHydrograph, loadHydrographFromFeature,resetChartSelectMessage,
+        addECMWFSeriesToCharts, addSeriesToCharts, isThereDataToLoad;
 
 
     /************************************************************************
      *                    PRIVATE FUNCTION IMPLEMENTATIONS
      *************************************************************************/
+     //FUNCTION: reset chart and select options
+    resetChartSelectMessage = function() {
+        //remove old chart reguardless
+        clearOldChart('long-term');
+        $('.short-term-select').addClass('hidden');
+        $('.long-term-select').addClass('hidden');
+        //clear messages
+        clearAllMessages();
+    };
+
+    //FUNCTION: resize content based
     resizeAppContent = function() {
         var nav_open = $('#app-content-wrapper').hasClass('show-nav');
         if (nav_open) {
@@ -263,7 +273,7 @@ var ERFP_MAP = (function() {
     //FUNCTION: to convert date to string
     datePadString = function(i) {
         return (i < 10) ? "0" + i : "" + i; 
-    }
+    };
 
     //FUNCTION: adds appropriate base layer based on name
     getBaseLayer = function(base_layer_name, api_key) {
@@ -375,6 +385,7 @@ var ERFP_MAP = (function() {
               datePadString(1 + date.getUTCMonth()) + "-" +
               datePadString(date.getUTCDate());
     };
+
     //FUNCTION: adds a series to both the chart
     addECMWFSeriesToCharts = function(series_name, series_data, series_color){
         var long_term_chart = $("#long-term-chart").highcharts();
@@ -395,20 +406,16 @@ var ERFP_MAP = (function() {
 
     //FUNCTION: gets all data for chart
     getChartData = function() {
-        $('.short-term-select').addClass('hidden');
-        $('.long-term-select').addClass('hidden');
-        //make sure old chart is removed
-        clearOldChart('long-term');
-        //clear messages
-        clearAllMessages();
         if(!isNotLoadingPastRequest()) {
             //updateInfoAlert
             addWarningMessage("Please wait for datasets to download before making another selection.");
 
         } else if (!isThereDataToLoad()) {
+            resetChartSelectMessage();
             //updateInfoAlert
             addWarningMessage("No data found to load. Please toggle on a dataset.");
         } else {
+            resetChartSelectMessage();
             m_long_term_chart_data_ajax_load_failed = false;
             //turn off select interaction
             m_map.removeInteraction(m_select_interaction);
@@ -553,45 +560,50 @@ var ERFP_MAP = (function() {
                     }
                 });
             }
-            //get dates
+            //get current dates
             var date_now = new Date();
             var date_past = new Date();
             date_past.setUTCDate(date_now.getUTCDate()-3);
             var date_future = new Date();
             date_future.setUTCDate(date_now.getUTCDate()+15);
-            var date_observed_start = date_past;
-            var date_observed_end = date_now;
-            var date_nws_start = date_now;
-            var date_nws_end = date_future;       
 
-            //get forcast dates if available
+            //ECMWF Dates
+            var ecmwf_date_forecast_begin = new Date(8640000000000000);
+            var ecmwf_date_forecast_end = new Date(-8640000000000000);
+            //get ECMWF forcast dates if available
             if(m_ecmwf_start_folder != null && typeof m_ecmwf_start_folder != "undefined" &&
                 m_ecmwf_start_folder != "most_recent" && m_ecmwf_show) {
-                var forecast_start_year = parseInt(m_ecmwf_start_folder.substring(0,4));
-                var forecast_start_month = parseInt(m_ecmwf_start_folder.substring(4,6));
-                var forecast_start_day = parseInt(m_ecmwf_start_folder.substring(6,8));
-                var forecast_start_hour = parseInt(m_ecmwf_start_folder.split(".")[1].substring(0,2));
-                var date_forecast_begin = new Date(Date.UTC(forecast_start_year, forecast_start_month-1,
-                    forecast_start_day, forecast_start_hour));
-                var date_forecast_end = new Date();
-                date_forecast_end.setUTCDate(date_forecast_begin.getUTCDate()+15);
+                var ecmwf_forecast_start_year = parseInt(m_ecmwf_start_folder.substring(0,4));
+                var ecmwf_forecast_start_month = parseInt(m_ecmwf_start_folder.substring(4,6));
+                var ecmwf_forecast_start_day = parseInt(m_ecmwf_start_folder.substring(6,8));
+                var ecmwf_forecast_start_hour = parseInt(m_ecmwf_start_folder.split(".")[1].substring(0,2));
+                ecmwf_date_forecast_begin = new Date(Date.UTC(ecmwf_forecast_start_year, ecmwf_forecast_start_month-1,
+                                                     ecmwf_forecast_start_day, ecmwf_forecast_start_hour));
+                ecmwf_date_forecast_end = new Date();
+                ecmwf_date_forecast_end.setUTCDate(ecmwf_date_forecast_begin.getUTCDate()+15);
 
-                //make corrections to dates if needed
-                //USGS Dates
-                if (date_forecast_begin<date_observed_start) {
-                    date_observed_start = date_forecast_begin;
-                }
-                if (date_forecast_end<date_observed_end) {
-                    date_observed_end = date_forecast_end;
-                }
-                //NWS Dates
-                if (date_forecast_begin<date_nws_start) {
-                    date_nws_start = date_forecast_begin;
-                }
-                if (date_forecast_end<date_nws_end) {
-                    date_nws_end = date_forecast_end;
-                }
             }
+            //WRF-Hydro Dates
+            var wrf_hydro_date_forecast_begin = new Date(8640000000000000);
+            var wrf_hydro_date_forecast_end = new Date(-8640000000000000);
+            //get WRF-Hydro forcast dates if available
+            if(m_wrf_hydro_date_string != null && typeof m_wrf_hydro_date_string != "undefined" &&
+                m_wrf_hydro_date_string != "most_recent" && m_wrf_show) {
+                var wrf_hydro_forecast_start_year = parseInt(m_wrf_hydro_date_string.substring(0,4));
+                var wrf_hydro_forecast_start_month = parseInt(m_wrf_hydro_date_string.substring(4,6));
+                var wrf_hydro_forecast_start_day = parseInt(m_wrf_hydro_date_string.substring(6,8));
+                var wrf_hydro_forecast_start_hour = parseInt(m_wrf_hydro_date_string.split("T")[1].substring(0,2));
+                wrf_hydro_date_forecast_begin = new Date(Date.UTC(wrf_hydro_forecast_start_year, wrf_hydro_forecast_start_month-1,
+                                                         wrf_hydro_forecast_start_day, wrf_hydro_forecast_start_hour));
+                wrf_hydro_date_forecast_end = new Date(wrf_hydro_date_forecast_begin.getTime()+15*60*60000);
+
+            }
+
+            var date_observed_start = new Date(Math.min.apply(null,[date_past, ecmwf_date_forecast_begin, wrf_hydro_date_forecast_begin]));
+            var date_observed_end =  new Date(Math.max.apply(null,[date_now, ecmwf_date_forecast_end, wrf_hydro_date_forecast_end]));
+            var date_nws_start = new Date(Math.min.apply(null,[date_now, ecmwf_date_forecast_begin, wrf_hydro_date_forecast_begin]));
+            var date_nws_end = new Date(Math.max.apply(null,[date_future, ecmwf_date_forecast_end, wrf_hydro_date_forecast_end]));
+
             //Get USGS data if USGS ID attribute exists
             if(typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) &&
                 m_selected_usgs_id != null) {
@@ -720,23 +732,20 @@ var ERFP_MAP = (function() {
 
     //FUNCTION: displays hydrograph at stream segment
     displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index, usgs_id, nws_id, hydroserver_url) {
-         //remove old chart reguardless
-        clearOldChart('long-term');
-        $('.short-term-select').addClass('hidden');
-        $('.long-term-select').addClass('hidden');
-        //clear messages
-        clearAllMessages();
         //check if old ajax call still running
         if(!isNotLoadingPastRequest()) {
             //updateInfoAlert
             appendWarningMessage("Please wait for datasets to download before making another selection.", "wait_warning");
 
         } else if (!isThereDataToLoad()) {
+            resetChartSelectMessage();
             //updateInfoAlert
             addWarningMessage("No data found to load. Please toggle on a dataset.");
             m_selected_feature = feature;
         }
         else {
+            resetChartSelectMessage();
+
             m_selected_feature = feature;
             m_selected_reach_id = reach_id;
             m_selected_watershed = watershed;
