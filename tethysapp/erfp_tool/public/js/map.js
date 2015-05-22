@@ -438,7 +438,7 @@ var ERFP_MAP = (function() {
         clearOldChart('long-term');
         //clear messages
         clearAllMessages();
-       if(!isNotLoadingPastRequest()) {
+        if(!isNotLoadingPastRequest()) {
             //updateInfoAlert
             addWarningMessage("Please wait for datasets to download before making another selection.");
 
@@ -629,7 +629,6 @@ var ERFP_MAP = (function() {
                 if (date_forecast_end<date_nws_end) {
                     date_nws_end = date_forecast_end;
                 }
-                date_future = date_forecast_end;
             }
             //Get USGS data if USGS ID attribute exists
             if(typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) &&
@@ -650,7 +649,6 @@ var ERFP_MAP = (function() {
                         },
                         success: function (data) {
                             if (typeof data != 'undefined') {
-                                var time_series = [];
                                 try {
                                     var usgs_series = {
                                         name: "USGS (" + m_selected_usgs_id + ")",
@@ -769,17 +767,14 @@ var ERFP_MAP = (function() {
         //check if old ajax call still running
         if(!isNotLoadingPastRequest()) {
             //updateInfoAlert
-            console.log('if');
             appendWarningMessage("Please wait for datasets to download before making another selection.", "wait_warning");
 
         } else if (!isThereDataToLoad()) {
-            console.log('else if');
             //updateInfoAlert
-            addWarningMessage("No data found to load. Please toggle on a dataset.", "toggle_warning");
+            addWarningMessage("No data found to load. Please toggle on a dataset.");
             m_selected_feature = feature;
         }
         else {
-            console.log('else');
             m_selected_feature = feature;
             m_selected_reach_id = reach_id;
             m_selected_watershed = watershed;
@@ -835,6 +830,9 @@ var ERFP_MAP = (function() {
                 })
                 .always(function () {
                     m_downloading_long_term_select = false;
+                    if(isNotLoadingPastRequest()){
+                       clearInfoMessages();
+                    }
                 });
             }
             //Get available WRF-Hydro Dates
@@ -878,6 +876,9 @@ var ERFP_MAP = (function() {
                 })
                 .always(function () {
                     m_downloading_short_term_select = false;
+                    if(isNotLoadingPastRequest()){
+                       clearInfoMessages();
+                    }
                 });
             }
 
