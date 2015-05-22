@@ -79,6 +79,7 @@ var ERFP_MAP = (function() {
     //FUNCTION: resize content based
     resizeAppContent = function() {
         var nav_open = $('#app-content-wrapper').hasClass('show-nav');
+        var height_ratio = 0.97;
         if (nav_open) {
             var lg_col = $('.col-md-7')
             lg_col.removeClass('col-md-7');
@@ -87,6 +88,13 @@ var ERFP_MAP = (function() {
             var sm_col = $('.col-md-4')
             sm_col.removeClass('col-md-4');
             sm_col.addClass('col-md-7');
+            height_ratio = 0.57;
+        }
+        //resize highchart
+        var long_term_chart = $("#long-term-chart").highcharts();
+        if (typeof long_term_chart != 'undefined') {
+            var width = $("#long-term-chart-row").width();
+            long_term_chart.setSize(0.97*width,height_ratio*width);
         }
     };
 
@@ -1279,28 +1287,6 @@ var ERFP_MAP = (function() {
 
         $('.toggle-nav').click(function() {
             resizeAppContent();
-            //redraw highchart
-            var long_term_chart = $("#long-term-chart").highcharts();
-            if (typeof long_term_chart != 'undefined') {
-                getChartData();
-            }
-            //reset charts
-            /**var short_term_chart = $("#short-term-chart").highcharts();
-            if (typeof short_term_chart != 'undefined') {
-                short_term_chart.addSeries({name: "dummy_data", data: [0, 0]});
-                //console.log(short_term_chart.series.dummy_data.data);
-                //short_term_chart.redraw();
-                short_term_chart.series[short_term_chart.series.length - 1].remove();
-                short_term_chart.redraw(true);
-                short_term_chart.setSize($("#short-term-row").width() , $("#short-term-row").height());
-            }
-
-            var long_term_chart = $("#long-term-chart").highcharts();
-             if (typeof long_term_chart != 'undefined') {
-                 long_term_chart.addSeries({name: "dummy_data", data: [0, 0]});
-                 long_term_chart.redraw();
-                 //long_term_chart.series[long_term_chart.series.length - 1].remove();
-             }*/
         });
 
     });
