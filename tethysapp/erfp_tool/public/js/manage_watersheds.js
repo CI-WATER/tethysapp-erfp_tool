@@ -266,7 +266,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
 
                             });
                         } else {
-                            addErrorMessage("Need a drainage line to continue.");
+                            appendErrorMessage("Need a drainage line to continue.");
                         }
                     } else {
                         var data = {
@@ -303,7 +303,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             }  else if (m_uploading_data) {
                 addWarningMessage("Submitting Data. Please Wait.");
             } else {
-                addErrorMessage(safe_to_submit.error);
+                appendErrorMessage(safe_to_submit.error);
             }
             
         });

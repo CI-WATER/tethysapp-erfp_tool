@@ -66,7 +66,7 @@ var ERFP_ADD_WATERSHED = (function() {
         } else {
             //delete watershed and show error
             var xhr = ajax_update_database("delete",{watershed_id: watershed_id});
-            addErrorMessage(result["error"]);
+            appendErrorMessage(result["error"]);
         }
      };
 
@@ -340,7 +340,7 @@ var ERFP_ADD_WATERSHED = (function() {
                                 });
                             }
                         } else {
-                            addErrorMessage(return_data['error']);
+                            appendErrorMessage(return_data['error']);
                         }
                     });
                 } else {
@@ -379,7 +379,7 @@ var ERFP_ADD_WATERSHED = (function() {
                 //give user information
                 addWarningMessage("Submitting Data. Please Wait.");
             } else {
-                addErrorMessage("Not submitted. Please fix form errors to proceed.");
+                appendErrorMessage("Not submitted. Please fix form errors to proceed.");
             }
         
         });

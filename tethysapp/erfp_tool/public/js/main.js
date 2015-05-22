@@ -83,8 +83,12 @@ function checkTableCellInputWithError(input, safe_to_submit, error_msg) {
     }
 }
 //add error message to #message div
-function addErrorMessage(error) {
-   $('#message').html(
+function appendErrorMessage(error, div_id) {
+    var div_id_string = '#message';
+    if (typeof div_id != 'undefined') {
+        div_id_string = '#'+div_id;
+    }
+    $(div_id_string).html(
       '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
       '<span class="sr-only">Error:</span> ' + error
     )
@@ -101,7 +105,7 @@ function addWarningMessage(error, div_id) {
     if (typeof div_id != 'undefined') {
         div_id_string = '#'+div_id;
     }
-   $(div_id_string).html(
+    $(div_id_string).html(
       '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
       '<span class="sr-only">Warning:</span> ' + error
     )
@@ -118,7 +122,7 @@ function addInfoMessage(message, div_id) {
     if (typeof div_id != 'undefined') {
         div_id_string = '#'+div_id;
     }
-   $(div_id_string).html(
+    $(div_id_string).html(
       '<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>' +
       '<span class="sr-only">Info:</span> ' + message
     )
@@ -146,13 +150,36 @@ function addSuccessMessage(message, div_id) {
 }
 
 //add error message to #message div
-function appendErrorMessage(message, div_id) {
+function appendErrorMessage(message, div_id, message_div_id) {
     var div_id_string = '';
     if (typeof div_id != 'undefined') {
         div_id_string = 'id = "'+div_id+'"';
     }
-    $('#message').append(
+    var message_div_id_string = '#message';
+    if (typeof message_div_id != 'undefined') {
+        message_div_id_string = '#'+message_div_id;
+    }
+    $('#'+div_id).remove();
+    $(message_div_id_string).append(
       '<div '+ div_id_string +' class="alert alert-danger" role="alert">' +
+      '<span class="glyphicon glyphicon-fire" aria-hidden="true"></span>' +
+      '<span class="sr-only">Error:</span> ' + message + '</div>'
+    )
+    .removeClass('hidden');
+}
+//add error message to #message div
+function appendWarningMessage(message, div_id, message_div_id) {
+    var div_id_string = '';
+    if (typeof div_id != 'undefined') {
+        div_id_string = 'id = "'+div_id+'"';
+    }
+    var message_div_id_string = '#message';
+    if (typeof message_div_id != 'undefined') {
+        message_div_id_string = '#'+message_div_id;
+    }
+    $('#'+div_id).remove();
+    $(message_div_id_string).append(
+      '<div '+ div_id_string +' class="alert alert-warning" role="alert">' +
       '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
       '<span class="sr-only">Error:</span> ' + message + '</div>'
     )
@@ -201,11 +228,11 @@ function ajax_update_database(ajax_url, ajax_data, div_id) {
             if("success" in data) {
                 addSuccessMessage(data['success'], div_id);
             } else {
-                addErrorMessage(data['error'], div_id);
+                appendErrorMessage(data['error'], div_id);
             }
         }, 
         error: function(xhr, status, error) {
-            addErrorMessage(error, div_id);
+            appendErrorMessage(error, div_id);
             console.log(xhr.responseText);
         },
     });
@@ -231,11 +258,11 @@ function ajax_update_database_with_file(ajax_url, ajax_data, div_id) {
             if("success" in data) {
                 addSuccessMessage(data['success'], div_id);
             } else {
-                addErrorMessage(data['error'], div_id);
+                appendErrorMessage(data['error'], div_id);
             }
         }, 
         error: function(xhr, status, error) {
-            addErrorMessage(error, div_id);
+            appendErrorMessage(error, div_id);
             console.log(xhr.responseText);
         },
     });
@@ -261,11 +288,11 @@ function ajax_update_database_multiple_files(ajax_url, ajax_data, custom_message
         if("success" in data) {
             addSuccessMessage(custom_message, div_id);
         } else {
-            addErrorMessage(data['error'], div_id);
+            appendErrorMessage(data['error'], div_id);
         }
     })
     .fail(function(xhr, status, error) {
-        addErrorMessage(error, div_id);
+        appendErrorMessage(error, div_id);
         console.log(xhr.responseText);
     });
     return xhr;
@@ -282,7 +309,7 @@ function submitRowData(submit_button, data, safe_to_submit) {
             submit_button.html(submit_button_html);
         });
     } else {
-        addErrorMessage(safe_to_submit.error);
+        appendErrorMessage(safe_to_submit.error);
     }
 }
 //delete row data

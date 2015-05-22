@@ -58,7 +58,7 @@ var ERFP_MAP = (function() {
         convertTimeSeriesEnglishToMetric, isNotLoadingPastRequest, zoomToAll,
         zoomToLayer, zoomToFeature, toTitleCase, removeInfoDivClasses,
         datePadString, updateInfoAlert, getBaseLayer, getTileLayer,
-        getKMLLayer, clearMessages, clearOldChart, dateToUTCString,
+        getKMLLayer, clearAllMessages, clearInfoMessages, clearOldChart, dateToUTCString,
         clearChartSelect2, getChartData, displayHydrograph,
         loadHydrographFromFeature,resetChart, addECMWFSeriesToCharts,
         addSeriesToCharts, isThereDataToLoad;
@@ -147,7 +147,7 @@ var ERFP_MAP = (function() {
             });
         } catch (e) {
             if (e instanceof TypeError) {
-                updateInfoAlert('alert-danger', "Error loading " + series_name + " data.");
+                appendErrorMessage("Error loading " + series_name + " data.", "load_series_error", "message-error");
             }
         }
         return new_time_series;
@@ -213,9 +213,9 @@ var ERFP_MAP = (function() {
                     if(drainage_line_layer.get('layer_type') == "kml") {
                         var features = drainage_line_layer.getSource().getFeatures();
                         for(var i=0; features.length>i; i++) {
-                            var feature_reach_id = features[i].get('COMID');
+                            var feature_reach_id = getCI(features[i],'COMID');
                             if(typeof feature_reach_id == 'undefined' || isNaN(feature_reach_id)) {
-                                var feature_reach_id = features[i].get('name');
+                                var feature_reach_id = getCI(features[i],'hydroid');
                             }
     
                             if (feature_reach_id == reach_id) {
@@ -233,6 +233,7 @@ var ERFP_MAP = (function() {
                         return;
                     } else if (drainage_line_layer.get('layer_type') == "geoserver") {
                         m_searching_for_reach = true;
+                        //TODO: Make query more robust
                         var url = drainage_line_layer.get('geoserver_url') + 
                               '&format_options=callback:searchFeatures' +
                               '&CQL_FILTER=COMID =' + reach_id +
@@ -373,11 +374,16 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: removes message and hides the div
-    clearMessages = function() {
-        removeInfoDivClasses();
-        $('#erfp-message').addClass('hidden');
-        $('#erfp-message').empty();
+    clearInfoMessages = function() {
+        $('#message').addClass('hidden');
+        $('#message').empty();
     };
+
+    clearAllMessages = function() {
+        clearInfoMessages();
+        $('#message-error').addClass('hidden');
+        $('#message-error').empty();
+    }
 
     //FUNCTION: removes highchart
     clearOldChart = function(model_name) {
@@ -430,18 +436,20 @@ var ERFP_MAP = (function() {
         $('.long-term-select').addClass('hidden');
         //make sure old chart is removed
         clearOldChart('long-term');
+        //clear messages
+        clearAllMessages();
        if(!isNotLoadingPastRequest()) {
             //updateInfoAlert
-            updateInfoAlert('alert-warning', "Please wait for datasets to download before making another selection.");
+            addWarningMessage("Please wait for datasets to download before making another selection.");
 
         } else if (!isThereDataToLoad()) {
             //updateInfoAlert
-            updateInfoAlert('alert-warning', "No data found to load. Please toggle on a dataset.");
+            addWarningMessage("No data found to load. Please toggle on a dataset.");
         } else {
             m_long_term_chart_data_ajax_load_failed = false;
             //turn off select interaction
             m_map.removeInteraction(m_select_interaction);
-            updateInfoAlert('alert-info', "Retrieving Data ...");
+            addInfoMessage("Retrieving Data ...");
             var y_axis_title = "Flow (cms)";
             if (m_units == "english") {
                 y_axis_title = "Flow (cfs)";
@@ -515,24 +523,24 @@ var ERFP_MAP = (function() {
                             }
                             $('.long-term-select').removeClass('hidden');
                             $('#long-term-chart').removeClass('hidden');
-                            if(!m_downloading_wrf_hydro_hydrograph) {
-                                clearMessages();
-                            }
                         } else {
                             m_long_term_chart_data_ajax_load_failed = true;
-                            updateInfoAlert('alert-danger', "Error: " + data["error"]);
+                            appendErrorMessage(data["error"], "ecmwf_error", "message-error");
                             clearChartSelect2('long-term');
                         }
                     },
                     error: function (request, status, error) {
                         m_long_term_chart_data_ajax_load_failed = true;
-                        updateInfoAlert('alert-danger', "Error: " + error);
+                        appendErrorMessage("Error: " + error, "ecmwf_error", "message-error");
                         clearChartSelect2('long-term');
                     },
                 })
                 .always(function () {
                     m_downloading_ecmwf_hydrograph = false;
                     m_map.addInteraction(m_select_interaction);
+                    if(isNotLoadingPastRequest()){
+                        clearInfoMessages();
+                    }
                 });
             }
             //if there is a wrf watershed & subbasin attribute
@@ -562,25 +570,25 @@ var ERFP_MAP = (function() {
                                 long_term_chart.addSeries(wrf_series);
                                 $('.short-term-select').removeClass('hidden');
                                 $('#long-term-chart').removeClass('hidden');
-                                if(!m_downloading_ecmwf_hydrograph){
-                                    clearMessages();
-                                }
                             }
                         } else {
                             m_short_term_chart_data_ajax_load_failed = true;
-                            updateInfoAlert('alert-danger', "Error: " + data["error"]);
+                            appendErrorMessage("Error: " + data["error"], "wrf_hydro_error", "message-error");
                             clearChartSelect2('short-term');
                         }
                     },
                     error: function (request, status, error) {
                         m_short_term_chart_data_ajax_load_failed = true;
-                        updateInfoAlert('alert-danger', "Error: " + error);
+                        appendErrorMessage("Error: " + error, "wrf_hydro_error", "message-error");
                         clearChartSelect2('short-term');
                     },
                 })
                 .always(function () {
                     m_downloading_wrf_hydro_hydrograph = false;
                     m_map.addInteraction(m_select_interaction);
+                    if(isNotLoadingPastRequest()){
+                        clearInfoMessages();
+                    }
                 });
             }
             //get dates
@@ -652,17 +660,20 @@ var ERFP_MAP = (function() {
                                     addSeriesToCharts(usgs_series);
                                 } catch (e) {
                                     if (e instanceof TypeError) {
-                                        updateInfoAlert('alert-danger', "Error loading USGS data.");
+                                        appendErrorMessage("Recent USGS data not found.", "usgs_error", "message-error");
                                     }
                                 }
                             }
                         },
                         error: function (request, status, error) {
-                            updateInfoAlert('alert-danger', "Error: " + error);
+                            appendErrorMessage("Error: " + error, "usgs_error", "message-error");
                         },
                     })
                     .always(function () {
                         m_downloading_usgs = false;
+                        if(isNotLoadingPastRequest()){
+                           clearInfoMessages();
+                        }
                     });
                 }
             }
@@ -687,7 +698,7 @@ var ERFP_MAP = (function() {
                     },
                     success: function(data) {
                         var ahps_series = {
-                                        name: "NWS (" + m_selected_nws_id + ")",
+                                        name: "AHPS (" + m_selected_nws_id + ")",
                                         data: convertTimeSeriesEnglishToMetric(data[0].data, "NWS"),
                                         dashStyle: 'longdash',
                         };
@@ -696,11 +707,14 @@ var ERFP_MAP = (function() {
 
                     },
                     error: function(request, status, error) {
-                        updateInfoAlert('alert-danger', "Error: " + error);
+                        appendErrorMessage("Error: " + error, "ahps_error", "message-error");
                     },
                 })
                 .always(function() {
                     m_downloading_nws = false;
+                    if(isNotLoadingPastRequest()){
+                       clearInfoMessages();
+                    }
                 });
             }
             //Get HydroServer Data if Available
@@ -717,7 +731,7 @@ var ERFP_MAP = (function() {
                     success: function(data) {
                         var series_data = WATERML.get_json_from_waterml(data, m_units);
                         if(series_data == null) {
-                            updateInfoAlert('alert-danger', "No data found for WorldWater");
+                            appendErrorMessage("No data found for WorldWater", "hydro_server_error", "message-error");
                         } else {
 
                             var hydro_server_series = {
@@ -729,11 +743,14 @@ var ERFP_MAP = (function() {
                         }
                     },
                     error: function(request, status, error) {
-                        updateInfoAlert('alert-danger', "Error: " + error);
+                        appendErrorMessage("Error: " + error, "hydro_server_error", "message-error");
                     },
                 })
                 .always(function() {
                     m_downloading_hydroserver = false;
+                    if(isNotLoadingPastRequest()){
+                       clearInfoMessages();
+                    }
                 });
             }
 
@@ -747,16 +764,22 @@ var ERFP_MAP = (function() {
         clearOldChart('long-term');
         $('.short-term-select').addClass('hidden');
         $('.long-term-select').addClass('hidden');
+        //clear messages
+        clearAllMessages();
         //check if old ajax call still running
         if(!isNotLoadingPastRequest()) {
             //updateInfoAlert
-            updateInfoAlert('alert-warning', "Please wait for datasets to download before making another selection.");
+            console.log('if');
+            appendWarningMessage("Please wait for datasets to download before making another selection.", "wait_warning");
 
         } else if (!isThereDataToLoad()) {
+            console.log('else if');
             //updateInfoAlert
-            updateInfoAlert('alert-warning', "No data found to load. Please toggle on a dataset.");
+            addWarningMessage("No data found to load. Please toggle on a dataset.", "toggle_warning");
             m_selected_feature = feature;
-        } else {
+        }
+        else {
+            console.log('else');
             m_selected_feature = feature;
             m_selected_reach_id = reach_id;
             m_selected_watershed = watershed;
@@ -802,12 +825,12 @@ var ERFP_MAP = (function() {
                             getChartData();
                         });
                     } else if ("error" in data) {
-                        updateInfoAlert('alert-danger', "Error: " + data.error);
+                        appendErrorMessage("Error: " + data.error, "ecmwf_error", "message-error");
                         clearChartSelect2('long-term');
                     }
                 })
                 .fail(function (request, status, error) {
-                    updateInfoAlert('alert-danger', "Error: " + error);
+                    appendErrorMessage("Error: " + error, "ecmwf_error", "message-error");
                     clearChartSelect2('long-term');
                 })
                 .always(function () {
@@ -845,12 +868,12 @@ var ERFP_MAP = (function() {
                             getChartData();
                         });
                     } else if ("error" in data) {
-                        updateInfoAlert('alert-danger', "Error: " + data.error);
+                        appendErrorMessage("Error: " + data.error, "wrf_hydro_error", "message-error");
                         clearChartSelect2('short-term');
                     }
                 })
                 .fail(function (request, status, error) {
-                    updateInfoAlert('alert-danger', "Error: " + error);
+                    appendErrorMessage("Error: " + error, "wrf_hydro_error", "message-error");
                     clearChartSelect2('short-term');
                 })
                 .always(function () {
@@ -927,7 +950,9 @@ var ERFP_MAP = (function() {
                             nws_id,
                             hydroserver_url); 
         } else {
-            updateInfoAlert('alert-warning', 'The attributes in the file are faulty. Please fix and upload again.');
+            appendErrorMessage('The attributes in the file are faulty. Please fix and upload again.',
+                                "file_attr_error",
+                                "message-error");
         }
     };
     
@@ -1014,12 +1039,12 @@ var ERFP_MAP = (function() {
                     var drainage_line_layer_id = 'layer' + group_index + 'g' + 0;
                     //check if required parameters exist
                     if(layer_info['drainage_line']['missing_attributes'].length > 0) {
-                        updateInfoAlert('alert-danger', 'The drainage line layer for ' + 
-                                                          layer_info['watershed'] + '(' +
-                                                          layer_info['subbasin'] + ') ' +
-                                                          'is missing '+ 
-                                                          layer_info['drainage_line']['missing_attributes'] +
-                                                          ' attributes and will not function properly.');
+                        appendErrorMessage('The drainage line layer for ' +
+                                          layer_info['watershed'] + '(' +
+                                          layer_info['subbasin'] + ') ' +
+                                          'is missing '+
+                                          layer_info['drainage_line']['missing_attributes'] +
+                                          ' attributes and will not function properly.', "layer_loading_error", "message-error");
                     } 
                     //check layer capabilites
                     if(layer_info['drainage_line']['geoserver_method'] == "natur_flow_query") {
@@ -1166,7 +1191,7 @@ var ERFP_MAP = (function() {
 
         //send message to user if Drainage Line KML file not found
         if (m_drainage_line_layers.length <= 0) {
-            updateInfoAlert('alert-danger', 'No valid drainage line layers found. Please upload to begin.');
+            appendErrorMessage('No valid drainage line layers found. Please upload to begin.', "drainage_line_error", "message-error");
         }
 
         //make drainage line layers selectable
