@@ -82,14 +82,26 @@ var ERFP_MAP = (function() {
     resizeAppContent = function() {
         var nav_open = $('#app-content-wrapper').hasClass('show-nav');
         var height_ratio = 0.97;
-        if (nav_open && $(document).width() < 1250) {
-            var lg_col = $('.col-md-7')
-            lg_col.removeClass('col-md-7');
-            lg_col.addClass('col-md-4');
+
+        //get column
+        var graph_col = $('#graph_panel');
+        graph_col.removeClass('col-md-7');
+        graph_col.removeClass('col-md-6');
+        graph_col.removeClass('col-md-5');
+        graph_col.removeClass('col-md-4');
+        var wrf_toggle_col = $('#wrf_toogle_col');
+        wrf_toggle_col.removeClass('col-sm-3');
+        wrf_toggle_col.removeClass('col-sm-4');
+
+        if (nav_open && $(document).width() < 1400) {
+            graph_col.addClass('col-md-4');
+            wrf_toggle_col.addClass('col-sm-4');
+        } else if (nav_open && $(document).width() < 1500) {
+            graph_col.addClass('col-md-6');
+            wrf_toggle_col.addClass('col-sm-3');
         } else {
-            var sm_col = $('.col-md-4')
-            sm_col.removeClass('col-md-4');
-            sm_col.addClass('col-md-7');
+            graph_col.addClass('col-md-7');
+            wrf_toggle_col.addClass('col-sm-3');
             height_ratio = 0.57;
         }
         //resize highchart
