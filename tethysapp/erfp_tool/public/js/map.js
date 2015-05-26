@@ -605,6 +605,7 @@ var ERFP_MAP = (function() {
                                     name: "WRF-Hydro (HRRR)",
                                     data: convertTimeSeriesMetricToEnglish(data.wrf_hydro),
                                     dashStyle: 'longdash',
+                                    color: Highcharts.getOptions().colors[1]
                                 };
                                 var long_term_chart = $("#long-term-chart").highcharts();
                                 long_term_chart.addSeries(wrf_series);
@@ -714,6 +715,7 @@ var ERFP_MAP = (function() {
                                         name: "USGS (" + m_selected_usgs_id + ")",
                                         data: convertTimeSeriesEnglishToMetric(data.value.timeSeries[0].values[0].value, "USGS"),
                                         dashStyle: 'longdash',
+                                        color: Highcharts.getOptions().colors[2]
                                     };
                                     addSeriesToCharts(usgs_series);
                                 } catch (e) {
@@ -759,6 +761,7 @@ var ERFP_MAP = (function() {
                                         name: "AHPS (" + m_selected_nws_id + ")",
                                         data: convertTimeSeriesEnglishToMetric(data[0].data, "NWS"),
                                         dashStyle: 'longdash',
+                                        Highcharts.getOptions().colors[3],
                         };
                         addSeriesToCharts(ahps_series);
                         $('#long-term-chart').removeClass('hidden');
@@ -796,6 +799,7 @@ var ERFP_MAP = (function() {
                                             name: "HydroServer",
                                             data: series_data[0],
                                             dashStyle: 'longdash',
+                                            color: Highcharts.getOptions().colors[4]
                                         };
                             addSeriesToCharts(hydro_server_series);
                         }
