@@ -149,9 +149,12 @@ var ERFP_MAP = (function() {
         if(m_units=="english") {
             conversion_factor = 35.3146667;
         }
-        time_series.map(function(data) {
-            new_time_series.push([data[0],
-                parseFloat((data[1]*conversion_factor).toFixed(5))]);
+        time_series.map(function(data_row) {
+            var new_data_array = [data_row[0]];
+            for (var i =1; i<data_row.length; i++) {
+                new_data_array.push(parseFloat((data_row[i]*conversion_factor).toFixed(5)));
+            }
+            new_time_series.push(new_data_array);
         });
         return new_time_series;
     };
@@ -441,13 +444,21 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: adds a series to both the chart
-    addECMWFSeriesToCharts = function(series_name, series_data, series_color){
+    addECMWFSeriesToCharts = function(series_name, series_data, series_color, series_type){
         var long_term_chart = $("#long-term-chart").highcharts();
-        long_term_chart.addSeries({
-                    name: series_name,
-                    data: convertTimeSeriesMetricToEnglish(series_data),
-                    color: series_color,
-                });
+        var new_series = {
+                            name: series_name,
+                            data: convertTimeSeriesMetricToEnglish(series_data),
+                            color: series_color,
+                         };
+        if(typeof series_type != 'undefined' && new_series != null) {
+            console.log(series_data);
+            new_series.type = series_type;
+            new_series.lineWidth = 0;
+            new_series.linkedTo = ":previous";
+            new_series.fillOpacity = 0.3;
+        }
+        long_term_chart.addSeries(new_series);
     };
 
     //FUNCTION: adds data to the chart
@@ -527,23 +538,26 @@ var ERFP_MAP = (function() {
 
                     success: function (data) {
                         if ("success" in data) {
-                            if ("max" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Maximum", data['max'], '#BE2625');
-                            }
-                            if ("mean_plus_std" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Mean Plus Std. Dev.", data['mean_plus_std'], '#61B329');
-                            }
                             if ("mean" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Mean", data['mean'], '#00688B');
+                                addECMWFSeriesToCharts("ECMWF", data['mean'], 
+                                                        Highcharts.getOptions().colors[0]);
                             }
-                            if ("mean_minus_std" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Mean Minus Std. Dev.", data['mean_minus_std'], '#61B329');
+                            if ("outer_range" in data) {
+                                addECMWFSeriesToCharts("ECMWF - Outer Range",
+                                                        data['outer_range'], 
+                                                        Highcharts.getOptions().colors[0], 
+                                                        'arearange');
                             }
-                            if ("min" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Minimum", data['min'], '#BE2625');
+                            if ("std_dev_range" in data) {
+                                addECMWFSeriesToCharts("ECMWF - Std. Dev.", 
+                                                       data['std_dev_range'], 
+                                                       Highcharts.getOptions().colors[0], 
+                                                       'arearange');
                             }
                             if ("high_res" in data) {
-                                addECMWFSeriesToCharts("ECMWF -High Res.", data['high_res'], '#ffa500');
+                                addECMWFSeriesToCharts("ECMWF - High Res.",
+                                                       data['high_res'],
+                                                       '#ffa500');
                             }
                             $('.long-term-select').removeClass('hidden');
                             $('#long-term-chart').removeClass('hidden');

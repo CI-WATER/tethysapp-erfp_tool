@@ -390,7 +390,7 @@ def wrf_hydro_get_avaialable_dates(request):
                         "output_files" : output_files,
                     })
         else:
-            return JsonResponse({'error' : 'Recent WRF-Hydro forecasts for reach with id: %s not found.' % reach_id})
+            return JsonResponse({'error' : 'Recent WRF-Hydro forecasts for %s (%s) not found.' % (watershed_name, subbasin_name)})
 
 def ecmwf_get_hydrograph(request):
     """""
@@ -496,11 +496,9 @@ def ecmwf_get_hydrograph(request):
             #mean minus std
             mean_mins_std = (mean_series - std_dev).clip(min=0)
             #return results of analysis
-            return_data["max"] = zip(erfp_time, max_series.tolist())
-            return_data["min"] = zip(erfp_time, min_series.tolist())
             return_data["mean"] = zip(erfp_time, mean_series.tolist())
-            return_data["mean_plus_std"] = zip(erfp_time, mean_plus_std.tolist())
-            return_data["mean_minus_std"] = zip(erfp_time, mean_mins_std.tolist())
+            return_data["outer_range"] = zip(erfp_time, min_series.tolist(), max_series.tolist())
+            return_data["std_dev_range"] = zip(erfp_time, mean_mins_std.tolist(), mean_plus_std.tolist())
             if len(high_res_data) > 0:
                 return_data["high_res"] = zip(erfp_time,high_res_data.tolist())
         return_data["success"] = "ECMWF Data analysis complete!"
