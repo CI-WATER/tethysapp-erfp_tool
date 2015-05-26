@@ -625,9 +625,7 @@ var ERFP_MAP = (function() {
             date_future.setUTCDate(date_now.getUTCDate()+15);
 
             var date_observed_end =  date_now;
-            var date_nws_end = new Date(Math.max.apply(null,[date_future, ecmwf_date_forecast_end, wrf_hydro_date_forecast_end]));
-
-
+            var date_nws_end = date_future;
 
             //ECMWF Dates
             var ecmwf_date_forecast_begin = new Date(8640000000000000);
@@ -712,7 +710,7 @@ var ERFP_MAP = (function() {
                             }
                         },
                         error: function (request, status, error) {
-                            appendErrorMessage("Error: " + error, "usgs_error", "message-error");
+                            appendErrorMessage("USGS Error: " + error, "usgs_error", "message-error");
                         },
                     })
                     .always(function () {
@@ -753,7 +751,7 @@ var ERFP_MAP = (function() {
 
                     },
                     error: function(request, status, error) {
-                        appendErrorMessage("Error: " + error, "ahps_error", "message-error");
+                        appendErrorMessage("AHPS Error: " + error, "ahps_error", "message-error");
                     },
                 })
                 .always(function() {
