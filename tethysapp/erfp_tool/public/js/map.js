@@ -624,12 +624,18 @@ var ERFP_MAP = (function() {
             var date_future = new Date();
             date_future.setUTCDate(date_now.getUTCDate()+15);
 
+            var date_observed_end =  date_now;
+            var date_nws_end = new Date(Math.max.apply(null,[date_future, ecmwf_date_forecast_end, wrf_hydro_date_forecast_end]));
+
+
+
             //ECMWF Dates
             var ecmwf_date_forecast_begin = new Date(8640000000000000);
             var ecmwf_date_forecast_end = new Date(-8640000000000000);
+            var get_ecmwf = m_ecmwf_start_folder != null && typeof m_ecmwf_start_folder != "undefined" &&
+                m_ecmwf_start_folder != "most_recent" && m_ecmwf_show;
             //get ECMWF forcast dates if available
-            if(m_ecmwf_start_folder != null && typeof m_ecmwf_start_folder != "undefined" &&
-                m_ecmwf_start_folder != "most_recent" && m_ecmwf_show) {
+            if(get_ecmwf) {
                 var ecmwf_forecast_start_year = parseInt(m_ecmwf_start_folder.substring(0,4));
                 var ecmwf_forecast_start_month = parseInt(m_ecmwf_start_folder.substring(4,6));
                 var ecmwf_forecast_start_day = parseInt(m_ecmwf_start_folder.substring(6,8));
@@ -639,6 +645,9 @@ var ERFP_MAP = (function() {
                 ecmwf_date_forecast_end = new Date();
                 ecmwf_date_forecast_end.setUTCDate(ecmwf_date_forecast_begin.getUTCDate()+15);
 
+                //reset dates if applicable
+                date_observed_end = ecmwf_date_forecast_end;
+                date_nws_end = ecmwf_date_forecast_end;
             }
             //WRF-Hydro Dates
             var wrf_hydro_date_forecast_begin = new Date(8640000000000000);
@@ -654,12 +663,21 @@ var ERFP_MAP = (function() {
                                                          wrf_hydro_forecast_start_day, wrf_hydro_forecast_start_hour));
                 wrf_hydro_date_forecast_end = new Date(wrf_hydro_date_forecast_begin.getTime()+15*60*60000);
 
+                //reset dates if applicable
+                if(get_ecmwf) {
+                    date_observed_end = new Date(Math.max.apply(null,[date_observed_end, wrf_hydro_date_forecast_end]));
+                    date_nws_end = new Date(Math.max.apply(null,[date_nws_end, wrf_hydro_date_forecast_end]));
+                } else {
+                    date_observed_end = wrf_hydro_date_forecast_end;
+                    date_nws_end = wrf_hydro_date_forecast_end;
+                }
+
             }
 
             var date_observed_start = new Date(Math.min.apply(null,[date_past, ecmwf_date_forecast_begin, wrf_hydro_date_forecast_begin]));
-            var date_observed_end =  new Date(Math.max.apply(null,[date_now, ecmwf_date_forecast_end, wrf_hydro_date_forecast_end]));
             var date_nws_start = new Date(Math.min.apply(null,[date_now, ecmwf_date_forecast_begin, wrf_hydro_date_forecast_begin]));
-            var date_nws_end = new Date(Math.max.apply(null,[date_future, ecmwf_date_forecast_end, wrf_hydro_date_forecast_end]));
+
+            
 
             //Get USGS data if USGS ID attribute exists
             if(!isNaN(m_selected_usgs_id) && m_selected_usgs_id != null) {
