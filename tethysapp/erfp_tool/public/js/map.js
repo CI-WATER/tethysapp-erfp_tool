@@ -452,7 +452,6 @@ var ERFP_MAP = (function() {
                             color: series_color,
                          };
         if(typeof series_type != 'undefined' && new_series != null) {
-            console.log(series_data);
             new_series.type = series_type;
             new_series.lineWidth = 0;
             new_series.linkedTo = ":previous";
@@ -761,7 +760,7 @@ var ERFP_MAP = (function() {
                                         name: "AHPS (" + m_selected_nws_id + ")",
                                         data: convertTimeSeriesEnglishToMetric(data[0].data, "NWS"),
                                         dashStyle: 'longdash',
-                                        Highcharts.getOptions().colors[3],
+                                        color: Highcharts.getOptions().colors[3],
                         };
                         addSeriesToCharts(ahps_series);
                         $('#long-term-chart').removeClass('hidden');
@@ -799,7 +798,7 @@ var ERFP_MAP = (function() {
                                             name: "HydroServer",
                                             data: series_data[0],
                                             dashStyle: 'longdash',
-                                            color: Highcharts.getOptions().colors[4]
+                                            color: Highcharts.getOptions().colors[4],
                                         };
                             addSeriesToCharts(hydro_server_series);
                         }
