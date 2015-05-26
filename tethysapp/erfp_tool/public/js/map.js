@@ -24,10 +24,11 @@ var ERFP_MAP = (function() {
         m_drainage_line_layers,
         m_select_interaction,
         m_selected_feature,
-        m_selected_watershed,
-        m_selected_subbasin,
+        m_selected_ecmwf_watershed,
+        m_selected_ecmwf_subbasin,
+        m_selected_wrf_hydro_watershed,
+        m_selected_wrf_hydro_subbasin,
         m_selected_reach_id,
-        m_selected_guess_index,
         m_selected_usgs_id,
         m_selected_nws_id,
         m_selected_hydroserver_url,
@@ -60,7 +61,8 @@ var ERFP_MAP = (function() {
         getTileLayer, getKMLLayer, clearAllMessages, clearInfoMessages,
         clearOldChart, dateToUTCString, clearChartSelect2, getChartData,
         displayHydrograph, loadHydrographFromFeature,resetChartSelectMessage,
-        addECMWFSeriesToCharts, addSeriesToCharts, isThereDataToLoad;
+        addECMWFSeriesToCharts, addSeriesToCharts, isThereDataToLoad, 
+        checkCleanString;
 
 
     /************************************************************************
@@ -80,7 +82,7 @@ var ERFP_MAP = (function() {
     resizeAppContent = function() {
         var nav_open = $('#app-content-wrapper').hasClass('show-nav');
         var height_ratio = 0.97;
-        if (nav_open) {
+        if (nav_open && $(document).width() < 1250) {
             var lg_col = $('.col-md-7')
             lg_col.removeClass('col-md-7');
             lg_col.addClass('col-md-4');
@@ -113,10 +115,11 @@ var ERFP_MAP = (function() {
 
     //FUNCTION: check to see if there is data to redraw on chart
     isThereDataToLoad = function(){
-        return (m_ecmwf_show || m_wrf_show
-               || (typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) && m_selected_usgs_id != null)
-               || (typeof m_selected_nws_id != 'undefined' && !isNaN(m_selected_nws_id) && m_selected_nws_id != null)
-               || (typeof m_selected_hydroserver_url != 'undefined' && m_selected_hydroserver_url != null));
+        return ((m_ecmwf_show && m_selected_ecmwf_watershed != null && m_selected_ecmwf_subbasin != null)
+               || (m_wrf_show && m_selected_wrf_hydro_watershed != null && m_selected_wrf_hydro_subbasin != null)
+               || (!isNaN(m_selected_usgs_id) && m_selected_usgs_id != null)
+               || (!isNaN(m_selected_nws_id) && m_selected_nws_id != null)
+               || m_selected_hydroserver_url != null);
     };
     
     //FUNCTION: convert units from metric to english
@@ -161,22 +164,39 @@ var ERFP_MAP = (function() {
         return new_time_series;
     };
 
+    //FUNCTION: cleans sting and returns null if empty
+    checkCleanString = function(string) {
+        if(typeof string == 'undefined' || string == null) {
+            return null;
+        } else if (typeof string != 'string') {
+            return string;
+        } else {
+            string = string.trim();
+            //set to null if it is empty string
+            if (string.length <= 0) {
+                return null;
+            }
+            return string;
+        }
+    };
+
     //FUNCTION: ol case insensitive get feature property
     getCI = function(obj,prop){
-      prop = prop.toLowerCase();
-      for(var key in obj.getProperties()){
-         if(prop == key.toLowerCase()){
-               return obj.get(key);
-          }
-       }
-    }
+        prop = prop.toLowerCase();
+        for(var key in obj.getProperties()){
+            if(prop == key.toLowerCase()){
+                return checkCleanString(obj.get(key));
+            }
+        }
+        return null;
+    };
 
     //FUNCTION: check if loading past request
     isNotLoadingPastRequest = function() {
         return !m_downloading_ecmwf_hydrograph && !m_downloading_long_term_select &&
             !m_downloading_usgs && !m_downloading_nws && !m_downloading_hydroserver &&
             !m_downloading_short_term_select && !m_downloading_wrf_hydro_hydrograph;
-    }
+    };
 
     //FUNCTION: zooms to all kml files
     zoomToAll = function() {
@@ -222,7 +242,7 @@ var ERFP_MAP = (function() {
                         var features = drainage_line_layer.getSource().getFeatures();
                         for(var i=0; features.length>i; i++) {
                             var feature_reach_id = getCI(features[i],'COMID');
-                            if(typeof feature_reach_id == 'undefined' || isNaN(feature_reach_id)) {
+                            if(feature_reach_id == null || isNaN(feature_reach_id)) {
                                 var feature_reach_id = getCI(features[i],'hydroid');
                             }
     
@@ -241,30 +261,36 @@ var ERFP_MAP = (function() {
                         return;
                     } else if (drainage_line_layer.get('layer_type') == "geoserver") {
                         m_searching_for_reach = true;
-                        //TODO: Make query more robust
-                        var url = drainage_line_layer.get('geoserver_url') + 
-                              '&format_options=callback:searchFeatures' +
-                              '&CQL_FILTER=COMID =' + reach_id +
-                              '&srsname=' + m_map_projection;
-                        jQuery.ajax({
-                            url: encodeURI(url),
-                            dataType: 'jsonp',
-                            jsonpCallback: 'searchFeatures',
-                            success: function(response) {
-                                if (response.totalFeatures > 0) {
-                                    var features = drainage_line_layer.getSource().readFeatures(response);
-                                    m_map.getView().fitExtent(features[0].getGeometry().getExtent(), m_map.getSize());
-                                    m_select_interaction.getFeatures().clear();
-                                    m_select_interaction.getFeatures().push(features[0]);
-                                } else {
-                                    $("#reach-id-help-message").text('Reach ID ' + reach_id + ' not found');
-                                    $("#reach-id-help-message").parent().addClass('alert-danger');
-                                }
-                            },
-                        }).always(function() {
-                            m_searching_for_reach = false;
-                            search_id_button.html(search_id_button_html);
-                        });
+                        var reach_id_attr_name = getCI(drainage_line_layer, 'reach_id_attr_name');
+                        if (reach_id_attr_name != null) {
+                            //TODO: Make query more robust
+                            var url = drainage_line_layer.get('geoserver_url') + 
+                                  '&format_options=callback:searchFeatures' +
+                                  '&CQL_FILTER='+ drainage_line_layer.get('reach_id_attr_name') +' =' + reach_id +
+                                  '&srsname=' + m_map_projection;
+                            jQuery.ajax({
+                                url: encodeURI(url),
+                                dataType: 'jsonp',
+                                jsonpCallback: 'searchFeatures',
+                                success: function(response) {
+                                    if (response.totalFeatures > 0) {
+                                        var features = drainage_line_layer.getSource().readFeatures(response);
+                                        m_map.getView().fitExtent(features[0].getGeometry().getExtent(), m_map.getSize());
+                                        m_select_interaction.getFeatures().clear();
+                                        m_select_interaction.getFeatures().push(features[0]);
+                                    } else {
+                                        $("#reach-id-help-message").text('Reach ID ' + reach_id + ' not found');
+                                        $("#reach-id-help-message").parent().addClass('alert-danger');
+                                    }
+                                },
+                            }).always(function() {
+                                m_searching_for_reach = false;
+                                search_id_button.html(search_id_button_html);
+                            });
+                        } else {
+                            $("#reach-id-help-message").text('No valid reach ID attribute found.');
+                            $("#reach-id-help-message").parent().addClass('alert-danger');
+                        }
                         return;
                     }
                 }
@@ -434,8 +460,8 @@ var ERFP_MAP = (function() {
             }
             var default_chart_settings = {
                 title: { text: "Forecast"},
-                subtitle: {text: toTitleCase(m_selected_watershed) + " (" +
-                                 toTitleCase(m_selected_subbasin) + "): " + m_selected_reach_id},
+                subtitle: {text: toTitleCase(m_selected_ecmwf_watershed) + " (" +
+                                 toTitleCase(m_selected_ecmwf_subbasin) + "): " + m_selected_reach_id},
                 chart: {
                     zoomType: 'x',
                 },
@@ -464,17 +490,18 @@ var ERFP_MAP = (function() {
             $("#long-term-chart").highcharts(default_chart_settings);
 
             //get ecmwf data
-            if (m_ecmwf_show) {
+            if (m_ecmwf_show && m_selected_ecmwf_watershed != null &&
+                m_selected_ecmwf_subbasin != null) {
+
                 m_downloading_ecmwf_hydrograph = true;
                 jQuery.ajax({
                     type: "GET",
                     url: "ecmwf-get-hydrograph",
                     dataType: "json",
                     data: {
-                        watershed_name: m_selected_watershed,
-                        subbasin_name: m_selected_subbasin,
+                        watershed_name: m_selected_ecmwf_watershed,
+                        subbasin_name: m_selected_ecmwf_subbasin,
                         reach_id: m_selected_reach_id,
-                        guess_index: m_selected_guess_index,
                         start_folder: m_ecmwf_start_folder,
                     },
 
@@ -521,15 +548,17 @@ var ERFP_MAP = (function() {
                 });
             }
             //if there is a wrf watershed & subbasin attribute
-            if (m_wrf_show) {
+            if (m_wrf_show && m_selected_wrf_hydro_watershed != null 
+                && m_selected_wrf_hydro_subbasin != null) {
+
                 m_downloading_wrf_hydro_hydrograph = true;
                 jQuery.ajax({
                     type: "GET",
                     url: "wrf-hydro-get-hydrograph",
                     dataType: "json",
                     data: {
-                        watershed_name: m_selected_watershed,
-                        subbasin_name: m_selected_subbasin,
+                        watershed_name: m_selected_wrf_hydro_watershed,
+                        subbasin_name: m_selected_wrf_hydro_subbasin,
                         reach_id: m_selected_reach_id,
                         date_string: m_wrf_hydro_date_string,
                     },
@@ -613,8 +642,7 @@ var ERFP_MAP = (function() {
             var date_nws_end = new Date(Math.max.apply(null,[date_future, ecmwf_date_forecast_end, wrf_hydro_date_forecast_end]));
 
             //Get USGS data if USGS ID attribute exists
-            if(typeof m_selected_usgs_id != 'undefined' && !isNaN(m_selected_usgs_id) &&
-                m_selected_usgs_id != null) {
+            if(!isNaN(m_selected_usgs_id) && m_selected_usgs_id != null) {
                 if(m_selected_usgs_id.length >= 8) {
                     m_downloading_usgs = true;
                     //get USGS data
@@ -658,8 +686,8 @@ var ERFP_MAP = (function() {
                 }
             }
             //Get AHPS data if NWD ID attribute exists
-            if(typeof m_selected_nws_id != 'undefined' && !isNaN(m_selected_nws_id) &&
-                m_selected_nws_id != null) {
+            if(!isNaN(m_selected_nws_id) && m_selected_nws_id != null) {
+
                 m_downloading_nws = true;
                 //get NWS data
                 var chart_nws_data_ajax_handle = jQuery.ajax({
@@ -698,7 +726,7 @@ var ERFP_MAP = (function() {
                 });
             }
             //Get HydroServer Data if Available
-            if(typeof m_selected_hydroserver_url != 'undefined' && m_selected_hydroserver_url != null) {
+            if(m_selected_hydroserver_url != null) {
                 m_downloading_hydroserver = true;
                 //get WorldWater data
                 var chart_ww_data_ajax_handle = jQuery.ajax({
@@ -739,7 +767,7 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: displays hydrograph at stream segment
-    displayHydrograph = function(feature, reach_id, watershed, subbasin, guess_index, usgs_id, nws_id, hydroserver_url) {
+    displayHydrograph = function() {
         //check if old ajax call still running
         if(!isNotLoadingPastRequest()) {
             //updateInfoAlert
@@ -749,25 +777,18 @@ var ERFP_MAP = (function() {
             resetChartSelectMessage();
             //updateInfoAlert
             addWarningMessage("No data found to load. Please toggle on a dataset.");
-            m_selected_feature = feature;
         }
         else {
             resetChartSelectMessage();
 
-            m_selected_feature = feature;
-            m_selected_reach_id = reach_id;
-            m_selected_watershed = watershed;
-            m_selected_subbasin = subbasin;
-            m_selected_guess_index = guess_index;
-            m_selected_usgs_id = usgs_id;
-            m_selected_nws_id = nws_id;
-            m_selected_hydroserver_url = hydroserver_url;
             //Get chart data
             m_ecmwf_start_folder = "most_recent";
             m_wrf_hydro_date_string = "most_recent";
             getChartData();
+
             //Get available ECMWF Dates
-            if (m_ecmwf_show)
+            if (m_ecmwf_show && m_selected_ecmwf_watershed != null 
+                && m_selected_ecmwf_subbasin != null)
             {
                 m_downloading_long_term_select = true;
                 m_long_term_select_data_ajax_handle = jQuery.ajax({
@@ -775,8 +796,8 @@ var ERFP_MAP = (function() {
                     url: "ecmwf-get-avaialable-dates",
                     dataType: "json",
                     data: {
-                        watershed_name: m_selected_watershed,
-                        subbasin_name: m_selected_subbasin,
+                        watershed_name: m_selected_ecmwf_watershed,
+                        subbasin_name: m_selected_ecmwf_subbasin,
                         reach_id: m_selected_reach_id,
                     },
                 })
@@ -815,15 +836,16 @@ var ERFP_MAP = (function() {
                 });
             }
             //Get available WRF-Hydro Dates
-            if (m_wrf_show) {
+            if (m_wrf_show && m_selected_wrf_hydro_watershed != null 
+                && m_selected_wrf_hydro_subbasin != null) {
                 m_downloading_short_term_select = true;
                 m_short_term_select_data_ajax_handle = jQuery.ajax({
                     type: "GET",
                     url: "wrf-hydro-get-avaialable-dates",
                     dataType: "json",
                     data: {
-                        watershed_name: m_selected_watershed,
-                        subbasin_name: m_selected_subbasin,
+                        watershed_name: m_selected_wrf_hydro_watershed,
+                        subbasin_name: m_selected_wrf_hydro_subbasin,
                     },
                 })
                 .done(function (data) {
@@ -865,74 +887,64 @@ var ERFP_MAP = (function() {
     };
     //FUNCTION: Loads Hydrograph from Selected feature
     loadHydrographFromFeature = function(selected_feature) {
-        //get attributes
-        var reach_id = getCI(selected_feature, 'COMID'); 
-        var watershed_name = getCI(selected_feature, "watershed");
-        var subbasin_name = getCI(selected_feature, "subbasin");
-        var guess_index = getCI(selected_feature, "guess_index");
-        var usgs_id = getCI(selected_feature, "usgs_id");
-        var nws_id = getCI(selected_feature, "nws_id");
-        var hydroserver_url = getCI(selected_feature, "hydroserve");
-        
-        //in case the reach_id is in a different location
-        if(typeof reach_id == 'undefined' || isNaN(reach_id)) {
-            var reach_id = getCI(selected_feature, 'hydroid');
-        }
+        //check if old ajax call still running
+        if(!isNotLoadingPastRequest()) {
+            //updateInfoAlert
+            appendWarningMessage("Please wait for datasets to download before making another selection.", "wait_warning");
 
-        if(typeof watershed_name == 'undefined') {
-            var watershed_name = getCI(selected_feature, 'watershed_name');
-        }
-        if(typeof subbasin_name == 'undefined') {
-            var subbasin_name = getCI(selected_feature, 'subbasin_name');
-        }
-        //clean up usgs_id
-        if(typeof usgs_id != 'undefined' && !isNaN(usgs_id) && usgs_id != null) {
-            usgs_id = usgs_id.trim();
-            //add zero in case it was removed when converted to a number
-            if(usgs_id.length < 8 && usgs_id.length > 0) {
-                usgs_id = '0' + usgs_id;
-            }
-            //set to null if it is empty string
-            if (usgs_id.length <= 0) {
-                usgs_id = null;
-            }
-        }
-        //clean up nws_id
-        if(typeof nws_id != 'undefined' && !isNaN(nws_id) && nws_id != null) {
-            nws_id = nws_id.trim();
-            //set to null if it is empty string
-            if (nws_id.length <= 0) {
-                nws_id = null;
-            }
-        }
-        //clean up hydroserver_url
-        if(typeof hydroserver_url != 'undefined' && hydroserver_url != null) {
-            hydroserver_url = hydroserver_url.trim();
-            //set to null if it is empty string
-            if (hydroserver_url.length <= 0) {
-                hydroserver_url = null;
-            }
-        }
-
-        if(typeof reach_id != 'undefined' &&
-           reach_id != null &&  
-           typeof watershed_name != 'undefined' &&
-           watershed_name != null &&  
-           typeof subbasin_name != 'undefined' &&
-           subbasin_name != null)
-        {
-            displayHydrograph(selected_feature, 
-                            reach_id,
-                            watershed_name,
-                            subbasin_name, 
-                            guess_index,
-                            usgs_id,
-                            nws_id,
-                            hydroserver_url); 
         } else {
-            appendErrorMessage('The attributes in the file are faulty. Please fix and upload again.',
-                                "file_attr_error",
-                                "message-error");
+            //get attributes
+            var reach_id = getCI(selected_feature, 'COMID'); 
+            var ecmwf_watershed_name = getCI(selected_feature, "watershed");
+            var ecmwf_subbasin_name = getCI(selected_feature, "subbasin");
+            var wrf_hydro_watershed_name = getCI(selected_feature, "wwatershed");
+            var wrf_hydro_subbasin_name = getCI(selected_feature, "wsubbasin");
+            var usgs_id = getCI(selected_feature, "usgs_id");
+            var nws_id = getCI(selected_feature, "nws_id");
+            var hydroserver_url = getCI(selected_feature, "hydroserve");
+            
+            //check if the variables are under a different name
+            if(reach_id == null || isNaN(reach_id)) {
+                var reach_id = getCI(selected_feature, 'hydroid');
+            }
+    
+            if(ecmwf_watershed_name == null) {
+                var ecmwf_watershed_name = getCI(selected_feature, 'watershed_name');
+            }
+            if(ecmwf_subbasin_name == null) {
+                var ecmwf_subbasin_name = getCI(selected_feature, 'subbasin_name');
+            }
+    
+            //clean up usgs_id
+            if(!isNaN(usgs_id) && usgs_id != null) {
+                //add zero in case it was removed when converted to a number
+                while(usgs_id.length < 8 && usgs_id.length > 0) {
+                    usgs_id = '0' + usgs_id;
+                }
+            }
+
+            if(reach_id != null &&  
+               (ecmwf_watershed_name != null && 
+                ecmwf_subbasin_name != null) ||
+               (wrf_hydro_watershed_name != null &&
+                wrf_hydro_subbasin_name != null))
+            {
+                m_selected_feature = selected_feature;
+                m_selected_reach_id = reach_id;
+                m_selected_ecmwf_watershed = ecmwf_watershed_name;
+                m_selected_ecmwf_subbasin = ecmwf_subbasin_name;
+                m_selected_wrf_hydro_watershed = wrf_hydro_watershed_name;
+                m_selected_wrf_hydro_subbasin = wrf_hydro_subbasin_name;
+                m_selected_usgs_id = usgs_id;
+                m_selected_nws_id = nws_id;
+                m_selected_hydroserver_url = hydroserver_url;
+
+                displayHydrograph(); 
+            } else {
+                appendErrorMessage('The attributes in the file are faulty. Please fix and upload again.',
+                                    "file_attr_error",
+                                    "message-error");
+            }
         }
     };
     
@@ -965,10 +977,11 @@ var ERFP_MAP = (function() {
         m_map_projection = 'EPSG:3857';
         m_map_extent = ol.extent.createEmpty();
         m_selected_feature = null;
-        m_selected_watershed = null;
-        m_selected_subbasin = null;
+        m_selected_ecmwf_watershed = null;
+        m_selected_ecmwf_subbasin = null;
+        m_selected_wrf_hydro_watershed = null;
+        m_selected_wrf_hydro_subbasin = null;
         m_selected_reach_id = null;
-        m_selected_guess_index = null;
         m_selected_usgs_id = null;
         m_selected_nws_id = null;
         m_selected_hydroserver_url = null;
@@ -1018,12 +1031,12 @@ var ERFP_MAP = (function() {
                 if('drainage_line' in layer_info) {
                     var drainage_line_layer_id = 'layer' + group_index + 'g' + 0;
                     //check if required parameters exist
-                    if(layer_info['drainage_line']['missing_attributes'].length > 0) {
+                    if(layer_info['drainage_line']['missing_attributes'].length > 2) {
                         appendErrorMessage('The drainage line layer for ' +
                                           layer_info['watershed'] + '(' +
                                           layer_info['subbasin'] + ') ' +
                                           'is missing '+
-                                          layer_info['drainage_line']['missing_attributes'] +
+                                          layer_info['drainage_line']['missing_attributes'].join(", ") +
                                           ' attributes and will not function properly.', "layer_loading_error", "message-error");
                     } 
                     //check layer capabilites
@@ -1051,7 +1064,7 @@ var ERFP_MAP = (function() {
                                       '&format_options=callback:loadFeatures' + 
                                       drainage_line_layer_id +
                                       '&PROPERTYNAME=the_geom,' +
-                                      layer_info['drainage_line']['contained_attributes'] +
+                                      layer_info['drainage_line']['contained_attributes'].join(",") +
                                       '&CQL_FILTER=Natur_Flow > ' + stream_flow_limit +
                                       ' AND bbox(the_geom,' + extent.join(',') + 
                                       ',\'' + m_map_projection + '\')' +
@@ -1108,7 +1121,7 @@ var ERFP_MAP = (function() {
                                       '&format_options=callback:loadFeatures' +
                                       drainage_line_layer_id +
                                       '&PROPERTYNAME=the_geom,' +
-                                      layer_info['drainage_line']['contained_attributes'] +
+                                      layer_info['drainage_line']['contained_attributes'].join(",") +
                                       '&BBOX=' + extent.join(',') + 
                                       ','+ m_map_projection +
                                       '&srsname=' + m_map_projection;
@@ -1129,6 +1142,14 @@ var ERFP_MAP = (function() {
                     var drainage_line = new ol.layer.Vector({
                         source: drainage_line_vector_source,
                     });
+
+                    layer_info['drainage_line']['contained_attributes'].some(function(attribute) {
+                        if (attribute.toLowerCase() == "comid" || attribute.toLowerCase() == "hydroid") {
+                            drainage_line.set('reach_id_attr_name', attribute);
+                            return true;
+                        }
+                    });
+
                     drainage_line.set('geoserver_url', layer_info['drainage_line']['geojsonp'])
                     drainage_line.set('watershed_name', layer_info['watershed']);
                     drainage_line.set('subbasin_name', layer_info['subbasin']);
@@ -1271,21 +1292,29 @@ var ERFP_MAP = (function() {
             
         });
 
+        //show/hide forecasts based on toggle
          $('#ecmwf-toggle').on('switchChange.bootstrapSwitch', function(event, state) {
              m_ecmwf_show = state;
-             if (m_selected_feature != null) {
+             if (m_selected_feature != null && m_selected_ecmwf_watershed != null 
+                 && m_selected_ecmwf_subbasin != null) {
                  loadHydrographFromFeature(m_selected_feature);
              }
         });
 
         $('#wrf-toggle').on('switchChange.bootstrapSwitch', function(event, state) {
             m_wrf_show = state;
-            if (m_selected_feature != null) {
+            if (m_selected_feature != null && m_selected_wrf_hydro_watershed != null 
+                && m_selected_wrf_hydro_subbasin != null) {
                 loadHydrographFromFeature(m_selected_feature);
             }
         });
 
+        //resize app content based on window size and nav bar
         $('.toggle-nav').click(function() {
+            resizeAppContent();
+        });
+
+        $(window).resize(function() {
             resizeAppContent();
         });
 

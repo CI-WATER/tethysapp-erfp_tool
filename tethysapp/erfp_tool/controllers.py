@@ -137,31 +137,51 @@ def map(request):
                 if drainage_line_info['success']:
                     #check layers attributes to see if valid
                     layer_attributes = drainage_line_info['result']['attributes']
-                    optional_attributes = ['usgs_id', 'nws_id', 'hydroserve']
                     missing_attributes = []
                     contained_attributes = []
                     #check required attributes
-                    necessary_attributes = ['watershed', 'subbasin', 'COMID']
-                    for necessary_attribute in necessary_attributes:
-                        found = False
-                        for attribute in layer_attributes:    
-                            if necessary_attribute.lower() == attribute.lower():
-                                contained_attributes.append(attribute)
-                                found = True
-                        if not found:
-                            missing_attributes.append(necessary_attribute)
+                    #necessary_attributes = ['COMID','watershed', 'subbasin', 'wwatershed','wsubbasin']
+                    
+                    def find_add_attribute_ci(attribute, layer_attributes, contained_attributes):
+                        """
+                        Case insensitive attribute search and add
+                        """
+                        for layer_attribute in layer_attributes:    
+                            if layer_attribute.lower() == attribute.lower():
+                                contained_attributes.append(layer_attribute)
+                                return True
+                        return False
+                            
+                    #check COMID/HydroID attribute
+                    if not find_add_attribute_ci('COMID', layer_attributes, contained_attributes):
+                        missing_attributes.append('COMID')
+                        if not find_add_attribute_ci('HydroID', layer_attributes, contained_attributes):
+                            missing_attributes.append('HydroID')
+                    
+                    #check ECMWF watershed/subbasin attributes
+                    if not find_add_attribute_ci('watershed', layer_attributes, contained_attributes) \
+                    or not find_add_attribute_ci('subbasin', layer_attributes, contained_attributes):
+                        missing_attributes.append('watershed')
+                        missing_attributes.append('subbasin')
+                        
+                    #check WRF-Hydro watershed/subbasin attributes
+                    if not find_add_attribute_ci('wwatershed', layer_attributes, contained_attributes) \
+                    or not find_add_attribute_ci('wsubbasin', layer_attributes, contained_attributes):
+                        missing_attributes.append('wwatershed')
+                        missing_attributes.append('wsubbasin')
+                        
                     #check optional attributes
+                    optional_attributes = ['usgs_id', 'nws_id', 'hydroserve']
                     for optional_attribute in optional_attributes:
-                        if optional_attribute in layer_attributes:
-                            contained_attributes.append(optional_attribute)
+                        find_add_attribute_ci(optional_attribute, layer_attributes, contained_attributes)
                         
                     latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
                     geoserver_info['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
                                                        'geojsonp': drainage_line_info['result']['wfs']['geojsonp'],
                                                        'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
                                                        'projection': drainage_line_info['result']['projection'],
-                                                       'contained_attributes': ",".join(contained_attributes),
-                                                       'missing_attributes': ", ".join(missing_attributes),
+                                                       'contained_attributes': contained_attributes,
+                                                       'missing_attributes': missing_attributes,
                                                        }
                     #check if needed attribute is there to perfrom query based rendering of layer
                     if 'Natur_Flow' not in layer_attributes:
