@@ -556,7 +556,7 @@ var ERFP_MAP = (function() {
                             if ("high_res" in data) {
                                 addECMWFSeriesToCharts("ECMWF - High Res.",
                                                        data['high_res'],
-                                                       Highcharts.getOptions().colors[2]);
+                                                       Highcharts.getOptions().colors[1]);
                             }
                             $('.long-term-select').removeClass('hidden');
                             $('#long-term-chart').removeClass('hidden');
