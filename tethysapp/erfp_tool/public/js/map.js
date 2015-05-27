@@ -149,9 +149,12 @@ var ERFP_MAP = (function() {
         if(m_units=="english") {
             conversion_factor = 35.3146667;
         }
-        time_series.map(function(data) {
-            new_time_series.push([data[0],
-                parseFloat((data[1]*conversion_factor).toFixed(5))]);
+        time_series.map(function(data_row) {
+            var new_data_array = [data_row[0]];
+            for (var i =1; i<data_row.length; i++) {
+                new_data_array.push(parseFloat((data_row[i]*conversion_factor).toFixed(5)));
+            }
+            new_time_series.push(new_data_array);
         });
         return new_time_series;
     };
@@ -441,13 +444,20 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: adds a series to both the chart
-    addECMWFSeriesToCharts = function(series_name, series_data, series_color){
+    addECMWFSeriesToCharts = function(series_name, series_data, series_color, series_type){
         var long_term_chart = $("#long-term-chart").highcharts();
-        long_term_chart.addSeries({
-                    name: series_name,
-                    data: convertTimeSeriesMetricToEnglish(series_data),
-                    color: series_color,
-                });
+        var new_series = {
+                            name: series_name,
+                            data: convertTimeSeriesMetricToEnglish(series_data),
+                            color: series_color,
+                         };
+        if(typeof series_type != 'undefined' && new_series != null) {
+            new_series.type = series_type;
+            new_series.lineWidth = 0;
+            new_series.linkedTo = ":previous";
+            new_series.fillOpacity = 0.3;
+        }
+        long_term_chart.addSeries(new_series);
     };
 
     //FUNCTION: adds data to the chart
@@ -527,23 +537,26 @@ var ERFP_MAP = (function() {
 
                     success: function (data) {
                         if ("success" in data) {
-                            if ("max" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Maximum", data['max'], '#BE2625');
-                            }
-                            if ("mean_plus_std" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Mean Plus Std. Dev.", data['mean_plus_std'], '#61B329');
-                            }
                             if ("mean" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Mean", data['mean'], '#00688B');
+                                addECMWFSeriesToCharts("ECMWF", data['mean'], 
+                                                        Highcharts.getOptions().colors[2]);
                             }
-                            if ("mean_minus_std" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Mean Minus Std. Dev.", data['mean_minus_std'], '#61B329');
+                            if ("outer_range" in data) {
+                                addECMWFSeriesToCharts("ECMWF - Outer Range",
+                                                        data['outer_range'], 
+                                                        Highcharts.getOptions().colors[2], 
+                                                        'arearange');
                             }
-                            if ("min" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Minimum", data['min'], '#BE2625');
+                            if ("std_dev_range" in data) {
+                                addECMWFSeriesToCharts("ECMWF - Std. Dev.", 
+                                                       data['std_dev_range'], 
+                                                       Highcharts.getOptions().colors[2], 
+                                                       'arearange');
                             }
                             if ("high_res" in data) {
-                                addECMWFSeriesToCharts("ECMWF -High Res.", data['high_res'], '#ffa500');
+                                addECMWFSeriesToCharts("ECMWF - High Res.",
+                                                       data['high_res'],
+                                                       Highcharts.getOptions().colors[1]);
                             }
                             $('.long-term-select').removeClass('hidden');
                             $('#long-term-chart').removeClass('hidden');
@@ -591,6 +604,7 @@ var ERFP_MAP = (function() {
                                     name: "WRF-Hydro (HRRR)",
                                     data: convertTimeSeriesMetricToEnglish(data.wrf_hydro),
                                     dashStyle: 'longdash',
+                                    color: Highcharts.getOptions().colors[3]
                                 };
                                 var long_term_chart = $("#long-term-chart").highcharts();
                                 long_term_chart.addSeries(wrf_series);
@@ -624,12 +638,16 @@ var ERFP_MAP = (function() {
             var date_future = new Date();
             date_future.setUTCDate(date_now.getUTCDate()+15);
 
+            var date_observed_end =  date_now;
+            var date_nws_end = date_future;
+
             //ECMWF Dates
             var ecmwf_date_forecast_begin = new Date(8640000000000000);
             var ecmwf_date_forecast_end = new Date(-8640000000000000);
+            var get_ecmwf = m_ecmwf_start_folder != null && typeof m_ecmwf_start_folder != "undefined" &&
+                m_ecmwf_start_folder != "most_recent" && m_ecmwf_show;
             //get ECMWF forcast dates if available
-            if(m_ecmwf_start_folder != null && typeof m_ecmwf_start_folder != "undefined" &&
-                m_ecmwf_start_folder != "most_recent" && m_ecmwf_show) {
+            if(get_ecmwf) {
                 var ecmwf_forecast_start_year = parseInt(m_ecmwf_start_folder.substring(0,4));
                 var ecmwf_forecast_start_month = parseInt(m_ecmwf_start_folder.substring(4,6));
                 var ecmwf_forecast_start_day = parseInt(m_ecmwf_start_folder.substring(6,8));
@@ -639,6 +657,9 @@ var ERFP_MAP = (function() {
                 ecmwf_date_forecast_end = new Date();
                 ecmwf_date_forecast_end.setUTCDate(ecmwf_date_forecast_begin.getUTCDate()+15);
 
+                //reset dates if applicable
+                date_observed_end = ecmwf_date_forecast_end;
+                date_nws_end = ecmwf_date_forecast_end;
             }
             //WRF-Hydro Dates
             var wrf_hydro_date_forecast_begin = new Date(8640000000000000);
@@ -654,12 +675,21 @@ var ERFP_MAP = (function() {
                                                          wrf_hydro_forecast_start_day, wrf_hydro_forecast_start_hour));
                 wrf_hydro_date_forecast_end = new Date(wrf_hydro_date_forecast_begin.getTime()+15*60*60000);
 
+                //reset dates if applicable
+                if(get_ecmwf) {
+                    date_observed_end = new Date(Math.max.apply(null,[date_observed_end, wrf_hydro_date_forecast_end]));
+                    date_nws_end = new Date(Math.max.apply(null,[date_nws_end, wrf_hydro_date_forecast_end]));
+                } else {
+                    date_observed_end = wrf_hydro_date_forecast_end;
+                    date_nws_end = wrf_hydro_date_forecast_end;
+                }
+
             }
 
             var date_observed_start = new Date(Math.min.apply(null,[date_past, ecmwf_date_forecast_begin, wrf_hydro_date_forecast_begin]));
-            var date_observed_end =  new Date(Math.max.apply(null,[date_now, ecmwf_date_forecast_end, wrf_hydro_date_forecast_end]));
             var date_nws_start = new Date(Math.min.apply(null,[date_now, ecmwf_date_forecast_begin, wrf_hydro_date_forecast_begin]));
-            var date_nws_end = new Date(Math.max.apply(null,[date_future, ecmwf_date_forecast_end, wrf_hydro_date_forecast_end]));
+
+            
 
             //Get USGS data if USGS ID attribute exists
             if(!isNaN(m_selected_usgs_id) && m_selected_usgs_id != null) {
@@ -684,6 +714,7 @@ var ERFP_MAP = (function() {
                                         name: "USGS (" + m_selected_usgs_id + ")",
                                         data: convertTimeSeriesEnglishToMetric(data.value.timeSeries[0].values[0].value, "USGS"),
                                         dashStyle: 'longdash',
+                                        color: Highcharts.getOptions().colors[0]
                                     };
                                     addSeriesToCharts(usgs_series);
                                 } catch (e) {
@@ -694,7 +725,7 @@ var ERFP_MAP = (function() {
                             }
                         },
                         error: function (request, status, error) {
-                            appendErrorMessage("Error: " + error, "usgs_error", "message-error");
+                            appendErrorMessage("USGS Error: " + error, "usgs_error", "message-error");
                         },
                     })
                     .always(function () {
@@ -729,13 +760,14 @@ var ERFP_MAP = (function() {
                                         name: "AHPS (" + m_selected_nws_id + ")",
                                         data: convertTimeSeriesEnglishToMetric(data[0].data, "NWS"),
                                         dashStyle: 'longdash',
+                                        color: Highcharts.getOptions().colors[4],
                         };
                         addSeriesToCharts(ahps_series);
                         $('#long-term-chart').removeClass('hidden');
 
                     },
                     error: function(request, status, error) {
-                        appendErrorMessage("Error: " + error, "ahps_error", "message-error");
+                        appendErrorMessage("AHPS Error: " + error, "ahps_error", "message-error");
                     },
                 })
                 .always(function() {
@@ -766,6 +798,7 @@ var ERFP_MAP = (function() {
                                             name: "HydroServer",
                                             data: series_data[0],
                                             dashStyle: 'longdash',
+                                            color: Highcharts.getOptions().colors[5],
                                         };
                             addSeriesToCharts(hydro_server_series);
                         }
