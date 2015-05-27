@@ -22,7 +22,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
     /************************************************************************
      *                    PRIVATE FUNCTION DECLARATIONS
      *************************************************************************/
-    var initializeTableFunctions, getTablePage;
+    var initializeTableFunctions, getTablePage, displayingResultsText;
 
 
     /************************************************************************
@@ -338,6 +338,17 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             }
         });
 
+        var page = parseInt($('#manage_watershed_table').data('page'));
+        var num_watersheds_data = $('#manage_watershed_table').data('num_watersheds');
+        var results = num_watersheds_data / page;
+        var display_min = ((page + 1) * 5) - 4;
+        var display_max = Math.min(num_watersheds_data, ((page + 1) * 5));
+        $('#display-info').innerHTML = "Displaying results " + display_min + " - " + display_max + " of " + num_watersheds_data;
+
+
+
+        displayingResultsText();
+
         //pageination next and previous button update
         $('[name="prev_button"]').click(function(){
             var page = parseInt($('#manage_watershed_table').data('page'));
@@ -350,6 +361,15 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                                 Math.floor(parseInt($('#manage_watershed_table').data('num_watersheds')) / 5 - 0.1)));
             getTablePage();
         });
+    };
+
+    displayingResultsText = function() {
+        //dynamically show table results display info text on page
+        var page = parseInt($('#manage_watershed_table').data('page'));
+        var num_watersheds_data = $('#manage_watershed_table').data('num_watersheds');
+        var display_min = ((page + 1) * 5) - 4;
+        var display_max = Math.min(num_watersheds_data, ((page + 1) * 5));
+        $('#display-info').append('<div style="text-align: center">Displaying results ' + display_min + ' - ' + display_max + ' of ' + num_watersheds_data + '</div>');
     };
 
     getTablePage = function() {

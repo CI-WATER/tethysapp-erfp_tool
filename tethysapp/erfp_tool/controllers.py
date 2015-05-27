@@ -493,24 +493,27 @@ def manage_watersheds_table(request):
                 'off_style': 'danger',
                 'initial': False,
                 }
-    nav_button = {'buttons': [
+    prev_button = {'buttons': [
                 {'display_text' : 'Previous',
                  'name' : 'prev_button',
                  'type' : 'submit',
-                 'attributes': 'class=nav_button'},
+                 'attributes': 'class=nav_button'}],
+                }
+
+    next_button = {'buttons':[
                 {'display_text' : 'Next',
                  'name' : 'next_button',
                  'type' : 'submit',
-                 'attributes': 'class=nav_button'}
-                ],
-            }
+                 'attributes': 'class=nav_button'}],
+                }
 
     context = {
                 'watersheds': watersheds,
                 'data_stores': data_stores,
                 'geoservers': geoservers,
                 'shp_upload_toggle_switch': shp_upload_toggle_switch,
-                'nav_button': nav_button,
+                'prev_button': prev_button,
+                'next_button': next_button,
               }
 
     return render(request, 'erfp_tool/manage_watersheds_table.html', context)
