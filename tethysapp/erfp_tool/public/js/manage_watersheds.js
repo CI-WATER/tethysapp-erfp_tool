@@ -20,20 +20,29 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
     var m_uploading_data; 
 
     /************************************************************************
-    *                  INITIALIZATION / CONSTRUCTOR
-    *************************************************************************/
-    
-    $(function() {
-        //modlule variable
+     *                    PRIVATE FUNCTION DECLARATIONS
+     *************************************************************************/
+    var initializeTableFunctions, getTablePage;
+
+
+    /************************************************************************
+     *                    PRIVATE FUNCTION IMPLEMENTATIONS
+     *************************************************************************/
+
+
+    initializeTableFunctions = function() {
         m_uploading_data = false;
         //turn the select options into select2
         $(".data-store-select").each(function() {
             $(this).select2();
-        }); 
+        });
         $(".geoserver-select").each(function() {
             $(this).select2();
         });
-    
+        // Initialize any switch elements
+        $('.bootstrap-switch').each(function() {
+            $(this).bootstrapSwitch();
+        });
         //manage on change event for geoserver select
         $(".geoserver-select").change(function() {
             var geoserver_id = $(this).val();
@@ -56,7 +65,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
         });
         //trigger change event to initialize page
         $(".geoserver-select").change();
-    
+
         //show hide elements based on shape upload toggle selection
         $('.bootstrap-switch-id-shp-upload-toggle').on('switchChange.bootstrapSwitch', function(event, state) {
             var parent_row = $(this).parent().parent();
@@ -68,9 +77,9 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                 parent_row.find('.shapefile').removeClass('hidden');
                 parent_row.find('.shapefile.upload').addClass('hidden');
             }
-            
+
         });
-    
+
         //handle the submit event
         $('.submit-update-watershed').click(function(){
             var safe_to_submit = {val: true};
@@ -94,7 +103,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             var drainage_line_kml_file = null;
             var catchment_kml_file = null;
             var gage_kml_file = null;
-    
+
             if(geoserver_id==1){
                 //kml upload
                 drainage_line_kml_file = parent_row.find('.drainage-line-kml-upload-input')[0].files[0];
@@ -120,7 +129,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                 catchment_shp_files = parent_row.find('.catchment-shp-upload-input')[0].files;
                 gage_shp_files = parent_row.find('.gage-shp-upload-input')[0].files;
             }
-        
+
             //submit if the form is ok
             if(safe_to_submit.val && !m_uploading_data) {
                 if (window.confirm("Are you sure? You will delete prediction files " +
@@ -165,9 +174,9 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                 drainage_success_message = "Watershed Data Upload Success!"
                             }
                             //needs to be outside
-                            xhr = ajax_update_database_multiple_files("submit", 
+                            xhr = ajax_update_database_multiple_files("submit",
                                                                       data,
-                                                                      drainage_success_message, 
+                                                                      drainage_success_message,
                                                                       "message_drainage_line");
 
                             //upload catchment when drainage line finishes if catchment exist
@@ -279,7 +288,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                 geoserver_catchment_layer: geoserver_catchment_layer,
                                 geoserver_gage_layer: geoserver_gage_layer,
                                 };
-                
+
                         var xhr = ajax_update_database("submit",data);
                     }
                     m_uploading_data = true;
@@ -305,9 +314,9 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             } else {
                 appendErrorMessage(safe_to_submit.error);
             }
-            
+
         });
-        
+
         //handle the submit update event
         $('.submit-delete-watershed').click(function(){
             var data = {
@@ -315,7 +324,52 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                     .find('.watershed-id').text(),
                     };
             //update database
-            deleteRowData($(this),data);
-        });       
+            var xhr = deleteRowData($(this),data);
+            if (xhr != null) {
+                xhr.done(function() {
+                    var num_watersheds_data = $('#manage_watershed_table').data('num_watersheds');
+                    var page = parseInt($('#manage_watershed_table').data('page'));
+                    $('#manage_watershed_table').data('num_watersheds', Math.max(0, parseInt(num_watersheds_data) - 1));
+                    if (parseInt($('#manage_watershed_table').data('num_watersheds')) <= 5 * page) {
+                        $('#manage_watershed_table').data('page', Math.max(0, page - 1));
+                    }
+                    getTablePage();
+                });
+            }
+        });
+
+        //pageination next and previous button update
+        $('[name="prev_button"]').click(function(){
+            var page = parseInt($('#manage_watershed_table').data('page'));
+            $('#manage_watershed_table').data('page', Math.max(0, page-1));
+            getTablePage();
+        });
+        $('[name="next_button"]').click(function(){
+            var page = parseInt($('#manage_watershed_table').data('page'));
+            $('#manage_watershed_table').data('page', Math.min(page+1,
+                                                Math.floor(parseInt($('#manage_watershed_table').data('num_watersheds')) / 5 - 0.1)));
+            getTablePage();
+        });
+    };
+
+    getTablePage = function() {
+        $.ajax({
+            url: 'table',
+            method: 'GET',
+            data: {'page': $('#manage_watershed_table').data('page')},
+            success: function(data) {
+                $("#manage_watershed_table").html(data);
+                initializeTableFunctions();
+            }
+        });
+
+    };
+    /************************************************************************
+    *                  INITIALIZATION / CONSTRUCTOR
+    *************************************************************************/
+    
+    $(function() {
+        m_uploading_data = false;
+        getTablePage();
     }); //document ready
 }()); // End of package wrapper 

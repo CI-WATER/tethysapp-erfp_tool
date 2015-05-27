@@ -4,6 +4,7 @@ import os
 #django imports
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import redirect, render 
+#from endless_pagination import utils
 
 #tethys imports
 from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
@@ -453,19 +454,35 @@ def manage_watersheds(request):
     """
     #initialize session
     session = SettingsSessionMaker()
+    num_watersheds = session.query(Watershed).count()
+    session.close()
+    context = { 'initial_page': 0, 'num_watersheds': num_watersheds}
+
+    return render(request, 'erfp_tool/manage_watersheds.html', context)
+
+@user_passes_test(user_permission_test)
+def manage_watersheds_table(request):
+    """
+    Controller for the app manage_watersheds page.
+    """
+    #initialize session
+    session = SettingsSessionMaker()
 
     # Query DB for watersheds
+    RESULTS_PER_PAGE = 5
+    page = int(request.GET.get('page'))
+
     watersheds = session.query(Watershed) \
                         .order_by(Watershed.watershed_name,
                                   Watershed.subbasin_name) \
-                        .all()
+                        .all()[(page * RESULTS_PER_PAGE):((page + 1)*RESULTS_PER_PAGE)]
 
     # Query DB for data stores
     data_stores = session.query(DataStore).all()
-              
+
     # Query DB for geoservers
     geoservers = session.query(Geoserver).all()
-    
+
     session.close()
 
     shp_upload_toggle_switch = {
@@ -476,14 +493,27 @@ def manage_watersheds(request):
                 'off_style': 'danger',
                 'initial': False,
                 }
+    nav_button = {'buttons': [
+                {'display_text' : 'Previous',
+                 'name' : 'prev_button',
+                 'type' : 'submit',
+                 'attributes': 'class=nav_button'},
+                {'display_text' : 'Next',
+                 'name' : 'next_button',
+                 'type' : 'submit',
+                 'attributes': 'class=nav_button'}
+                ],
+            }
 
     context = {
                 'watersheds': watersheds,
                 'data_stores': data_stores,
                 'geoservers': geoservers,
                 'shp_upload_toggle_switch': shp_upload_toggle_switch,
+                'nav_button': nav_button,
               }
-    return render(request, 'erfp_tool/manage_watersheds.html', context)
+
+    return render(request, 'erfp_tool/manage_watersheds_table.html', context)
 
 @user_passes_test(user_permission_test)
 def add_data_store(request):        

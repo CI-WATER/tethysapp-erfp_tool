@@ -335,5 +335,7 @@ function deleteRowData(submit_button, data) {
         }).always(function(){
             submit_button.html(submit_button_html);
         });
+        return xhr;
     }
+    return null;
 }

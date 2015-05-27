@@ -599,7 +599,7 @@ def settings_update(request):
 @user_passes_test(user_permission_test)    
 def watershed_add(request):
     """
-    Controller for ading a watershed.
+    Controller for adding a watershed.
     """
     if request.is_ajax() and request.method == 'POST':
         post_info = request.POST

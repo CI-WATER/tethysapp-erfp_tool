@@ -16,6 +16,10 @@
     height: 100%;
 }
 
+.nav_button{
+    margin: auto;
+}
+
 .sfpt-chart {
     width:100%;
 }
