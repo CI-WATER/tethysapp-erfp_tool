@@ -51,7 +51,11 @@ function checkInputWithError(input, safe_to_submit, one_parent, select_two) {
     if(data_value) {
         parent.removeClass('has-error');
         parent.find('.help-block').addClass('hidden');
-        return data_value.trim();
+        if (typeof data_value == "string") {
+            return data_value.trim();
+        } else {
+            return data_value;
+        }
     } else {
         safe_to_submit.val = false;
         parent.addClass('has-error');

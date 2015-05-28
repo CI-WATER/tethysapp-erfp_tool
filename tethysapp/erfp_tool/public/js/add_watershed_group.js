@@ -27,7 +27,7 @@ $('#submit-add-watershed-group').click(function(){
             if ('success' in data) {
                 //reset inputs
                 $('#watershed-group-name-input').val('');
-                $('#watershed_select').val('');
+                $('[name="watershed_select"]').select2('val','');
             }
         })
         .always(function() {
