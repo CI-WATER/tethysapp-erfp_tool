@@ -1,4 +1,4 @@
-#ECMWF-RAPID Flood Prediction Tool App
+#Streamflow Prediction Tool App
 *tethysapp-erfp_tool*
 
 **This app is created to run in the Teyths programming environment.
