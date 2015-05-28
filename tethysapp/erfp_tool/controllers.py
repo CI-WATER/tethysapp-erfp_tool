@@ -741,14 +741,17 @@ def manage_watershed_groups(request):
     watershed_groups = session.query(WatershedGroup)\
                                 .order_by(WatershedGroup.name) \
                                 .all()
+
     watersheds = session.query(Watershed) \
                         .order_by(Watershed.watershed_name,
                                   Watershed.subbasin_name)\
                         .all()
     
-    session.close()
+
     context = {
                 'watershed_groups': watershed_groups,
                 'watersheds' : watersheds,
               }
-    return render(request, 'erfp_tool/manage_watershed_groups.html', context)
+    page_html = render(request, 'erfp_tool/manage_watershed_groups.html', context)
+    session.close()
+    return page_html

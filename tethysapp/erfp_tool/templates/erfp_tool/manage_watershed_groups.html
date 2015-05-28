@@ -44,7 +44,7 @@
                     {% for watershed in watersheds %}
                         <option value="{{watershed.id}}"
                         {% if watershed in watershed_group.watersheds %}
-                        selected   
+                        selected="selected"
                         {% endif %}                 
                         >{{ watershed.watershed_name }} ({{watershed.subbasin_name}})</option>
                     {% endfor %}

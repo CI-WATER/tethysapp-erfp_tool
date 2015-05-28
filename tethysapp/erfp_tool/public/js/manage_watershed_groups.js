@@ -1,7 +1,7 @@
 $(document).ready(function() {
     //turn the select options into select2
     $(".watershed-select").each(function() {
-        $(this).select2();
+        $(this).select2({placeholder: "Add Watershed to Group", width: '100%'});
     });
 });
 
