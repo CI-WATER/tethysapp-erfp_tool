@@ -30,6 +30,36 @@ $(function() {
         }
     });
 }); //document ready
+//FUNCTION: Check shapefile inputs to make sure required files are attached
+function checkShapefile(shapefile, safe_to_submit) {
+    var required_extensions = ['shp', 'shx', 'prj','dbf'];
+    var accepted_extensions = [];
+    for (var i = 0; i < shapefile.length; ++i) {
+        var file_extension = shapefile[i].name.split('.').pop();
+        required_extensions.forEach(function(required_extension){
+            if (file_extension == required_extension) {
+                accepted_extensions.push(required_extension);
+                required_extensions.splice(required_extensions.indexOf(required_extension),1);
+            }
+        });
+    }
+    if(accepted_extensions.length < 4) {
+        safe_to_submit.val = false;
+        safe_to_submit.error = "Problem with shapefile.";
+        return false;
+    }
+    return true;
+}
+
+//FUNCTION: Check KML file inputs to make sure required file is there
+function checkKMLfile(kml_file, safe_to_submit) {
+    if("kml" != kml_file.name.split('.').pop()) {
+        safe_to_submit.val = false;
+        safe_to_submit.error = "Problem with KML file.";
+        return false;
+    }
+    return true;
+}
 
 //form submission check function
 function checkInputWithError(input, safe_to_submit, one_parent, select_two) {
@@ -100,6 +130,7 @@ function appendErrorMessage(error, div_id) {
     .removeClass('alert-success')
     .removeClass('alert-info')
     .removeClass('alert-warning')
+    .addClass('alert')
     .addClass('alert-danger');
  
 }
@@ -117,6 +148,7 @@ function addWarningMessage(error, div_id) {
     .removeClass('alert-success')
     .removeClass('alert-info')
     .removeClass('alert-danger')
+    .addClass('alert')
     .addClass('alert-warning');
  
 }
@@ -134,6 +166,7 @@ function addInfoMessage(message, div_id) {
     .removeClass('alert-success')
     .removeClass('alert-danger')
     .removeClass('alert-warning')
+    .addClass('alert')
     .addClass('alert-info');
  
 }
@@ -150,7 +183,8 @@ function addSuccessMessage(message, div_id) {
     .removeClass('alert-danger')
     .removeClass('alert-info')
     .removeClass('alert-warning')
-    .addClass('alert-success'); 
+    .addClass('alert')
+    .addClass('alert-success');
 }
 
 //add error message to #message div
@@ -307,6 +341,32 @@ function ajax_update_database_multiple_files(ajax_url, ajax_data, custom_message
     });
     return xhr;
 }
+
+//FUNCTION: AJAX upload of ECMWF RAPID Input
+function upload_AJAX_ECMWF_RAPID_input(watershed_id, data_store_id) {
+    var xhr_ecmwf_rapid = null;
+    var ecmwf_rapid_input_file = null;
+    if(data_store_id>1) {
+        ecmwf_rapid_input_file = $('#ecmwf-rapid-files-upload-input')[0].files[0]
+        if(ecmwf_rapid_input_file != null) {
+            appendInfoMessage("Uploading ECMWF RAPID Input Data ...",
+                              "message_ecmwf_rapid_input");
+            var data = new FormData();
+            data.append("watershed_id", watershed_id)
+            data.append("ecmwf_rapid_input_file",ecmwf_rapid_input_file);
+            xhr_ecmwf_rapid = ajax_update_database_multiple_files("upload_ecmwf_rapid",
+                                                                  data,
+                                                                  "ECMWF RAPID Input Upload Success!",
+                                                                  "message_ecmwf_rapid_input");
+            //clear input
+            xhr_ecmwf_rapid.done(function() {
+                $('#ecmwf-rapid-files-upload-input').val('');
+            });
+        }
+    }
+    return xhr_ecmwf_rapid
+}
+
 //submit row data
 function submitRowData(submit_button, data, safe_to_submit) {
     if(safe_to_submit.val) {

@@ -815,6 +815,11 @@ def watershed_ecmwf_rapid_file_upload(request):
                                                     watershed.data_store.api_key,
                                                     "ecmwf",
                                                     main_settings.app_instance_id)
+
+            #remove RAPID input files on CKAN if exists
+            if watershed.ecmwf_rapid_input_resource_id.strip():
+                data_manager.dataset_engine.delete_resource(watershed.ecmwf_rapid_input_resource_id)
+
             #upload file to CKAN
             upload_file = os.path.join(tmp_file_location, ecmwf_rapid_input_zip)
             resource_info = data_manager.upload_model_resource(upload_file, 

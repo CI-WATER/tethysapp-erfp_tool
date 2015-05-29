@@ -41,6 +41,7 @@ def home(request):
                 'display_text': 'Select Watershed(s)',
                 'name': 'watershed_select',
                 'options': watershed_list,
+                'options': watershed_list,
                 'multiple': True,
                 'placeholder': 'Select Watershed(s)',
                 }          
@@ -456,7 +457,17 @@ def manage_watersheds(request):
     session = SettingsSessionMaker()
     num_watersheds = session.query(Watershed).count()
     session.close()
-    context = { 'initial_page': 0, 'num_watersheds': num_watersheds}
+    edit_modal = {'name': 'edit_watershed_modal',
+               'title': 'Edit Watershed',
+               'message': 'Loading ...',
+               'dismiss_button': 'Nevermind',
+               'affirmative_button': 'Save Changes',
+               'width': 500}
+    context = {
+        'initial_page': 0,
+        'num_watersheds': num_watersheds,
+        'edit_modal' : edit_modal
+    }
 
     return render(request, 'erfp_tool/manage_watersheds.html', context)
 
@@ -476,12 +487,6 @@ def manage_watersheds_table(request):
                         .order_by(Watershed.watershed_name,
                                   Watershed.subbasin_name) \
                         .all()[(page * RESULTS_PER_PAGE):((page + 1)*RESULTS_PER_PAGE)]
-
-    # Query DB for data stores
-    data_stores = session.query(DataStore).all()
-
-    # Query DB for geoservers
-    geoservers = session.query(Geoserver).all()
 
     session.close()
 
@@ -509,14 +514,136 @@ def manage_watersheds_table(request):
 
     context = {
                 'watersheds': watersheds,
-                'data_stores': data_stores,
-                'geoservers': geoservers,
                 'shp_upload_toggle_switch': shp_upload_toggle_switch,
                 'prev_button': prev_button,
                 'next_button': next_button,
               }
 
     return render(request, 'erfp_tool/manage_watersheds_table.html', context)
+
+@user_passes_test(user_permission_test)
+def edit_watershed(request):
+    """
+    Controller for the app manage_watersheds page.
+    """
+    if request.method == 'GET':
+        get_info = request.GET
+        #get/check information from AJAX request
+        watershed_id = get_info.get('watershed_id')
+
+        #initialize session
+        session = SettingsSessionMaker()
+        #get desired watershed
+        #try:
+        watershed  = session.query(Watershed).get(watershed_id)
+        """
+        except ObjectDeletedError:
+            session.close()
+            return JsonResponse({ 'error': "The watershed to update does not exist." })
+        """
+        watershed_name_input = {
+                'display_text': 'Watershed Name',
+                'name': 'watershed-name-input',
+                'placeholder': 'e.g.: magdalena',
+                'icon_append':'glyphicon glyphicon-home',
+                'initial' : watershed.watershed_name,
+              }
+
+        subbasin_name_input = {
+                    'display_text': 'Subbasin Name',
+                    'name': 'subbasin-name-input',
+                    'placeholder': 'e.g.: el_banco',
+                    'icon_append':'glyphicon glyphicon-tree-deciduous',
+                    'initial' : watershed.subbasin_name,
+                  }
+
+        # Query DB for data stores
+        data_stores = session.query(DataStore).all()
+        data_store_list = []
+        for data_store in data_stores:
+            data_store_list.append(("%s (%s)" % (data_store.name, data_store.api_endpoint),
+                                     data_store.id))
+
+        data_store_select = {
+                    'display_text': 'Select a Data Store',
+                    'name': 'data-store-select',
+                    'options': data_store_list,
+                    'placeholder': 'Select a Data Store',
+                    'initial' : ["%s (%s)" % (watershed.data_store.name, watershed.data_store.api_endpoint)]
+                    }
+
+        # Query DB for geoservers
+        geoservers = session.query(Geoserver).all()
+        geoserver_list = []
+        for geoserver in geoservers:
+            geoserver_list.append(( "%s (%s)" % (geoserver.name, geoserver.url),
+                                   geoserver.id))
+
+        geoserver_select= {
+                    'display_text': 'Select a Geoserver',
+                    'name': 'geoserver-select',
+                    'options': geoserver_list,
+                    'placeholder': 'Select a Geoserver',
+                    'initial' : ["%s (%s)" % (watershed.geoserver.name, watershed.geoserver.url)]
+                    }
+
+        geoserver_drainage_line_input = {
+                    'display_text': 'Geoserver Drainage Line Layer',
+                    'name': 'geoserver-drainage-line-input',
+                    'placeholder': 'e.g.: erfp:streams',
+                    'icon_append':'glyphicon glyphicon-link',
+                    'initial' : watershed.geoserver_drainage_line_layer
+                  }
+        geoserver_catchment_input = {
+                    'display_text': 'Geoserver Catchment Layer (Optional)',
+                    'name': 'geoserver-catchment-input',
+                    'placeholder': 'e.g.: erfp:catchment',
+                    'icon_append':'glyphicon glyphicon-link',
+                    'initial' : watershed.geoserver_catchment_layer
+                  }
+        geoserver_gage_input = {
+                    'display_text': 'Geoserver Gage Layer (Optional)',
+                    'name': 'geoserver-gage-input',
+                    'placeholder': 'e.g.: erfp:gage',
+                    'icon_append':'glyphicon glyphicon-link',
+                    'initial' : watershed.geoserver_gage_layer
+                  }
+        shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
+                    'name': 'shp-upload-toggle',
+                    'on_label': 'Yes',
+                    'off_label': 'No',
+                    'on_style': 'success',
+                    'off_style': 'danger',
+                    'initial': False,
+                    }
+
+        add_button = {'buttons': [
+                                     {'display_text': 'Add Watershed',
+                                      'icon': 'glyphicon glyphicon-plus',
+                                      'style': 'success',
+                                      'name': 'submit-add-watershed',
+                                      'attributes': 'id=submit-add-watershed',
+                                      'type': 'submit'
+                                      }
+                                 ],
+                     }
+
+        context = {
+                    'watershed_name_input': watershed_name_input,
+                    'subbasin_name_input': subbasin_name_input,
+                    'data_store_select': data_store_select,
+                    'geoserver_select': geoserver_select,
+                    'geoserver_drainage_line_input': geoserver_drainage_line_input,
+                    'geoserver_catchment_input': geoserver_catchment_input,
+                    'geoserver_gage_input': geoserver_gage_input,
+                    'shp_upload_toggle_switch': shp_upload_toggle_switch,
+                    'add_button': add_button,
+                    'watershed' : watershed,
+                  }
+        page_html = render(request, 'erfp_tool/edit_watershed.html', context)
+        session.close()
+
+        return page_html
 
 @user_passes_test(user_permission_test)
 def add_data_store(request):        

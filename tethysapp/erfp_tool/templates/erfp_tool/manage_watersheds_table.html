@@ -1,98 +1,28 @@
 {% load tethys_gizmos %}
 
-<div class="table-overflow">
+<div>
     <table class="table table-striped table-condensed">
         <thead>
-            <th>Update</th>
+            <th>Edit</th>
             <th>Delete</th>
-            <th>ID</th>
             <th>Watershed Name</th>
             <th>Subbasin Name</th>
-            <th>Data Store</th>
-            <th>Geoserver</th>
-            <th>Upload To Geoserver?</th>
-            <th>Drainage Line Layer</th>
-            <th>Catchment Layer</th>
-            <th>Gage Layer</th>
+
         </thead>
         <tbody>
         {% for watershed in watersheds %}
             <tr>
-                <td class="table-button"><div class=" btn-group "><a name="submit-update-watershed" class="btn btn-warning submit-update-watershed" role="button">
-                    <span class="glyphicon glyphicon-floppy-disk"></span> Update </a>
+                <td class="table-button"><div class=" btn-group"><a name="submit-edit-watershed" class="btn btn-warning submit-edit-watershed" data-toggle="modal" data-target="#edit_watershed_modal" role="button">
+                    <span class="glyphicon glyphicon-pencil"></span> Edit </a>
                     </div>
                 </td>
-                <td class="table-button"><div class=" btn-group "><a name="submit-delete-watershed" class="btn btn-danger submit-delete-watershed" role="button">
+                <td class="table-button"><div class=" btn-group"><a name="submit-delete-watershed" class="btn btn-danger submit-delete-watershed" role="button">
                     <span class="glyphicon glyphicon-remove"></span> Delete </a>
                     </div>
                 </td>
-                <td class="watershed-id">{{watershed.id}}</td>
-                <td class="watershed-name" contenteditable>{{watershed.watershed_name}}</td>
-                <td class="subbasin-name" contenteditable>{{watershed.subbasin_name}}</td>
-                <td class="data-store" data-store-id="{{watershed.data_store_id}}">
-                    <select class="data-store-select">
-                    {% for data_store in data_stores %}
-                        <option value="{{data_store.id}}"
-                        {% if watershed.data_store_id == data_store.id %}
-                        selected
-                        {% endif %}
-                        >{{ data_store.name }} ({{data_store.api_endpoint}})</option>
-                    {% endfor %}
-                    </select>
-                </td>
-                <td class="geoserver" geoserver-id="{{watershed.geoserver_id}}">
-                    <select  class="geoserver-select">
-                    {% for geoserver in geoservers %}
-                        <option value="{{geoserver.id}}"
-                        {% if watershed.geoserver_id == geoserver.id %}
-                        selected
-                        {% endif %}
-                        >{{ geoserver.name }} ({{geoserver.url}})</option>
-                    {% endfor %}
-                    </select>
-                </td>
-                <td class="geoserver-upload"
-                    {% gizmo toggle_switch shp_upload_toggle_switch %}
-                    <p class="kml{% if watershed.geoserver_id != 1 %} hidden{% endif %}">N/A</p>
-                </td>
-                <td class="drainage-line-layer" data-kml-drainage-line-layer="{{watershed.kml_drainage_line_layer}}">
-                    <div class="form-group shapefile{% if watershed.geoserver_id == 1 %} hidden{% endif %}">
-                        <input class="geoserver-drainage-line-input" name="geoserver-drainage-line-input" type="input" value="{{watershed.geoserver_drainage_line_layer}}">
-                    </div>
-                    <div class="form-group upload kml{% if watershed.geoserver_id != 1 %} hidden{% endif %}">
-                        <input class="drainage-line-kml-upload-input" name="drainage-line-kml-upload-input" type="file" accept=".kml">
-                        <p class="help-block hidden">Must select file to submit!</p>
-                    </div>
-                    <div class="form-group shapefile upload hidden">
-                        <input class="drainage-line-shp-upload-input" name="drainage-line-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
-                    </div>
-                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.kml_drainage_line_layer}}</p>
-                </td>
-                <td class="catchment-layer" data-kml-catchment-layer="{{watershed.kml_catchment_layer}}">
-                    <div class="form-group shapefile{% if watershed.geoserver_id == 1 %} hidden{% endif %}">
-                        <input class="geoserver-catchment-input" name="geoserver-catchment-input" type="input" value="{{watershed.geoserver_catchment_layer}}">
-                    </div>
-                    <div class="form-group upload kml{% if watershed.geoserver_id != 1 %} hidden{% endif %}">
-                        <input class="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept=".kml">
-                    </div>
-                    <div class="form-group shapefile upload hidden">
-                        <input class="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
-                    </div>
-                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.kml_catchment_layer}}</p>
-                </td>
-                <td class="gage-layer" data-kml-gage-layer="{{watershed.kml_gage_layer}}">
-                    <div class="form-group shapefile{% if watershed.geoserver_id == 1 %} hidden{% endif %}">
-                        <input class="geoserver-gage-input" name="geoserver-gage-input" type="input" value="{{watershed.geoserver_gage_layer}}">
-                    </div>
-                    <div class="form-group upload kml{% if watershed.geoserver_id != 1 %} hidden{% endif %}">
-                        <input class="gage-kml-upload-input" name="gage-kml-upload-input" type="file" accept=".kml">
-                    </div>
-                    <div class="form-group shapefile upload hidden">
-                        <input class="gage-shp-upload-input" name="gage-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
-                    </div>
-                    <p class="help-block upload{% if watershed.geoserver_id != 1 %} hidden{% endif %}">Current: {{watershed.kml_gage_layer}}</p>
-                </td>
-            </tr>
+                <td class="watershed-name" data-watershed_id="{{watershed.id}}">{{watershed.watershed_name}}</td>
+                <td class="subbasin-name">{{watershed.subbasin_name}}</td>
+             </tr>
         {% endfor %}
         </tbody>
     </table>
