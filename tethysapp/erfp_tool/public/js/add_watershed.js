@@ -329,7 +329,8 @@ var ERFP_ADD_WATERSHED = (function() {
                         //when everything is finished
                         jQuery.when(xhr_ecmwf_rapid).done(function(){
                             finishReset(return_data);
-                        })
+                        });
+                        window.scrollTo(0,0);
                     })
                 }
                 m_uploading_data = true;
@@ -345,7 +346,6 @@ var ERFP_ADD_WATERSHED = (function() {
             } else {
                 appendErrorMessage("Not submitted. Please fix form errors to proceed.");
             }
-        
         });
         
         //show/hide elements based on data store selection

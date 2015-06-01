@@ -442,7 +442,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
 
     initializeTableFunctions = function() {
         m_results_per_page = 5;
-        //handle the submit event
+        //handle the submit edit event
         $('.submit-edit-watershed').off().click(function () {
             $.ajax({
                 url: 'edit',
@@ -477,6 +477,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                 });
             }
         });
+
         displayResultsText();
         if (m_results_per_page >= $('#manage_watershed_table').data('num_watersheds')) {
             $('[name="prev_button"]').addClass('hidden');
@@ -501,7 +502,13 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
         //dynamically show table results display info text on page
         var page = parseInt($('#manage_watershed_table').data('page'));
         var num_watersheds_data = $('#manage_watershed_table').data('num_watersheds');
-        var display_min = ((page + 1) * m_results_per_page) - (m_results_per_page - 1);
+        var display_min;
+        if (num_watersheds_data == 0){
+            display_min = 0
+        }
+        else{
+            display_min = ((page + 1) * m_results_per_page) - (m_results_per_page - 1);
+        }
         var display_max = Math.min(num_watersheds_data, ((page + 1) * m_results_per_page));
         $('[name="prev_button"]').removeClass('hidden');
         $('[name="next_button"]').removeClass('hidden');

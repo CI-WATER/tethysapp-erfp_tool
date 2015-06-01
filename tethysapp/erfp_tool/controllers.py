@@ -863,22 +863,56 @@ def manage_watershed_groups(request):
     """
     #initialize session
     session = SettingsSessionMaker()
+    num_watershed_groups = session.query(WatershedGroup).count();
+    session.close()
+    context = {
+                'initial_page': 0,
+                'num_watershed_groups': num_watershed_groups,
+              }
+    return render(request, 'erfp_tool/manage_watershed_groups.html', context)
+
+@user_passes_test(user_permission_test)
+def manage_watershed_groups_table(request):
+    """
+    Controller for the app manage_watershed_groups page.
+    """
+    #initialize session
+    session = SettingsSessionMaker()
+    RESULTS_PER_PAGE = 5
+    page = int(request.GET.get('page'))
 
     # Query DB for data store types
     watershed_groups = session.query(WatershedGroup)\
                                 .order_by(WatershedGroup.name) \
-                                .all()
+                                .all()[(page * RESULTS_PER_PAGE):((page + 1)*RESULTS_PER_PAGE)]
 
     watersheds = session.query(Watershed) \
                         .order_by(Watershed.watershed_name,
                                   Watershed.subbasin_name)\
                         .all()
-    
+
+
+    prev_button = {'buttons': [
+                {'display_text' : 'Previous',
+                 'name' : 'prev_button',
+                 'type' : 'submit',
+                 'attributes': 'class=nav_button'}],
+                }
+
+    next_button = {'buttons':[
+                {'display_text' : 'Next',
+                 'name' : 'next_button',
+                 'type' : 'submit',
+                 'attributes': 'class=nav_button'}],
+                }
 
     context = {
+                'prev_button' : prev_button,
+                'next_button': next_button,
                 'watershed_groups': watershed_groups,
                 'watersheds' : watersheds,
               }
-    page_html = render(request, 'erfp_tool/manage_watershed_groups.html', context)
+    table_html = render(request, 'erfp_tool/manage_watershed_groups_table.html', context)
     session.close()
-    return page_html
+
+    return table_html
