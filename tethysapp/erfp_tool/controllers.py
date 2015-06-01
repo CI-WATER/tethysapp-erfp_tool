@@ -717,23 +717,57 @@ def manage_data_stores(request):
     """
     #initialize session
     session = SettingsSessionMaker()
+    num_data_stores = session.query(DataStore).count() - 1
+    session.close()
+    context = {
+                'initial_page': 0,
+                'num_data_stores': num_data_stores,
+              }
+              
+    return render(request, 'erfp_tool/manage_data_stores.html', context)
+
+@user_passes_test(user_permission_test)
+def manage_data_stores_table(request):
+    """
+    Controller for the app manage_data_stores page.
+    """
+    #initialize session
+    session = SettingsSessionMaker()
+    RESULTS_PER_PAGE = 5
+    page = int(request.GET.get('page'))
 
     # Query DB for data store types
     data_stores = session.query(DataStore) \
                         .filter(DataStore.id>1) \
                         .order_by(DataStore.name) \
-                        .all()
+                        .all()[(page * RESULTS_PER_PAGE):((page + 1)*RESULTS_PER_PAGE)]
+
+    prev_button = {'buttons': [
+                {'display_text' : 'Previous',
+                 'name' : 'prev_button',
+                 'type' : 'submit',
+                 'attributes': 'class=nav_button'}],
+                }
+
+    next_button = {'buttons':[
+                {'display_text' : 'Next',
+                 'name' : 'next_button',
+                 'type' : 'submit',
+                 'attributes': 'class=nav_button'}],
+                }
 
     context = {
+                'prev_button' : prev_button,
+                'next_button': next_button,
                 'data_stores': data_stores,
               }
 
-    render_request = render(request, 'erfp_tool/manage_data_stores.html', context)
+    table_html = render(request, 'erfp_tool/manage_data_stores_table.html', context)
     #in order to close the session, the request needed to be rendered first
     session.close()
-              
-    return render_request
-    
+
+    return table_html
+
 @user_passes_test(user_permission_test)
 def add_geoserver(request):        
     """
