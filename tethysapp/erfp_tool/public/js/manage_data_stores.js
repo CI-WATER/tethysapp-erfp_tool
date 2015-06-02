@@ -74,26 +74,6 @@ var ERFP_MANAGE_DATA_STORES = (function() {
             }
         });
 
-        //handle the submit delete event
-        $('.submit-delete-watershed-group').off().click(function(){
-            var data = {
-                watershed_group_id: $(this).parent().parent().parent().find('.watershed-group-id').text()
-            };
-            //update database
-            var xhr = deleteRowData($(this), data);
-            if (xhr != null) {
-                xhr.done(function () {
-                    var num_data_stores_data = $('#manage_data_stores_table').data('num_data_stores');
-                    var page = parseInt($('#manage_data_stores_table').data('page'));
-                    $('#manage_data_stores_table').data('num_data_stores', Math.max(0, parseInt(num_data_stores_data) - 1));
-                    if (parseInt($('#manage_data_stores_table').data('num_data_stores')) <= m_results_per_page * page) {
-                        $('#manage_data_stores_table').data('page', Math.max(0, page - 1));
-                    }
-                    getTablePage();
-                });
-            }
-        });
-
         displayResultsText();
         if (m_results_per_page >= $('#manage_data_stores_table').data('num_data_stores')) {
             $('[name="prev_button"]').addClass('hidden');
@@ -134,7 +114,6 @@ var ERFP_MANAGE_DATA_STORES = (function() {
         } else if (page == Math.floor(num_data_stores_data / m_results_per_page - 0.1)) {
             $('[name="next_button"]').addClass('hidden');
         }
-        console.log(num_data_stores_data);
         $('#display-info').append('<div style="text-align: center">Displaying Results '
                                     + display_min + ' - ' + display_max + ' of ' + num_data_stores_data + '</div>');
     };

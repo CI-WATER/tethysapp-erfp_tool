@@ -821,21 +821,55 @@ def manage_geoservers(request):
     """
     #initialize session
     session = SettingsSessionMaker()
+    num_geoservers = session.query(Geoserver).count() - 1
+    session.close()
+
+    context = {
+                'initial_page': 0,
+                'num_geoservers': num_geoservers,
+              }
+
+    return render(request, 'erfp_tool/manage_geoservers.html', context)
+
+@user_passes_test(user_permission_test)
+def manage_geoservers_table(request):
+    """
+    Controller for the app manage_geoservers page.
+    """
+    #initialize session
+    session = SettingsSessionMaker()
+    RESULTS_PER_PAGE = 5
+    page = int(request.GET.get('page'))
 
     # Query DB for data store types
     geoservers = session.query(Geoserver)\
                         .filter(Geoserver.id>1) \
                         .order_by(Geoserver.name, Geoserver.url) \
-                        .all()
-    
+                        .all()[(page * RESULTS_PER_PAGE):((page + 1)*RESULTS_PER_PAGE)]
+
+    prev_button = {'buttons': [
+                {'display_text' : 'Previous',
+                 'name' : 'prev_button',
+                 'type' : 'submit',
+                 'attributes': 'class=nav_button'}],
+                }
+
+    next_button = {'buttons':[
+                {'display_text' : 'Next',
+                 'name' : 'next_button',
+                 'type' : 'submit',
+                 'attributes': 'class=nav_button'}],
+                }
 
     context = {
+                'prev_button' : prev_button,
+                'next_button': next_button,
                 'geoservers': geoservers,
               }
 
     session.close()
 
-    return render(request, 'erfp_tool/manage_geoservers.html', context)
+    return render(request, 'erfp_tool/manage_geoservers_table.html', context)
 
 @user_passes_test(user_permission_test)
 def add_watershed_group(request):        
@@ -897,7 +931,7 @@ def manage_watershed_groups(request):
     """
     #initialize session
     session = SettingsSessionMaker()
-    num_watershed_groups = session.query(WatershedGroup).count();
+    num_watershed_groups = session.query(WatershedGroup).count()
     session.close()
     context = {
                 'initial_page': 0,
