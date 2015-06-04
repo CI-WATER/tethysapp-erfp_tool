@@ -57,3 +57,13 @@ $ python /usr/lib/tethys/src/manage.py collectstatic
 Restart the Apache Server:
 See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site-and-restart-apache
 
+#Troubleshooting
+If you see this error:
+ImportError: No module named packages.urllib3.poolmanager
+```
+$ pip install pip --upgrade
+```
+Restart your terminal
+```
+$ pip install requests --upgrade
+```
