@@ -38,6 +38,9 @@ def delete_old_watershed_prediction_files(main_folder_name,
     """
     Removes old watershed prediction files from system
     """
+    #TODO: Make sure that you don't delete if another watershed is using the
+    #same predictions
+    
     #remove watersheds subbsasins folders/files
     if main_folder_name and sub_folder_name:
         try:
