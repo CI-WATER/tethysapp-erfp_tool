@@ -35,6 +35,16 @@ var ERFP_MANAGE_DATA_STORES = (function() {
         
         //handle the submit update event
         $('.submit-update-data-store').off().click(function(){
+            //scroll back to top
+            window.scrollTo(0,0);
+            //clear messages
+            $('#message').addClass('hidden');
+            $('#message').empty()
+                .addClass('hidden')
+                .removeClass('alert-success')
+                .removeClass('alert-info')
+                .removeClass('alert-warning')
+                .removeClass('alert-danger');
             var parent_row = $(this).parent().parent().parent();
             //check data store input
             var safe_to_submit = {val: true, error:""};
@@ -50,7 +60,12 @@ var ERFP_MANAGE_DATA_STORES = (function() {
                     data_store_api_key: data_store_api_key
                     };
             //update database
-            submitRowData($(this), data, safe_to_submit); 
+            var xhr = submitRowData($(this), data, safe_to_submit); 
+            xhr.done(function(data) {
+                if ('success' in data) {
+                    addSuccessMessage("Data Store Successfully Updated!");
+                }
+            });
         });
         
         //handle the submit delete event
@@ -62,14 +77,17 @@ var ERFP_MANAGE_DATA_STORES = (function() {
             //update database
             var xhr = deleteRowData($(this), data);
             if (xhr != null) {
-                xhr.done(function () {
-                    var num_data_stores_data = $('#manage_data_stores_table').data('num_data_stores');
-                    var page = parseInt($('#manage_data_stores_table').data('page'));
-                    $('#manage_data_stores_table').data('num_data_stores', Math.max(0, parseInt(num_data_stores_data) - 1));
-                    if (parseInt($('#manage_data_stores_table').data('num_data_stores')) <= m_results_per_page * page) {
-                        $('#manage_data_stores_table').data('page', Math.max(0, page - 1));
+                xhr.done(function (data) {
+                    if('success' in data) {
+                        var num_data_stores_data = $('#manage_data_stores_table').data('num_data_stores');
+                        var page = parseInt($('#manage_data_stores_table').data('page'));
+                        $('#manage_data_stores_table').data('num_data_stores', Math.max(0, parseInt(num_data_stores_data) - 1));
+                        if (parseInt($('#manage_data_stores_table').data('num_data_stores')) <= m_results_per_page * page) {
+                            $('#manage_data_stores_table').data('page', Math.max(0, page - 1));
+                        }
+                        getTablePage();
+                        addSuccessMessage("Data Store Successfully Deleted!");
                     }
-                    getTablePage();
                 });
             }
         });

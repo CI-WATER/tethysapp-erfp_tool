@@ -6,6 +6,17 @@ $('#api-key-input').parent().parent().append(help_html);
 
 //handle the submit event
 $('#submit-changes-settings').click(function(){
+     //scroll back to top
+    window.scrollTo(0,0);
+     //clear messages
+    $('#message').addClass('hidden');
+    //clear message div
+    $('#message').empty()
+        .addClass('hidden')
+        .removeClass('alert-success')
+        .removeClass('alert-info')
+        .removeClass('alert-warning')
+        .removeClass('alert-danger');
     var safe_to_submit = {val: true};
 
     var base_layer_id = checkInputWithError($('#base-layer-select'),safe_to_submit, true, true);

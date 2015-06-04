@@ -30,6 +30,7 @@ $ pip install netCDF4
 Clone the app into the directory you want:
 ```
 $ git clone https://github.com/CI-WATER/tethysapp-erfp_tool.git
+$ cd tethysapp-erfp_tool
 $ gii submodule init
 $ git submodule update
 ```
@@ -43,3 +44,26 @@ $ python /usr/lib/tethys/src/manage.py collectstatic
 ```
 Restart the Apache Server:
 See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site-and-restart-apache
+
+##Updating the App:
+Update the local repository and Tethys Platform instance.
+```
+$ cd tethysapp-erfp_tool
+$ gii pull
+$ git submodule update
+$ tethys syncstores erfp_tool
+$ python /usr/lib/tethys/src/manage.py collectstatic
+```
+Restart the Apache Server:
+See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site-and-restart-apache
+
+#Troubleshooting
+If you see this error:
+ImportError: No module named packages.urllib3.poolmanager
+```
+$ pip install pip --upgrade
+```
+Restart your terminal
+```
+$ pip install requests --upgrade
+```

@@ -32,15 +32,31 @@ def rename_shapefile_input_files(shp_files, new_file_name):
         file_name, file_extension = os.path.splitext(shp_file.name)
         shp_file.name = "%s%s" % (new_file_name, file_extension)
     
-def delete_old_watershed_prediction_files(folder_name, local_prediction_files_location):
+def delete_old_watershed_prediction_files(main_folder_name, 
+                                          sub_folder_name, 
+                                          local_prediction_files_location):
     """
     Removes old watershed prediction files from system
     """
-    try:
-        rmtree(os.path.join(local_prediction_files_location,
-                                           folder_name))
-    except OSError:
-        pass
+    #TODO: Make sure that you don't delete if another watershed is using the
+    #same predictions
+    
+    #remove watersheds subbsasins folders/files
+    if main_folder_name and sub_folder_name:
+        try:
+            rmtree(os.path.join(local_prediction_files_location, 
+                                main_folder_name,
+                                sub_folder_name))
+        except OSError:
+            pass
+        
+        #remove watershed folder if no subbasins exist
+        try:
+            os.rmdir(os.path.join(local_prediction_files_location, 
+                                  main_folder_name))
+        except OSError:
+            pass
+              
 
 def delete_old_watershed_kml_files(watershed):
     """
@@ -101,7 +117,8 @@ def delete_old_watershed_geoserver_files(watershed):
     if watershed.geoserver_gage_uploaded:
         purge_remove_geoserver_layer(watershed.geoserver_gage_layer, engine) 
 
-def delete_old_watershed_files(watershed, local_prediction_files_location):
+def delete_old_watershed_files(watershed, ecmwf_local_prediction_files_location,
+                               wrf_hydro_local_prediction_files_location):
     """
     Removes old watershed files from system
     """
@@ -109,12 +126,17 @@ def delete_old_watershed_files(watershed, local_prediction_files_location):
     delete_old_watershed_kml_files(watershed)
     #remove old geoserver files
     delete_old_watershed_geoserver_files(watershed)
-    #remove old prediction files
-    delete_old_watershed_prediction_files(watershed.folder_name, 
-                                          local_prediction_files_location)
+    #remove old ECMWF prediction files
+    delete_old_watershed_prediction_files(watershed.ecmwf_data_store_watershed_name,
+                                          watershed.ecmwf_data_store_subbasin_name,
+                                          ecmwf_local_prediction_files_location)
+    #remove old WRF-Hydro prediction files
+    delete_old_watershed_prediction_files(watershed.wrf_hydro_data_store_watershed_name,
+                                          watershed.wrf_hydro_data_store_subbasin_name,
+                                          wrf_hydro_local_prediction_files_location)
     #remove RAPID input files on CKAN
     data_store = watershed.data_store
-    if 'ckan' == data_store.data_store_type.code_name:
+    if 'ckan' == data_store.data_store_type.code_name and watershed.ecmwf_rapid_input_resource_id:
         #get dataset managers
         data_manager = CKANDatasetManager(data_store.api_endpoint,
                                           data_store.api_key,

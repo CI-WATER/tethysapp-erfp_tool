@@ -6,6 +6,16 @@ $('#watershed_select').parent().append(help_html);
 
 //handle the submit event
 $('#submit-add-watershed-group').click(function(){
+    //scroll back to top
+    window.scrollTo(0,0);
+    //clear messages
+    $('#message').addClass('hidden');
+    $('#message').empty()
+        .addClass('hidden')
+        .removeClass('alert-success')
+        .removeClass('alert-info')
+        .removeClass('alert-warning')
+        .removeClass('alert-danger');
     //check data store input
     var safe_to_submit = {val: true};
     var watershed_group_name = checkInputWithError($('#watershed-group-name-input'),safe_to_submit);
@@ -28,6 +38,7 @@ $('#submit-add-watershed-group').click(function(){
                 //reset inputs
                 $('#watershed-group-name-input').val('');
                 $('[name="watershed_select"]').select2('val','');
+                addSuccessMessage("Watershed Group Update Complete!");
             }
         })
         .always(function() {

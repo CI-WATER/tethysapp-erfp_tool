@@ -9,7 +9,17 @@ jQuery(function() {
     
     //handle the submit event
     $('#submit-add-geoserver').click(function(){
-        //check data store input
+        //scroll back to top
+        window.scrollTo(0,0);
+        //clear messages
+        $('#message').addClass('hidden');
+        $('#message').empty()
+            .addClass('hidden')
+            .removeClass('alert-success')
+            .removeClass('alert-info')
+            .removeClass('alert-warning')
+            .removeClass('alert-danger');
+        //check geoserver input
         var safe_to_submit = {val: true};
         var geoserver_name = checkInputWithError($('#geoserver-name-input'),safe_to_submit);
         var geoserver_url = checkInputWithError($('#geoserver-url-input'),safe_to_submit);
@@ -30,7 +40,7 @@ jQuery(function() {
                     geoserver_password: geoserver_password,
                     };
     
-            var xhr = ajax_update_database("submit",data);
+            var xhr = ajax_update_database("submit",data,"geoserver_info");
             xhr.done(function(data) {
                 if ('success' in data) {
                     //reset inputs
@@ -38,6 +48,7 @@ jQuery(function() {
                     $('#geoserver-url-input').val('');
                     $('#geoserver-username-input').val('');
                     $('#geoserver-password-input').val('');
+                    addSuccessMessage("Geoserver Add Success!");
                 }
             })
             .always(function() {

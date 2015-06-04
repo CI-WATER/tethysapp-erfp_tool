@@ -39,6 +39,16 @@ var ERFP_MANAGE_WATERSHED_GROUPS = (function() {
 
         //handle the submit update event
         $('.submit-update-watershed-group').off().click(function(){
+            //scroll back to top
+            window.scrollTo(0,0);
+            //clear messages
+            $('#message').addClass('hidden');
+            $('#message').empty()
+                .addClass('hidden')
+                .removeClass('alert-success')
+                .removeClass('alert-info')
+                .removeClass('alert-warning')
+                .removeClass('alert-danger');
             var safe_to_submit = {val: true, error:""};
             var parent_row = $(this).parent().parent().parent();
             //check data store input
@@ -52,7 +62,12 @@ var ERFP_MANAGE_WATERSHED_GROUPS = (function() {
                     watershed_group_watershed_ids: watershed_group_watershed_ids
                     };
             //update database
-            submitRowData($(this), data, safe_to_submit);
+            var xhr = submitRowData($(this), data, safe_to_submit);
+            xhr.done(function(data){
+                if ('success' in data) {
+                    addSuccessMessage("Watershed Group Update Complete!");
+                }
+            });
         });
 
         //handle the submit delete event
@@ -63,14 +78,17 @@ var ERFP_MANAGE_WATERSHED_GROUPS = (function() {
             //update database
             var xhr = deleteRowData($(this), data);
             if (xhr != null) {
-                xhr.done(function () {
-                    var num_watershed_groups_data = $('#manage_watershed_groups_table').data('num_watershed_groups');
-                    var page = parseInt($('#manage_watershed_groups_table').data('page'));
-                    $('#manage_watershed_groups_table').data('num_watershed_groups', Math.max(0, parseInt(num_watershed_groups_data) - 1));
-                    if (parseInt($('#manage_watershed_groups_table').data('num_watershed_groups')) <= m_results_per_page * page) {
-                        $('#manage_watershed_groups_table').data('page', Math.max(0, page - 1));
+                xhr.done(function (data) {
+                    if ('success' in data) {
+                        var num_watershed_groups_data = $('#manage_watershed_groups_table').data('num_watershed_groups');
+                        var page = parseInt($('#manage_watershed_groups_table').data('page'));
+                        $('#manage_watershed_groups_table').data('num_watershed_groups', Math.max(0, parseInt(num_watershed_groups_data) - 1));
+                        if (parseInt($('#manage_watershed_groups_table').data('num_watershed_groups')) <= m_results_per_page * page) {
+                            $('#manage_watershed_groups_table').data('page', Math.max(0, page - 1));
+                        }
+                        addSuccessMessage("Watershed Group Successfully Deleted!");
+                        getTablePage();
                     }
-                    getTablePage();
                 });
             }
         });

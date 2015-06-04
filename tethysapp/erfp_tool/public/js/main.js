@@ -53,6 +53,11 @@ function checkShapefile(shapefile, safe_to_submit) {
 
 //FUNCTION: Check KML file inputs to make sure required file is there
 function checkKMLfile(kml_file, safe_to_submit) {
+    if(typeof kml_file == 'undefined') {
+        safe_to_submit.val = false;
+        safe_to_submit.error = "No KML file selected.";
+        return false;
+    }
     if("kml" != kml_file.name.split('.').pop()) {
         safe_to_submit.val = false;
         safe_to_submit.error = "Problem with KML file.";
@@ -267,19 +272,20 @@ function ajax_update_database(ajax_url, ajax_data, div_id) {
         type: "POST",
         url: ajax_url,
         dataType: "json",
-        data: ajax_data,
-        success: function(data) {
-            if("success" in data) {
-                addSuccessMessage(data['success'], div_id);
-            } else {
-                appendErrorMessage(data['error'], div_id);
-            }
-        }, 
-        error: function(xhr, status, error) {
-            appendErrorMessage(error, div_id);
-            console.log(xhr.responseText);
-        },
+        data: ajax_data
+    })
+    xhr.done(function(data) {
+        if("success" in data) {
+            appendSuccessMessage(data['success'], div_id);
+        } else {
+            appendErrorMessage(data['error'], div_id);
+        }
+    }) 
+    .fail(function(xhr, status, error) {
+        appendErrorMessage(error, div_id);
+        console.log(xhr.responseText);
     });
+
     return xhr;
 }
 
@@ -298,17 +304,17 @@ function ajax_update_database_with_file(ajax_url, ajax_data, div_id) {
         dataType: "json",
         processData: false, // Don't process the files
         contentType: false, // Set content type to false as jQuery will tell the server its a query string request
-        success: function(data) {
-            if("success" in data) {
-                addSuccessMessage(data['success'], div_id);
-            } else {
-                appendErrorMessage(data['error'], div_id);
-            }
-        }, 
-        error: function(xhr, status, error) {
+    })
+    xhr.done(function(data) {
+        if("success" in data) {
+            addSuccessMessage(data['success'], div_id);
+        } else {
+            appendErrorMessage(data['error'], div_id);
+        }
+    })
+    .fail(function(xhr, status, error) {
             appendErrorMessage(error, div_id);
             console.log(xhr.responseText);
-        },
     });
     return xhr;
 }
@@ -327,7 +333,7 @@ function ajax_update_database_multiple_files(ajax_url, ajax_data, custom_message
         dataType: "json",
         processData: false, // Don't process the files
         contentType: false, // Set content type to false as jQuery will tell the server it's a query string request
-    });
+    })
     xhr.done(function(data){
         if("success" in data) {
             addSuccessMessage(custom_message, div_id);
@@ -378,8 +384,10 @@ function submitRowData(submit_button, data, safe_to_submit) {
         xhr.always(function(){
             submit_button.html(submit_button_html);
         });
+        return xhr;
     } else {
         appendErrorMessage(safe_to_submit.error);
+        return null;
     }
 }
 //delete row data

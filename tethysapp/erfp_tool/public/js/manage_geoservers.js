@@ -35,9 +35,20 @@ var ERFP_MANAGE_GEOSERVERS = (function() {
 
         //handle the submit update event
         $('.submit-update-geoserver').off().click(function(){
+            //scroll back to top
+            window.scrollTo(0,0);
+            //clear messages
+            $('#message').addClass('hidden');
+            $('#message').empty()
+                .addClass('hidden')
+                .removeClass('alert-success')
+                .removeClass('alert-info')
+                .removeClass('alert-warning')
+                .removeClass('alert-danger');
+
+            //check data store input
             var safe_to_submit = {val: true, error:""};
             var parent_row = $(this).parent().parent().parent();
-            //check data store input
             var geoserver_id = parent_row.find('.geoserver-id').text();
             var geoserver_name = checkTableCellInputWithError(parent_row.find('.geoserver-name'),safe_to_submit);
             var geoserver_url = checkTableCellInputWithError(parent_row.find('.geoserver-url'),safe_to_submit);
@@ -53,7 +64,14 @@ var ERFP_MANAGE_GEOSERVERS = (function() {
                     };
 
             //update database
-            submitRowData($(this), data, safe_to_submit);
+            var xhr = submitRowData($(this), data, safe_to_submit);
+            if (xhr != null) {
+                xhr.done(function (data) {
+                    if ('success' in data) {
+                        addSuccessMessage("Geoserver Update Success!");
+                    }
+                });
+            }
         });
 
         //handle the submit delete event
@@ -65,14 +83,17 @@ var ERFP_MANAGE_GEOSERVERS = (function() {
             //update database
             var xhr = deleteRowData($(this), data);
             if (xhr != null) {
-                xhr.done(function () {
-                    var num_geoservers_data = $('#manage_geoservers_table').data('num_geoservers');
-                    var page = parseInt($('#manage_geoservers_table').data('page'));
-                    $('#manage_geoservers_table').data('num_geoservers', Math.max(0, parseInt(num_geoservers_data) - 1));
-                    if (parseInt($('#manage_geoservers_table').data('num_geoservers')) <= m_results_per_page * page) {
-                        $('#manage_geoservers_table').data('page', Math.max(0, page - 1));
+                xhr.done(function (data) {
+                    if ('success' in data) {
+                        addSuccessMessage("Geoserver Successfully Deleted!");
+                        var num_geoservers_data = $('#manage_geoservers_table').data('num_geoservers');
+                        var page = parseInt($('#manage_geoservers_table').data('page'));
+                        $('#manage_geoservers_table').data('num_geoservers', Math.max(0, parseInt(num_geoservers_data) - 1));
+                        if (parseInt($('#manage_geoservers_table').data('num_geoservers')) <= m_results_per_page * page) {
+                            $('#manage_geoservers_table').data('page', Math.max(0, page - 1));
+                        }
+                        getTablePage();
                     }
-                    getTablePage();
                 });
             }
         });

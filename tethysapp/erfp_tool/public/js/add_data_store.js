@@ -10,7 +10,16 @@ $('#data-store-api-key-input').parent().parent().append(help_html);
 
 //handle the submit event
 $('#submit-add-data-store').click(function(){
-
+    //scroll back to top
+    window.scrollTo(0,0);
+    //clear messages
+    $('#message').addClass('hidden');
+    $('#message').empty()
+        .addClass('hidden')
+        .removeClass('alert-success')
+        .removeClass('alert-info')
+        .removeClass('alert-warning')
+        .removeClass('alert-danger');
     //check data store input
     var safe_to_submit = {val: true};
     var data_store_name = checkInputWithError($('#data-store-name-input'),safe_to_submit);
@@ -40,6 +49,7 @@ $('#submit-add-data-store').click(function(){
                 $('#data-store-type-select').select2('val','2');
                 $('#data-store-endpoint-input').val('');
                 $('#data-store-api-key-input').val('');
+                addSuccessMessage("Data Store Successfully Added!");
             }
         })
         .always(function() {
