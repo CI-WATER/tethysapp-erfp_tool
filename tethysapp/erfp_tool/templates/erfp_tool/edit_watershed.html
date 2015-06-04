@@ -5,11 +5,18 @@
 {% gizmo text_input subbasin_name_input %}
 <h3>Data Storage Input</h3>
 {% gizmo select_input data_store_select %}
-<div class="form-group rapid-input{% if watershed.data_store_id == 1 %} hidden{% endif %}">
+<h5 class="data_store hidden">ECMWF Data Storage Input</h5>
+{% gizmo text_input ecmwf_data_store_watershed_name_input %}
+{% gizmo text_input ecmwf_data_store_subbasin_name_input %}
+<div class="form-group data_store{% if watershed.data_store_id == 1 %} hidden{% endif %}">
     <label class="control-label" for="ecmwf-rapid-files-upload-input">ECMWF RAPID Input Files (Optional)</label>
     <input id="ecmwf-rapid-files-upload-input" name="ecmwf-rapid-files-upload-input" type="file" accept=".zip">
     <p class="help-block">These files are used on the computatonal node to run the simulation.</p>
 </div>
+<h5 class="data_store hidden">WRF-Hydro Data Storage Input</h5>
+{% gizmo text_input wrf_hydro_data_store_watershed_name_input %}
+{% gizmo text_input wrf_hydro_data_store_subbasin_name_input %}
+
 
 <h3>Geoserver Location</h3>
 {% gizmo select_input geoserver_select %}

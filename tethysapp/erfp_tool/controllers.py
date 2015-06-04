@@ -353,16 +353,16 @@ def add_watershed(request):
     session = SettingsSessionMaker()
 
     watershed_name_input = {
-                'display_text': 'Watershed Name',
+                'display_text': 'Watershed Display Name',
                 'name': 'watershed-name-input',
-                'placeholder': 'e.g.: magdalena',
+                'placeholder': 'e.g.: Magdalena',
                 'icon_append':'glyphicon glyphicon-home',
               }
               
     subbasin_name_input = {
-                'display_text': 'Subbasin Name',
+                'display_text': 'Subbasin Display Name',
                 'name': 'subbasin-name-input',
-                'placeholder': 'e.g.: el_banco',
+                'placeholder': 'e.g.: El Banco',
                 'icon_append':'glyphicon glyphicon-tree-deciduous',
               }
               
@@ -380,6 +380,34 @@ def add_watershed(request):
                 'placeholder': 'Select a Data Store',
                 }          
               
+    ecmwf_data_store_watershed_name_input = {
+                'display_text': 'ECMWF Watershed Data Store Name',
+                'name': 'ecmwf-data-store-watershed-name-input',
+                'placeholder': 'e.g.: magdalena',
+                'icon_append':'glyphicon glyphicon-home',
+              }
+              
+    ecmwf_data_store_subbasin_name_input = {
+                'display_text': 'ECMWF Subbasin Data Store Name',
+                'name': 'ecmwf-data-store-subbasin-name-input',
+                'placeholder': 'e.g.: el_banco',
+                'icon_append':'glyphicon glyphicon-tree-deciduous',
+              }
+
+    wrf_hydro_data_store_watershed_name_input = {
+                'display_text': 'WRF-Hydro Watershed Data Store Name',
+                'name': 'wrf-hydro-data-store-watershed-name-input',
+                'placeholder': 'e.g.: nfie_wrfhydro_conus',
+                'icon_append':'glyphicon glyphicon-home',
+              }
+              
+    wrf_hydro_data_store_subbasin_name_input = {
+                'display_text': 'WRF-Hydro Subbasin Data Store Name',
+                'name': 'wrf-hydro-data-store-subbasin-name-input',
+                'placeholder': 'e.g.: nfie_wrfhydro_conus',
+                'icon_append':'glyphicon glyphicon-tree-deciduous',
+              }
+
     # Query DB for geoservers
     geoservers = session.query(Geoserver).all()
     geoserver_list = []
@@ -393,7 +421,7 @@ def add_watershed(request):
                 'name': 'geoserver-select',
                 'options': geoserver_list,
                 'placeholder': 'Select a Geoserver',
-                }
+              }
                 
     geoserver_drainage_line_input = {
                 'display_text': 'Geoserver Drainage Line Layer',
@@ -401,18 +429,21 @@ def add_watershed(request):
                 'placeholder': 'e.g.: erfp:streams',
                 'icon_append':'glyphicon glyphicon-link',
               }
+              
     geoserver_catchment_input = {
                 'display_text': 'Geoserver Catchment Layer',
                 'name': 'geoserver-catchment-input',
                 'placeholder': 'e.g.: erfp:catchment',
                 'icon_append':'glyphicon glyphicon-link',
               }
+              
     geoserver_gage_input = {
                 'display_text': 'Geoserver Gage Layer',
                 'name': 'geoserver-gage-input',
                 'placeholder': 'e.g.: erfp:gage',
                 'icon_append':'glyphicon glyphicon-link',
               }
+              
     shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
                 'name': 'shp-upload-toggle',
                 'on_label': 'Yes',
@@ -420,7 +451,7 @@ def add_watershed(request):
                 'on_style': 'success',
                 'off_style': 'danger',
                 'initial': True,
-                }
+              }
 
     add_button = {'buttons': [
                                  {'display_text': 'Add Watershed',
@@ -437,6 +468,10 @@ def add_watershed(request):
                 'watershed_name_input': watershed_name_input,
                 'subbasin_name_input': subbasin_name_input,
                 'data_store_select': data_store_select,
+                'ecmwf_data_store_watershed_name_input': ecmwf_data_store_watershed_name_input,
+                'ecmwf_data_store_subbasin_name_input': ecmwf_data_store_subbasin_name_input,
+                'wrf_hydro_data_store_watershed_name_input': wrf_hydro_data_store_watershed_name_input,
+                'wrf_hydro_data_store_subbasin_name_input': wrf_hydro_data_store_subbasin_name_input,
                 'geoserver_select': geoserver_select,
                 'geoserver_drainage_line_input': geoserver_drainage_line_input,
                 'geoserver_catchment_input': geoserver_catchment_input,
@@ -572,7 +607,38 @@ def edit_watershed(request):
                     'initial' : ["%s (%s)" % (watershed.data_store.name, watershed.data_store.api_endpoint)]
                     }
 
-        # Query DB for geoservers
+        ecmwf_data_store_watershed_name_input = {
+                    'display_text': 'ECMWF Watershed Data Store Name',
+                    'name': 'ecmwf-data-store-watershed-name-input',
+                    'placeholder': 'e.g.: magdalena',
+                    'icon_append':'glyphicon glyphicon-home',
+                    'initial' : watershed.ecmwf_data_store_watershed_name,
+                  }
+                  
+        ecmwf_data_store_subbasin_name_input = {
+                    'display_text': 'ECMWF Subbasin Data Store Name',
+                    'name': 'ecmwf-data-store-subbasin-name-input',
+                    'placeholder': 'e.g.: el_banco',
+                    'icon_append':'glyphicon glyphicon-tree-deciduous',
+                    'initial' : watershed.ecmwf_data_store_subbasin_name,
+                  }
+    
+        wrf_hydro_data_store_watershed_name_input = {
+                    'display_text': 'WRF-Hydro Watershed Data Store Name',
+                    'name': 'wrf-hydro-data-store-watershed-name-input',
+                    'placeholder': 'e.g.: magdalena',
+                    'icon_append':'glyphicon glyphicon-home',
+                    'initial' : watershed.wrf_hydro_data_store_watershed_name,
+                  }
+                  
+        wrf_hydro_data_store_subbasin_name_input = {
+                    'display_text': 'WRF-Hydro Subbasin Data Store Name',
+                    'name': 'wrf-hydro-data-store-subbasin-name-input',
+                    'placeholder': 'e.g.: el_banco',
+                    'icon_append':'glyphicon glyphicon-tree-deciduous',
+                    'initial' : watershed.wrf_hydro_data_store_subbasin_name,
+                  }
+       # Query DB for geoservers
         geoservers = session.query(Geoserver).all()
         geoserver_list = []
         for geoserver in geoservers:
@@ -632,6 +698,10 @@ def edit_watershed(request):
                     'watershed_name_input': watershed_name_input,
                     'subbasin_name_input': subbasin_name_input,
                     'data_store_select': data_store_select,
+                    'ecmwf_data_store_watershed_name_input': ecmwf_data_store_watershed_name_input,
+                    'ecmwf_data_store_subbasin_name_input': ecmwf_data_store_subbasin_name_input,
+                    'wrf_hydro_data_store_watershed_name_input': wrf_hydro_data_store_watershed_name_input,
+                    'wrf_hydro_data_store_subbasin_name_input': wrf_hydro_data_store_subbasin_name_input,
                     'geoserver_select': geoserver_select,
                     'geoserver_drainage_line_input': geoserver_drainage_line_input,
                     'geoserver_catchment_input': geoserver_catchment_input,

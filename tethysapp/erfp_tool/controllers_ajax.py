@@ -14,7 +14,8 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
 
 #tethys imports
-from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
+from tethys_dataset_services.engines import (GeoServerSpatialDatasetEngine, 
+                                             CkanDatasetEngine)
 
 #local imports
 from functions import (check_shapefile_input_files,
@@ -70,6 +71,17 @@ def data_store_add(request):
             .count()
         if(num_similar_data_stores > 0):
             return JsonResponse({ 'error': "A data store with the same name or api endpoint exists." })
+            
+        #check if data store info is valid
+        try:
+            dataset_engine = CkanDatasetEngine(endpoint=data_store_endpoint, 
+                                               apikey=data_store_api_key)    
+            result = dataset_engine.list_datasets()
+            if not result or "success" not in result:
+                return JsonResponse({ 'error': "Data Store Credentials Invalid"})
+        except Exception, ex:
+            return JsonResponse({ 'error': "%s" % ex })
+        
             
         #add Data Store
         session.add(DataStore(data_store_name, data_store_type_id, data_store_endpoint, data_store_api_key))
@@ -134,6 +146,17 @@ def data_store_update(request):
             if(num_similar_data_stores > 0):
                 session.close()
                 return JsonResponse({ 'error': "A data store with the same name or api endpoint exists." })
+
+            #check if data store info is valid
+            try:
+                dataset_engine = CkanDatasetEngine(endpoint=data_store_api_endpoint, 
+                                                   apikey=data_store_api_key)    
+                result = dataset_engine.list_datasets()
+                if not result or "success" not in result:
+                    return JsonResponse({ 'error': "Data store credentials invalid."})
+            except Exception, ex:
+                return JsonResponse({ 'error': "%s" % ex })
+                
             #update data store
             data_store  = session.query(DataStore).get(data_store_id)
             data_store.name = data_store_name
@@ -181,7 +204,16 @@ def geoserver_add(request):
         if(num_similar_geoservers > 0):
             session.close()
             return JsonResponse({ 'error': "A geoserver with the same name or url exists." })
-            
+        #check geoserver
+        try:
+            engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver_url.strip(), 
+                       username=geoserver_username.strip(),
+                       password=geoserver_password.strip())
+            resource_workspace = 'erfp'
+            engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+        except Exception, ex:
+            return JsonResponse({'error' : "GeoServer Error: %s" % ex})
+  
         #add Data Store
         session.add(Geoserver(geoserver_name.strip(), geoserver_url.strip(),
                               geoserver_username.strip(), geoserver_password.strip()))
@@ -270,6 +302,16 @@ def geoserver_update(request):
                 session.close()
                 return JsonResponse({ 'error': "The geoserver to update does not exist." })
             
+            #validate geoserver
+            try:
+                engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver_url.strip(), 
+                           username=geoserver_username.strip(),
+                           password=geoserver_password.strip())
+                resource_workspace = 'erfp'
+                engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+            except Exception, ex:
+                return JsonResponse({'error' : "GeoServer Error: %s" % ex})
+                
             geoserver.name = geoserver_name.strip()
             geoserver.url = geoserver_url.strip()    
             geoserver.username = geoserver_username.strip()    
@@ -303,7 +345,7 @@ def ecmwf_get_avaialable_dates(request):
             return JsonResponse({'error' : 'ECMWF AJAX request input faulty'})
     
         #find/check current output datasets    
-        path_to_watershed_files = os.path.join(path_to_rapid_output, watershed_name)
+        path_to_watershed_files = os.path.join(path_to_rapid_output, watershed_name, subbasin_name)
 
         if not os.path.exists(path_to_watershed_files):
             return JsonResponse({'error' : 'ECMWF forecast for %s (%s) not found.' % (watershed_name, subbasin_name) })
@@ -416,7 +458,7 @@ def ecmwf_get_hydrograph(request):
             return JsonResponse({'error' : 'ECMWF AJAX request input faulty.'})
     
         #find/check current output datasets
-        path_to_output_files = os.path.join(path_to_rapid_output, watershed_name)
+        path_to_output_files = os.path.join(path_to_rapid_output, watershed_name, subbasin_name)
         basin_files, start_date = ecmwf_find_most_current_files(path_to_output_files, subbasin_name, start_folder)
         if not basin_files or not start_date:
             return JsonResponse({'error' : 'ECMWF forecast for %s (%s) not found.' % (watershed_name, subbasin_name)})
@@ -604,11 +646,10 @@ def watershed_add(request):
         #get/check information from AJAX request
         watershed_name = post_info.get('watershed_name')
         subbasin_name = post_info.get('subbasin_name')
-        folder_name = format_name(watershed_name) if watershed_name else None
-        file_name = format_name(subbasin_name) if subbasin_name else None
+        folder_name = format_name(watershed_name)
+        file_name = format_name(subbasin_name)
         data_store_id = post_info.get('data_store_id')
         geoserver_id = post_info.get('geoserver_id')
-        ecmwf_rapid_input_files = ""
         #REQUIRED TO HAVE drainage_line from one of these
         #layer names
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
@@ -641,14 +682,51 @@ def watershed_add(request):
             int(geoserver_id)
         except ValueError:
             return JsonResponse({'error' : 'One or more ids are faulty.'})
+            
+        #make sure information is correct
+        ecmwf_rapid_input_resource_id = ""
+        ecmwf_data_store_watershed_name = ""
+        ecmwf_data_store_subbasin_name = ""
+        wrf_hydro_data_store_watershed_name = ""
+        wrf_hydro_data_store_subbasin_name = ""
+        if(int(data_store_id)>1):
+            #check ecmwf inputs
+            ecmwf_ready = False
+            ecmwf_data_store_watershed_name = format_name(post_info.get('ecmwf_data_store_watershed_name'))
+            ecmwf_data_store_subbasin_name = format_name(post_info.get('ecmwf_data_store_subbasin_name'))
+            
+            if not ecmwf_data_store_watershed_name or not ecmwf_data_store_subbasin_name:
+                ecmwf_data_store_watershed_name = ""
+                ecmwf_data_store_subbasin_name = ""
+            else:
+                ecmwf_ready = True
+            
+            #check wrf-hydro inputs
+            wrf_hydro_ready = False
+            wrf_hydro_data_store_watershed_name = format_name(post_info.get('wrf_hydro_data_store_watershed_name'))
+            wrf_hydro_data_store_subbasin_name = format_name(post_info.get('wrf_hydro_data_store_subbasin_name'))
+            
+            if not wrf_hydro_data_store_watershed_name or not wrf_hydro_data_store_subbasin_name:
+                wrf_hydro_data_store_watershed_name = ""
+                wrf_hydro_data_store_subbasin_name = ""
+            else:
+                wrf_hydro_ready = True
+
+            #need at least one to be OK to proceed
+            if not ecmwf_ready and not wrf_hydro_ready:
+                    return JsonResponse({'error' : "Must have an ECMWF or WRF-Hydro watershed/subbasin name to continue" })
+
+            
+        #initialize session
+        session = SettingsSessionMaker()
         #make sure one layer exists
         if(int(geoserver_id)==1):
             if not drainage_line_kml_file:
                 return JsonResponse({'error' : 'Missing drainage line KML file.'})
         else:
+            #check shapefiles
             if not drainage_line_shp_file and not geoserver_drainage_line_layer:
                 return JsonResponse({'error' : 'Missing geoserver drainage line.'})
-            #check shapefiles
             if drainage_line_shp_file:
                 missing_extenstions = check_shapefile_input_files(drainage_line_shp_file)
                 if missing_extenstions:
@@ -664,8 +742,6 @@ def watershed_add(request):
                 if missing_extenstions:
                     return JsonResponse({'error' : 'Missing geoserver gage files with extensions %s.' % \
                                         (", ".join(missing_extenstions)) })
-        #initialize session
-        session = SettingsSessionMaker()
         #check to see if duplicate exists
         num_similar_watersheds  = session.query(Watershed) \
             .filter(Watershed.folder_name == folder_name) \
@@ -703,11 +779,10 @@ def watershed_add(request):
         elif drainage_line_shp_file:
             geoserver = session.query(Geoserver).get(geoserver_id)
             engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver.url, 
-                                       username=geoserver.username,
-                                       password=geoserver.password)
+                       username=geoserver.username,
+                       password=geoserver.password)
             resource_workspace = 'erfp'
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
-            
             #DRAINAGE LINE
             resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
             geoserver_drainage_line_layer = '{0}:{1}'.format(resource_workspace, resource_name)
@@ -745,10 +820,14 @@ def watershed_add(request):
         #add watershed
         watershed = Watershed(watershed_name.strip(), 
                               subbasin_name.strip(), 
-                              folder_name.strip(), 
-                              file_name.strip(), 
+                              folder_name, 
+                              file_name, 
                               data_store_id, 
-                              ecmwf_rapid_input_files, 
+                              ecmwf_rapid_input_resource_id,
+                              ecmwf_data_store_watershed_name,
+                              ecmwf_data_store_subbasin_name,
+                              wrf_hydro_data_store_watershed_name,
+                              wrf_hydro_data_store_subbasin_name,
                               geoserver_id, 
                               geoserver_drainage_line_layer.strip(),
                               geoserver_catchment_layer.strip(),
@@ -845,7 +924,7 @@ def watershed_download_predicitons(request):
         #make sure id is int
         try:
             int(watershed_id)
-        except ValueError:
+        except TypeError, ValueError:
             return JsonResponse({'error' : 'Watershed ID need to be an integer.'})
 
         #initialize session
@@ -869,7 +948,7 @@ def watershed_delete(request):
         #make sure ids are ids
         try:
             int(watershed_id)
-        except ValueError:
+        except TypeError, ValueError:
             return JsonResponse({'error' : 'Watershed id is faulty.'})    
         
         if watershed_id:
@@ -882,7 +961,8 @@ def watershed_delete(request):
                 return JsonResponse({ 'error': "The watershed to delete does not exist." })
             main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
             #remove watershed geoserver, kml, local prediction files, RAPID Input Files
-            delete_old_watershed_files(watershed, main_settings.ecmwf_rapid_prediction_directory)
+            delete_old_watershed_files(watershed, main_settings.ecmwf_rapid_prediction_directory,
+                                       main_settings.wrf_hydro_rapid_prediction_directory)
             #delete watershed from database
             session.delete(watershed)
             session.commit()
@@ -903,8 +983,8 @@ def watershed_update(request):
         watershed_id = post_info.get('watershed_id')
         watershed_name = post_info.get('watershed_name')
         subbasin_name = post_info.get('subbasin_name')
-        folder_name = format_name(watershed_name) if watershed_name else None
-        file_name = format_name(subbasin_name) if subbasin_name else None
+        folder_name = format_name(watershed_name)
+        file_name = format_name(subbasin_name)
         data_store_id = post_info.get('data_store_id')
         geoserver_id = post_info.get('geoserver_id')
         #REQUIRED TO HAVE drainage_line from one of these
@@ -931,7 +1011,7 @@ def watershed_update(request):
             int(watershed_id)
             int(data_store_id)
             int(geoserver_id)
-        except ValueError:
+        except TypeError, ValueError:
             return JsonResponse({'error' : 'One or more ids are faulty.'})
 
         #initialize session
@@ -952,6 +1032,38 @@ def watershed_update(request):
         except ObjectDeletedError:
             session.close()
             return JsonResponse({ 'error': "The watershed to update does not exist." })
+            
+        #make sure data store information is correct
+        ecmwf_data_store_watershed_name = ""
+        ecmwf_data_store_subbasin_name = ""
+        wrf_hydro_data_store_watershed_name = ""
+        wrf_hydro_data_store_subbasin_name = ""
+        if(int(data_store_id)>1):
+            #check ecmwf inputs
+            ecmwf_ready = False
+            ecmwf_data_store_watershed_name = format_name(post_info.get('ecmwf_data_store_watershed_name'))
+            ecmwf_data_store_subbasin_name = format_name(post_info.get('ecmwf_data_store_subbasin_name'))
+            
+            if not ecmwf_data_store_watershed_name or not ecmwf_data_store_subbasin_name:
+                ecmwf_data_store_watershed_name = ""
+                ecmwf_data_store_subbasin_name = ""
+            else:
+                ecmwf_ready = True
+            
+            #check wrf-hydro inputs
+            wrf_hydro_ready = False
+            wrf_hydro_data_store_watershed_name = format_name(post_info.get('wrf_hydro_data_store_watershed_name'))
+            wrf_hydro_data_store_subbasin_name = format_name(post_info.get('wrf_hydro_data_store_subbasin_name'))
+            
+            if not wrf_hydro_data_store_watershed_name or not wrf_hydro_data_store_subbasin_name:
+                wrf_hydro_data_store_watershed_name = ""
+                wrf_hydro_data_store_subbasin_name = ""
+            else:
+                wrf_hydro_ready = True
+
+            #need at least one to be OK to proceed
+            if not ecmwf_ready and not wrf_hydro_ready:
+                return JsonResponse({'error' : "Must have an ECMWF or WRF-Hydro watershed/subbasin name to continue" })
 
         #make sure one layer exists
         if(int(geoserver_id)==1):
@@ -1144,17 +1256,28 @@ def watershed_update(request):
             delete_old_watershed_kml_files(watershed)
 
         #remove old prediction files if watershed/subbasin name changed
-        if(folder_name != watershed.folder_name or file_name != watershed.file_name):
-            delete_old_watershed_prediction_files(watershed.folder_name, 
+        if(ecmwf_data_store_watershed_name != watershed.ecmwf_data_store_watershed_name or 
+           ecmwf_data_store_subbasin_name != watershed.ecmwf_data_store_subbasin_name):
+            delete_old_watershed_prediction_files(watershed.ecmwf_data_store_watershed_name,
+                                                  watershed.ecmwf_data_store_subbasin_name,
                                                   main_settings.ecmwf_rapid_prediction_directory)
+
+        if(wrf_hydro_data_store_watershed_name != watershed.wrf_hydro_data_store_watershed_name or 
+           wrf_hydro_data_store_subbasin_name != watershed.wrf_hydro_data_store_subbasin_name):
+            delete_old_watershed_prediction_files(watershed.wrf_hydro_data_store_watershed_name,
+                                                  watershed.wrf_hydro_data_store_subbasin_name,
+                                                  main_settings.wrf_hydro_rapid_prediction_directory)
 
         #change watershed attributes
         watershed.watershed_name = watershed_name.strip()
         watershed.subbasin_name = subbasin_name.strip()
-        watershed.folder_name = folder_name.strip()
-        watershed.file_name = file_name.strip()
+        watershed.folder_name = folder_name
+        watershed.file_name = file_name
         watershed.data_store_id = data_store_id
-        watershed.geoserver_id = geoserver_id
+        watershed.ecmwf_data_store_watershed_name = ecmwf_data_store_watershed_name
+        watershed.ecmwf_data_store_subbasin_name = ecmwf_data_store_subbasin_name
+        watershed.wrf_hydro_data_store_watershed_name = wrf_hydro_data_store_watershed_name
+        watershed.wrf_hydro_data_store_subbasin_name = wrf_hydro_data_store_subbasin_name
         watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer.strip() if geoserver_drainage_line_layer else ""
         watershed.geoserver_catchment_layer = geoserver_catchment_layer.strip() if geoserver_catchment_layer else ""
         watershed.geoserver_gage_layer = geoserver_gage_layer.strip() if geoserver_gage_layer else ""
@@ -1167,9 +1290,6 @@ def watershed_update(request):
         
         #update database
         session.commit()
-        #load prediction datasets for watershed
-        load_watershed(watershed)
-
         session.close()
         
         return JsonResponse({ 'success': "Watershed sucessfully updated!", 

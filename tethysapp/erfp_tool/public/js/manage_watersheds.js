@@ -22,12 +22,31 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
     /************************************************************************
      *                    PRIVATE FUNCTION DECLARATIONS
      *************************************************************************/
-    var initializeTableFunctions, initializeModal, getTablePage, displayResultsText;
+    var initializeTableFunctions, initializeModal, getTablePage, displayResultsText,
+        getModalHTML;
 
 
     /************************************************************************
      *                    PRIVATE FUNCTION IMPLEMENTATIONS
      *************************************************************************/
+    getModalHTML = function(watershed_id, reload) {
+        reload = typeof reload !== 'undefined' ? reload : false;
+        $.ajax({
+            url: 'edit',
+            method: 'GET',
+            data: {
+                'watershed_id': watershed_id
+            },
+            success: function(data) {
+                $("#edit_watershed_modal").find('.modal-body').html(data);
+                initializeModal();
+                if (reload) {
+                    addSuccessMessage("Watershed Update Complete!");
+                }
+            }
+        });
+    };
+
     initializeModal = function() {
         //turn the select options into select2
         $("#data-store-select").select2();
@@ -38,7 +57,12 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             $(this).bootstrapSwitch();
         });
 
-        //add classes
+        //initialize gizmo classes
+        $('#ecmwf-data-store-watershed-name-input').parent().parent().addClass('data_store');
+        $('#ecmwf-data-store-subbasin-name-input').parent().parent().addClass('data_store');
+        $('#wrf-hydro-data-store-watershed-name-input').parent().parent().addClass('data_store');
+        $('#wrf-hydro-data-store-subbasin-name-input').parent().parent().addClass('data_store');
+
         $('#geoserver-drainage-line-input').parent().parent().addClass('shapefile');
         $('#geoserver-catchment-input').parent().parent().addClass('shapefile');
         $('#geoserver-gage-input').parent().parent().addClass('shapefile');
@@ -49,13 +73,14 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             var select_val = $(this).val();
             if(select_val == 1) {
                 //local upload
-                $('.rapid-input').addClass('hidden');
+                $('.data_store').addClass('hidden');
             } else {
-                //file located on geoserver
-                $('.rapid-input').removeClass('hidden');
+                $('.data_store').removeClass('hidden');
             }
 
         });
+
+        $("#data-store-select").change();
 
         //show/hide elements based on geoserver selection
         $('#geoserver-select').change(function() {
@@ -99,7 +124,11 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
 
         //handle the submit event
         $('.modal-footer').find('.btn-success').off().click(function () {
-            //clear message div
+             //scroll back to top
+            window.scrollTo(0,0);
+            //clear messages
+            $('#message').addClass('hidden');
+           //clear message div
             $('#message').empty()
                 .addClass('hidden')
                 .removeClass('alert-success')
@@ -116,6 +145,10 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             var geoserver_id = checkInputWithError($('#geoserver-select'),safe_to_submit, true);
 
             //initialize values
+            var ecmwf_data_store_watershed_name = "";
+            var ecmwf_data_store_subbasin_name = "";
+            var wrf_hydro_data_store_watershed_name = "";
+            var wrf_hydro_data_store_subbasin_name = "";
             var geoserver_drainage_line_layer = "";
             var geoserver_catchment_layer = "";
             var geoserver_gage_layer = "";
@@ -129,6 +162,46 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             var kml_catchment_layer = "";
             var kml_gage_layer = "";
 
+            //Initialize Data Store Data
+            if(data_store_id>1) {
+                //check ecmwf inputs
+                var ecmwf_ready = false
+                ecmwf_data_store_watershed_name = $('#ecmwf-data-store-watershed-name-input').val();
+                ecmwf_data_store_subbasin_name = $('#ecmwf-data-store-subbasin-name-input').val();
+                if (typeof ecmwf_data_store_watershed_name == 'undefined' || 
+                    typeof ecmwf_data_store_subbasin_name == 'undefined') {
+                    ecmwf_data_store_watershed_name = "";
+                    ecmwf_data_store_subbasin_name = "";
+                } else {
+                    ecmwf_data_store_watershed_name = ecmwf_data_store_watershed_name.trim();
+                    ecmwf_data_store_subbasin_name = ecmwf_data_store_subbasin_name.trim();
+                    ecmwf_ready = (ecmwf_data_store_watershed_name.length > 0 &&
+                                   ecmwf_data_store_subbasin_name.length > 0);
+                }
+
+                //check wrf-hydro inputs
+                var wrf_hydro_ready = false;
+                wrf_hydro_data_store_watershed_name = $('#wrf-hydro-data-store-watershed-name-input').val();
+                wrf_hydro_data_store_subbasin_name = $('#wrf-hydro-data-store-subbasin-name-input').val();
+                if (typeof wrf_hydro_data_store_watershed_name == 'undefined' || 
+                    typeof wrf_hydro_data_store_subbasin_name == 'undefined') {
+                    wrf_hydro_data_store_watershed_name = "";
+                    wrf_hydro_data_store_subbasin_name = "";
+                } else {
+                    wrf_hydro_data_store_watershed_name = wrf_hydro_data_store_watershed_name.trim();
+                    wrf_hydro_data_store_subbasin_name = wrf_hydro_data_store_subbasin_name.trim();
+                    wrf_hydro_ready = (wrf_hydro_data_store_watershed_name.length > 0 && 
+                                       wrf_hydro_data_store_subbasin_name.length > 0);
+                }
+                //need at least one to be OK to proceed
+                if(!ecmwf_ready && !wrf_hydro_ready) {
+                    safe_to_submit.val = false;
+                    safe_to_submit.error = "Need ECMWF or WRF-Hydro watershed and subbasin names to proceed";
+             
+                }
+            }
+
+            //initialize geoserver data
             if(geoserver_id==1){
                 //kml upload
                 kml_drainage_line_layer = $('#drainage-line-kml-upload-input').data('kml_drainage_line_layer');
@@ -200,7 +273,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             //submit if the form is ok
             if (safe_to_submit.val && !m_uploading_data) {
                 if (window.confirm("Are you sure? You will delete prediction files " +
-                    "if the watershed or subbasin name are changed.")) {
+                    "if either of the watershed or subbasin data store names are changed.")) {
 
                     m_uploading_data = true;
                     var submit_button = $(this);
@@ -227,6 +300,10 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                             data.append("watershed_name", watershed_name);
                             data.append("subbasin_name", subbasin_name);
                             data.append("data_store_id", data_store_id);
+                            data.append("ecmwf_data_store_watershed_name",ecmwf_data_store_watershed_name);
+                            data.append("ecmwf_data_store_subbasin_name",ecmwf_data_store_subbasin_name);
+                            data.append("wrf_hydro_data_store_watershed_name",wrf_hydro_data_store_watershed_name);
+                            data.append("wrf_hydro_data_store_subbasin_name",wrf_hydro_data_store_subbasin_name);
                             data.append("geoserver_id", geoserver_id);
                             data.append("geoserver_drainage_line_layer", geoserver_drainage_line_layer);
                             data.append("geoserver_catchment_layer", geoserver_catchment_layer);
@@ -263,6 +340,10 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                     data.append("watershed_name", watershed_name);
                                     data.append("subbasin_name", subbasin_name);
                                     data.append("data_store_id", data_store_id);
+                                    data.append("ecmwf_data_store_watershed_name",ecmwf_data_store_watershed_name);
+                                    data.append("ecmwf_data_store_subbasin_name",ecmwf_data_store_subbasin_name);
+                                    data.append("wrf_hydro_data_store_watershed_name",wrf_hydro_data_store_watershed_name);
+                                    data.append("wrf_hydro_data_store_subbasin_name",wrf_hydro_data_store_subbasin_name);
                                     data.append("geoserver_id", geoserver_id);
                                     if (return_data != null && typeof return_data != 'undefined') {
                                         if ('geoserver_drainage_line_layer' in return_data) {
@@ -297,6 +378,10 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                         data.append("watershed_name", watershed_name);
                                         data.append("subbasin_name", subbasin_name);
                                         data.append("data_store_id", data_store_id);
+                                        data.append("ecmwf_data_store_watershed_name",ecmwf_data_store_watershed_name);
+                                        data.append("ecmwf_data_store_subbasin_name",ecmwf_data_store_subbasin_name);
+                                        data.append("wrf_hydro_data_store_watershed_name",wrf_hydro_data_store_watershed_name);
+                                        data.append("wrf_hydro_data_store_subbasin_name",wrf_hydro_data_store_subbasin_name);
                                         data.append("geoserver_id", geoserver_id);
                                         if (catchment_data != null && typeof catchment_data != 'undefined') {
                                             if ('geoserver_catchment_layer' in catchment_data) {
@@ -337,45 +422,8 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                                     xhr_ecmwf_rapid, xhr_download_predicitons)
                                             .done(function(xhr_data, xhr_catchment_data, xhr_gage_data,
                                                             xhr_ecmwf_rapid_data, xhr_download_predictions_data){
-                                           //Clean file inputs
-                                            $('#drainage-line-shp-upload-input').val('');
-                                            $('#catchment-shp-upload-input').val('');
-                                            $('#gage-shp-upload-input').val('');
-                                            $('#drainage-line-kml-upload-input').val('');
-                                            $('catchment-kml-upload-input').val('');
-                                            $('#gage-kml-upload-input').val('');
-                                            //Change toggle to No
-                                            if ($('#shp-upload-toggle').bootstrapSwitch('state')) {
-                                                $('#shp-upload-toggle').bootstrapSwitch('toggleState');
-                                            }
-
-                                            if (geoserver_id != 1) {
-                                                $('#drainage-line-kml-upload-input').parent().next().text('Current: ');
-                                                $('#drainage-line-kml-upload-input').data('kml_drainage_line_layer', '');
-                                                $('#catchment-kml-upload-input').parent().next().text('Current: ');
-                                                $('#catchment-kml-upload-input').data('kml_catchment_layer', '');
-                                                $('#gage-kml-upload-input').parent().next().text('Current: ');
-                                                $('#gage-kml-upload-input').data('kml_gage_layer', '');
-                                            }
-
-                                            if (xhr_data != null && xhr_data != 'undefined') {
-                                                $('#geoserver-drainage-line-input').val(xhr_data[0]['geoserver_drainage_line_layer']);
-                                                $('#drainage-line-kml-upload-input').parent().next().text('Current: ' + xhr_data[0]['kml_drainage_line_layer']);
-                                                $('#drainage-line-kml-upload-input').data('kml_drainage_line_layer', xhr_data[0]['kml_drainage_line_layer']);
-                                            }
-                                            if (xhr_catchment_data != null && xhr_catchment_data != 'undefined') {
-                                                $('#geoserver-catchment-input').val(xhr_catchment_data[0]['geoserver_catchment_layer']);
-                                                $('#catchment-kml-upload-input').parent().next().text('Current: ' + xhr_catchment_data[0]['kml_catchment_layer']);
-                                                $('#catchment-kml-upload-input').data('kml_catchment_layer', xhr_catchment_data[0]['kml_catchment_layer']);
-                                            }
-                                            if (xhr_gage_data != null && xhr_gage_data != 'undefined') {
-                                                $('#geoserver-gage-input').val(xhr_gage_data[0]['geoserver_gage_layer']);
-                                                $('#gage-kml-upload-input').parent().next().text('Current: ' + xhr_gage_data[0]['kml_gage_layer']);
-                                                $('#gage-kml-upload-input').data('kml_gage_layer', xhr_gage_data[0]['kml_gage_layer']);
-                                            }
-
                                             //update the input boxes to reflect change
-                                            addSuccessMessage("Watershed Update Complete!");
+                                            getModalHTML(watershed_id, true);
                                         })
                                         .always(function () {
                                             submit_button.html(submit_button_html);
@@ -386,7 +434,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
 
                             });
                         } else {
-                            appendErrorMessage("Need a drainage line to continue.");
+                            appendErrorMessage("Need a drainage line to continue.", "error_form");
                         }
                     } else {
                         var data = {
@@ -394,6 +442,10 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                             watershed_name: watershed_name,
                             subbasin_name: subbasin_name,
                             data_store_id: data_store_id,
+                            ecmwf_data_store_watershed_name: ecmwf_data_store_watershed_name,
+                            ecmwf_data_store_subbasin_name: ecmwf_data_store_subbasin_name,
+                            wrf_hydro_data_store_watershed_name: wrf_hydro_data_store_watershed_name,
+                            wrf_hydro_data_store_subbasin_name: wrf_hydro_data_store_subbasin_name,
                             geoserver_id: geoserver_id,
                             geoserver_drainage_line_layer: geoserver_drainage_line_layer,
                             geoserver_catchment_layer: geoserver_catchment_layer,
@@ -403,26 +455,23 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                         var xhr_no_files = ajax_update_database("submit", data);
 
                         jQuery.when(xhr_no_files).done(function (data) {
-                            //upload RAPID file if exists
-                            xhr_ecmwf_rapid = upload_AJAX_ECMWF_RAPID_input(watershed_id,
-                                data_store_id);
-                            //download prediction files if exists
-                            appendInfoMessage("Downloading Predictions ...", "message_download_predictions");
-                            xhr_download_predicitons = ajax_update_database("download_predictions",
-                                {watershed_id: watershed_id},
-                                "message_download_predictions");
-
-                            $('#drainage-line-kml-upload-input').parent().next().text('Current: ');
-                            $('#drainage-line-kml-upload-input').data('kml_drainage_line_layer', '');
-                            $('#catchment-kml-upload-input').parent().next().text('Current: ');
-                            $('#catchment-kml-upload-input').data('kml_catchment_layer', '');
-                            $('#gage-kml-upload-input').parent().next().text('Current: ');
-                            $('#gage-kml-upload-input').data('kml_gage_layer', '');
-
-                            jQuery.when(xhr, xhr_ecmwf_rapid, xhr_download_predicitons).done(function () {
-                                //update the input boxes to reflect change
-                                addSuccessMessage("Watershed Update Complete!");
-                            });
+                            if ('success' in data) {
+                                //upload RAPID file if exists
+                                xhr_ecmwf_rapid = upload_AJAX_ECMWF_RAPID_input(watershed_id,
+                                    data_store_id);
+                                //download prediction files if exists
+                                appendInfoMessage("Downloading Predictions ...", "message_download_predictions");
+                                xhr_download_predicitons = ajax_update_database("download_predictions",
+                                    {watershed_id: watershed_id},
+                                    "message_download_predictions");
+    
+                                jQuery.when(xhr, xhr_ecmwf_rapid, xhr_download_predicitons).done(function () {
+                                    //update the input boxes to reflect change
+                                    getModalHTML(watershed_id, true);
+                                });
+                            } else {
+                                appendErrorMessage(return_data['error'], "error_submit");
+                            }
 
                         })
                         .always(function () {
@@ -434,7 +483,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             } else if (m_uploading_data) {
                 appendWarningMessage("Submitting Data. Please Wait.", "please_wait");
             } else {
-                appendErrorMessage(safe_to_submit.error);
+                appendErrorMessage(safe_to_submit.error, "error_form");
             }
 
         });
@@ -444,17 +493,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
         m_results_per_page = 5;
         //handle the submit edit event
         $('.submit-edit-watershed').off().click(function () {
-            $.ajax({
-                url: 'edit',
-                method: 'GET',
-                data: {
-                    'watershed_id': $(this).parent().parent().parent().find('.watershed-name').data('watershed_id')
-                },
-                success: function(data) {
-                    $("#edit_watershed_modal").find('.modal-body').html(data);
-                    initializeModal();
-                }
-            });
+            getModalHTML($(this).parent().parent().parent().find('.watershed-name').data('watershed_id'));
         });
 
 
@@ -466,14 +505,16 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
             //update database
             var xhr = deleteRowData($(this), data);
             if (xhr != null) {
-                xhr.done(function () {
-                    var num_watersheds_data = $('#manage_watershed_table').data('num_watersheds');
-                    var page = parseInt($('#manage_watershed_table').data('page'));
-                    $('#manage_watershed_table').data('num_watersheds', Math.max(0, parseInt(num_watersheds_data) - 1));
-                    if (parseInt($('#manage_watershed_table').data('num_watersheds')) <= m_results_per_page * page) {
-                        $('#manage_watershed_table').data('page', Math.max(0, page - 1));
+                xhr.done(function (data) { 
+                    if('success' in data) {
+                        var num_watersheds_data = $('#manage_watershed_table').data('num_watersheds');
+                        var page = parseInt($('#manage_watershed_table').data('page'));
+                        $('#manage_watershed_table').data('num_watersheds', Math.max(0, parseInt(num_watersheds_data) - 1));
+                        if (parseInt($('#manage_watershed_table').data('num_watersheds')) <= m_results_per_page * page) {
+                            $('#manage_watershed_table').data('page', Math.max(0, page - 1));
+                        }
+                        getTablePage();
                     }
-                    getTablePage();
                 });
             }
         });

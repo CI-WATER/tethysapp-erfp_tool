@@ -116,6 +116,10 @@ class Watershed(Base):
     data_store_id = Column(Integer,ForeignKey('data_store.id'))
     data_store = relationship("DataStore")
     ecmwf_rapid_input_resource_id = Column(String)
+    ecmwf_data_store_watershed_name = Column(String)
+    ecmwf_data_store_subbasin_name = Column(String)
+    wrf_hydro_data_store_watershed_name = Column(String)
+    wrf_hydro_data_store_subbasin_name = Column(String)
     geoserver_id = Column(Integer,ForeignKey('geoserver.id'))
     geoserver = relationship("Geoserver")
     geoserver_drainage_line_layer = Column(String)
@@ -131,11 +135,13 @@ class Watershed(Base):
                                     secondary='watershed_watershed_group_link')
                               
     def __init__(self, watershed_name, subbasin_name, folder_name, file_name,
-                 data_store_id, ecmwf_rapid_input_resource_id, geoserver_id, geoserver_drainage_line_layer, 
-                 geoserver_catchment_layer, geoserver_gage_layer, 
-                 geoserver_drainage_line_uploaded, geoserver_catchment_uploaded,
-                 geoserver_gage_uploaded, kml_drainage_line_layer,
-                 kml_catchment_layer, kml_gage_layer):
+                 data_store_id, ecmwf_rapid_input_resource_id, 
+                 ecmwf_data_store_watershed_name, ecmwf_data_store_subbasin_name,
+                 wrf_hydro_data_store_watershed_name, wrf_hydro_data_store_subbasin_name,
+                 geoserver_id, geoserver_drainage_line_layer, geoserver_catchment_layer, 
+                 geoserver_gage_layer, geoserver_drainage_line_uploaded, 
+                 geoserver_catchment_uploaded, geoserver_gage_uploaded, 
+                 kml_drainage_line_layer, kml_catchment_layer, kml_gage_layer):
 
         self.watershed_name = watershed_name
         self.subbasin_name = subbasin_name
@@ -143,6 +149,10 @@ class Watershed(Base):
         self.file_name = file_name
         self.data_store_id = data_store_id
         self.ecmwf_rapid_input_resource_id = ecmwf_rapid_input_resource_id
+        self.ecmwf_data_store_watershed_name = ecmwf_data_store_watershed_name
+        self.ecmwf_data_store_subbasin_name = ecmwf_data_store_subbasin_name
+        self.wrf_hydro_data_store_watershed_name = wrf_hydro_data_store_watershed_name
+        self.wrf_hydro_data_store_subbasin_name = wrf_hydro_data_store_subbasin_name
         self.geoserver_id = geoserver_id
         self.geoserver_drainage_line_layer = geoserver_drainage_line_layer
         self.geoserver_catchment_layer = geoserver_catchment_layer
