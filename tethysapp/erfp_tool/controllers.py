@@ -41,7 +41,6 @@ def home(request):
                 'display_text': 'Select Watershed(s)',
                 'name': 'watershed_select',
                 'options': watershed_list,
-                'options': watershed_list,
                 'multiple': True,
                 'placeholder': 'Select Watershed(s)',
                 }          

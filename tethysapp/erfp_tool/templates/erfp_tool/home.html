@@ -3,10 +3,11 @@
 {% load tethys_gizmos %}
 
 {% block app_content %}
+    <h4>Either...</h4>
     <h1>Select a Watershed</h1>
     {% if watersheds_length > 0 %}
         <form action="{% url 'erfp_tool:map' %}" method="get">
-            <p class="alert alert-warning" role="alert"><em>Warning: Selecting too many watersheds can make the operation of the app slow.</em></p>
+            <p id="too-many-watersheds-alert" class="alert alert-warning hidden" role="alert"><em>Warning: Selecting too many watersheds can make the operation of the app slow.</em></p>
             {% gizmo select_input watershed_select %}
             <div class="btn-group ">
                 <a name="submit-go-to-map" class="btn btn-success" role="button" onclick="document.forms[0].submit();" id="submit-go-to-map">
@@ -18,10 +19,10 @@
         <h4> No watersheds found ...</h4>
     {% endif %}
     {% if user.is_superuser or user.is_staff %}
-    <p class="help-block">Don't see the watershed you want? Add one 
+    <p class="help-block">Don't see the watershed you want? Add one
     <a href="{% url 'erfp_tool:add-watershed' %}">here</a>.</p>
     {% endif %}
-    <h4>Or</h41>
+    <h4>Or...</h4>
     <h1>Select a Watershed Group</h1>
     {% if watershed_group_length > 0 %}
         <form action="{% url 'erfp_tool:map' %}" method="get">
@@ -36,7 +37,7 @@
         <h4> No watershed groups found ...</h4>
     {% endif %}
     {% if user.is_superuser or user.is_staff %}
-    <p class="help-block">Don't see the watershed group you want? Add one 
+    <p class="help-block">Don't see the watershed group you want? Add one
     <a href="{% url 'erfp_tool:add-watershed-group' %}">here</a>.</p>
     {% endif %}
 {% endblock %}

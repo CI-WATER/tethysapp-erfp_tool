@@ -140,7 +140,6 @@ var ERFP_MANAGE_GEOSERVERS = (function() {
 
     $(function() {
         m_uploading_data = false;
-        console.log("Page Loaded.");
         getTablePage();
     }); //document ready
 }()); // End of package wrapper
