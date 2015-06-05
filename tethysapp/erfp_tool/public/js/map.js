@@ -505,7 +505,7 @@ var ERFP_MAP = (function() {
                 xAxis: {
                     type: 'datetime',
                     title: {
-                        text: 'Date'
+                        text: 'Date (UTC)'
                     },
                     minRange: 1 * 24 * 3600000 // one day
                 },
