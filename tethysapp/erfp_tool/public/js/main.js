@@ -412,7 +412,7 @@ function deleteRowData(submit_button, data) {
     return null;
 }
 
-//show "too many watersheds" alert if more than 1 watershed selection is made
+//show "too many watersheds" alert if more than one watershed selection is made
 $('#watershed_select').on('change',function(){
     if ($('#watershed_select').select2('data')[1] != undefined) {
         $('#too-many-watersheds-alert').removeClass('hidden');
