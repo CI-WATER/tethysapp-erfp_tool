@@ -933,6 +933,7 @@ def watershed_download_predicitons(request):
 
         #load prediction datasets for watershed
         load_watershed(watershed)
+        
         session.close()
         return JsonResponse({'success' : 'Watershed Prediction Download Success!'})
 
@@ -1258,15 +1259,11 @@ def watershed_update(request):
         #remove old prediction files if watershed/subbasin name changed
         if(ecmwf_data_store_watershed_name != watershed.ecmwf_data_store_watershed_name or 
            ecmwf_data_store_subbasin_name != watershed.ecmwf_data_store_subbasin_name):
-            delete_old_watershed_prediction_files(watershed.ecmwf_data_store_watershed_name,
-                                                  watershed.ecmwf_data_store_subbasin_name,
-                                                  main_settings.ecmwf_rapid_prediction_directory)
+            delete_old_watershed_prediction_files(watershed,forecast="ecmwf")
 
         if(wrf_hydro_data_store_watershed_name != watershed.wrf_hydro_data_store_watershed_name or 
            wrf_hydro_data_store_subbasin_name != watershed.wrf_hydro_data_store_subbasin_name):
-            delete_old_watershed_prediction_files(watershed.wrf_hydro_data_store_watershed_name,
-                                                  watershed.wrf_hydro_data_store_subbasin_name,
-                                                  main_settings.wrf_hydro_rapid_prediction_directory)
+            delete_old_watershed_prediction_files(watershed, forecast="wrf_hydro")
 
         #change watershed attributes
         watershed.watershed_name = watershed_name.strip()

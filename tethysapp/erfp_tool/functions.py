@@ -5,9 +5,11 @@ import numpy as np
 import os
 import re
 from shutil import rmtree
+from sqlalchemy import and_
 #tethys imports
 from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 #local import
+from model import SettingsSessionMaker, MainSettings, Watershed
 from sfpt_dataset_manager.dataset_manager import CKANDatasetManager
 
 def check_shapefile_input_files(shp_files):
@@ -32,30 +34,76 @@ def rename_shapefile_input_files(shp_files, new_file_name):
         file_name, file_extension = os.path.splitext(shp_file.name)
         shp_file.name = "%s%s" % (new_file_name, file_extension)
     
-def delete_old_watershed_prediction_files(main_folder_name, 
-                                          sub_folder_name, 
-                                          local_prediction_files_location):
+def delete_old_watershed_prediction_files(watershed, forecast="all"):
     """
-    Removes old watershed prediction files from system
+    Removes old watershed prediction files from system if no other watershed has them
     """
-    #TODO: Make sure that you don't delete if another watershed is using the
-    #same predictions
-    
-    #remove watersheds subbsasins folders/files
-    if main_folder_name and sub_folder_name:
-        try:
-            rmtree(os.path.join(local_prediction_files_location, 
-                                main_folder_name,
-                                sub_folder_name))
-        except OSError:
-            pass
+    def delete_prediciton_files(main_folder_name, sub_folder_name, local_prediction_files_location):
+        """
+        Removes predicitons from folder and folder if not empty
+        """
+        prediciton_folder = os.path.join(local_prediction_files_location, 
+                                         main_folder_name,
+                                         sub_folder_name)
+        #remove watersheds subbsasins folders/files
+        if main_folder_name and sub_folder_name and \
+        local_prediction_files_location and os.path.exists(prediciton_folder):
+            
+            #remove all prediction files from watershed/subbasin
+            try:
+                rmtree(prediciton_folder)
+            except OSError:
+                pass
+            
+            #remove watershed folder if no other subbasins exist
+            try:
+                os.rmdir(os.path.join(local_prediction_files_location, 
+                                      main_folder_name))
+            except OSError:
+                pass
         
-        #remove watershed folder if no subbasins exist
-        try:
-            os.rmdir(os.path.join(local_prediction_files_location, 
-                                  main_folder_name))
-        except OSError:
-            pass
+    #initialize session
+    session = SettingsSessionMaker()
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    forecast = forecast.lower()
+    
+    #Remove ECMWF Forecasta
+    if forecast == "all" or forecast == "ecmwf":
+        #Make sure that you don't delete if another watershed is using the
+        #same predictions
+        num_ecmwf_watersheds_with_forecast  = session.query(Watershed) \
+            .filter(
+                and_(
+                    Watershed.ecmwf_data_store_watershed_name == watershed.ecmwf_data_store_watershed_name, 
+                    Watershed.ecmwf_data_store_subbasin_name == watershed.ecmwf_data_store_subbasin_name
+                )
+            ) \
+            .filter(Watershed.id != watershed.id) \
+            .count()
+        if num_ecmwf_watersheds_with_forecast <= 0:
+            delete_prediciton_files(watershed.ecmwf_data_store_watershed_name, 
+                                    watershed.ecmwf_data_store_subbasin_name, 
+                                    main_settings.ecmwf_rapid_prediction_directory)
+    
+    #Remove WRF-Hydro Forecasts
+    if forecast == "all" or forecast == "wrf_hydro":
+        #Make sure that you don't delete if another watershed is using the
+        #same predictions
+        num_wrf_hydro_watersheds_with_forecast  = session.query(Watershed) \
+            .filter(
+                and_(
+                    Watershed.wrf_hydro_data_store_watershed_name == watershed.wrf_hydro_data_store_watershed_name, 
+                    Watershed.wrf_hydro_data_store_subbasin_name == watershed.wrf_hydro_data_store_subbasin_name
+                )
+            ) \
+            .filter(Watershed.id != watershed.id) \
+            .count()
+        if num_wrf_hydro_watersheds_with_forecast <= 0:
+            delete_prediciton_files(watershed.ecmwf_data_store_watershed_name, 
+                                    watershed.ecmwf_data_store_subbasin_name, 
+                                    main_settings.ecmwf_rapid_prediction_directory)
+    
+    session.close()
               
 
 def delete_old_watershed_kml_files(watershed):
@@ -126,14 +174,8 @@ def delete_old_watershed_files(watershed, ecmwf_local_prediction_files_location,
     delete_old_watershed_kml_files(watershed)
     #remove old geoserver files
     delete_old_watershed_geoserver_files(watershed)
-    #remove old ECMWF prediction files
-    delete_old_watershed_prediction_files(watershed.ecmwf_data_store_watershed_name,
-                                          watershed.ecmwf_data_store_subbasin_name,
-                                          ecmwf_local_prediction_files_location)
-    #remove old WRF-Hydro prediction files
-    delete_old_watershed_prediction_files(watershed.wrf_hydro_data_store_watershed_name,
-                                          watershed.wrf_hydro_data_store_subbasin_name,
-                                          wrf_hydro_local_prediction_files_location)
+    #remove old ECMWF and WRF-Hydro prediction files
+    delete_old_watershed_prediction_files(watershed, forecast="all")
     #remove RAPID input files on CKAN
     data_store = watershed.data_store
     if 'ckan' == data_store.data_store_type.code_name and watershed.ecmwf_rapid_input_resource_id:
