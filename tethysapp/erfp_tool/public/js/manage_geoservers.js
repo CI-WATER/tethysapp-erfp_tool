@@ -138,8 +138,13 @@ var ERFP_MANAGE_GEOSERVERS = (function() {
         } else if (page == Math.floor(num_geoservers_data / m_results_per_page - 0.1)) {
             $('[name="next_button"]').addClass('hidden');
         }
-        $('#display-info').append('<div style="text-align: center">Displaying Results '
-                                    + display_min + ' - ' + display_max + ' of ' + num_geoservers_data + '</div>');
+        if (num_geoservers_data != 0) {
+            $('#display-info').append('Displaying geoservers ' + display_min + ' - ' +
+                display_max + ' of ' + num_geoservers_data);
+        }else {
+            $('#display-info').append('No geoservers to display' + '<br>To add one, ' +
+                'click <a href="../add-geoserver">here</a>.');
+        }
     };
 
     getTablePage = function() {

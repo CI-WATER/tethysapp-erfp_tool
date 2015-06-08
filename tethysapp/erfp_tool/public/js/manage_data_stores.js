@@ -132,8 +132,13 @@ var ERFP_MANAGE_DATA_STORES = (function() {
         } else if (page == Math.floor(num_data_stores_data / m_results_per_page - 0.1)) {
             $('[name="next_button"]').addClass('hidden');
         }
-        $('#display-info').append('<div style="text-align: center">Displaying Results '
-                                    + display_min + ' - ' + display_max + ' of ' + num_data_stores_data + '</div>');
+        if (num_data_stores_data != 0) {
+            $('#display-info').append('Displaying data stores ' + display_min + ' - ' +
+                display_max + ' of ' + num_data_stores_data);
+        }else {
+            $('#display-info').append('No data stores to display' + '<br>To add one, ' +
+                'click <a href="../add-data-store">here</a>.');
+        }
     };
 
     getTablePage = function() {
