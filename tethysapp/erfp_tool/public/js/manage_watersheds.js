@@ -520,6 +520,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
         });
 
         displayResultsText();
+
         if (m_results_per_page >= $('#manage_watershed_table').data('num_watersheds')) {
             $('[name="prev_button"]').addClass('hidden');
             $('[name="next_button"]').addClass('hidden');
@@ -558,7 +559,13 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
         } else if (page == Math.floor(num_watersheds_data / m_results_per_page - 0.1)) {
             $('[name="next_button"]').addClass('hidden');
         }
-        $('#display-info').append('<div style="text-align: center">Displaying Results ' + display_min + ' - ' + display_max + ' of ' + num_watersheds_data + '</div>');
+        if (num_watersheds_data != 0) {
+            $('#display-info').append('Displaying watersheds ' + display_min + ' - '
+                + display_max + ' of ' + num_watersheds_data);
+        }else {
+            $('#display-info').append('No watersheds to display' + '<br>To add one, ' +
+                'click <a href="../add-watershed">here</a>.');
+                }
     };
 
     getTablePage = function() {

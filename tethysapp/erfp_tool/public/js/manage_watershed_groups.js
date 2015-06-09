@@ -133,7 +133,13 @@ var ERFP_MANAGE_WATERSHED_GROUPS = (function() {
         } else if (page == Math.floor(num_watershed_groups_data / m_results_per_page - 0.1)) {
             $('[name="next_button"]').addClass('hidden');
         }
-        $('#display-info').append('<div style="text-align: center">Displaying Results ' + display_min + ' - ' + display_max + ' of ' + num_watershed_groups_data + '</div>');
+        if (num_watershed_groups_data != 0) {
+            $('#display-info').append('Displaying watershed groups ' + display_min + ' - ' +
+                display_max + ' of ' + num_watershed_groups_data);
+        }else {
+            $('#display-info').append('No watershed groups to display' + '<br>To add one, ' +
+                'click <a href="../add-watershed-group">here</a>.');
+        }
     };
 
     getTablePage = function() {
