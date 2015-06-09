@@ -481,9 +481,11 @@ def ecmwf_get_hydrograph(request):
                 #Get hydrograph data from ECMWF Ensemble
                 data_nc = NET.Dataset(in_nc, mode="r")
                 qout_dimensions = data_nc.variables['Qout'].dimensions
-                if qout_dimensions[0] == 'Time' and qout_dimensions[1] == 'COMID':
+                if qout_dimensions[0].lower() == 'time' and \
+                    qout_dimensions[1].lower() == 'comid':
                     data_values = data_nc.variables['Qout'][:,reach_index]
-                elif qout_dimensions[0] == 'COMID' and qout_dimensions[1] == 'Time':
+                elif qout_dimensions[0].lower() == 'comid' and \
+                    qout_dimensions[1].lower() == 'time':
                     data_values = data_nc.variables['Qout'][reach_index,:]
                 else:
                     print "Invalid ECMWF forecast file", in_nc
@@ -581,8 +583,20 @@ def wrf_hydro_get_hydrograph(request):
 
         #get information from dataset
         data_nc = NET.Dataset(forecast_file, mode="r")
-        time = [t*1000 for t in data_nc.variables['time'][:]]
-        data_values = data_nc.variables['Qout'][reach_index,:]
+        qout_dimensions = data_nc.variables['Qout'].dimensions
+        if qout_dimensions[0].lower() == 'comid' and \
+            qout_dimensions[1].lower() == 'time':
+            data_values = data_nc.variables['Qout'][reach_index,:]
+        else:
+            data_nc.close()
+            return JsonResponse({'error' : "Invalid WRF-Hydro forecast file"})
+
+        variables = data_nc.variables.keys()
+        if 'time' in variables:
+            time = [t*1000 for t in data_nc.variables['time'][:]]
+        else:
+            data_nc.close()
+            return JsonResponse({'error' : "Invalid WRF-Hydro forecast file"})
         data_nc.close()
 
         return JsonResponse({
