@@ -283,7 +283,6 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                     var xhr_catchment = null;
                     var xhr_gage = null;
                     var xhr_ecmwf_rapid = null;
-                    var xhr_download_predicitons = null;
                     //give user information
                     addInfoMessage("Submiting data. Please be patient! " +
                     "This may take a few minutes due to downloading prediction datasets.");
@@ -412,16 +411,11 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                         //upload RAPID file if exists
                                         xhr_ecmwf_rapid = upload_AJAX_ECMWF_RAPID_input(watershed_id,
                                                                                         data_store_id);
-                                        //download prediction files if exists
-                                        appendInfoMessage("Downloading Predictions ...", "message_download_predictions");
-                                        xhr_download_predicitons = ajax_update_database("download_predictions",
-                                                                                        {watershed_id: watershed_id},
-                                                                                        "message_download_predictions");
                                         //when everything is finished
                                         jQuery.when(xhr, xhr_catchment, xhr_gage,
-                                                    xhr_ecmwf_rapid, xhr_download_predicitons)
+                                                    xhr_ecmwf_rapid)
                                             .done(function(xhr_data, xhr_catchment_data, xhr_gage_data,
-                                                            xhr_ecmwf_rapid_data, xhr_download_predictions_data){
+                                                            xhr_ecmwf_rapid_data){
                                             //update the input boxes to reflect change
                                             getModalHTML(watershed_id, true);
                                         })
@@ -459,13 +453,8 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                                 //upload RAPID file if exists
                                 xhr_ecmwf_rapid = upload_AJAX_ECMWF_RAPID_input(watershed_id,
                                     data_store_id);
-                                //download prediction files if exists
-                                appendInfoMessage("Downloading Predictions ...", "message_download_predictions");
-                                xhr_download_predicitons = ajax_update_database("download_predictions",
-                                    {watershed_id: watershed_id},
-                                    "message_download_predictions");
     
-                                jQuery.when(xhr, xhr_ecmwf_rapid, xhr_download_predicitons).done(function () {
+                                jQuery.when(xhr, xhr_ecmwf_rapid).done(function () {
                                     //update the input boxes to reflect change
                                     getModalHTML(watershed_id, true);
                                 });
@@ -587,6 +576,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
         m_uploading_data = false;
         getTablePage();
         $('#edit_watershed_modal').on('hidden.bs.modal', function () {
+            $("#edit_watershed_modal").find('.modal-body').html('<p class="lead">Loading ...</p>');
             getTablePage();
         });
     }); //document ready

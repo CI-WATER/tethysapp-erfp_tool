@@ -928,29 +928,6 @@ def watershed_ecmwf_rapid_file_upload(request):
         session.close()
         return JsonResponse({'success' : 'ECMWF RAPID Input Upload Success!'})
 
-@user_passes_test(user_permission_test)    
-def watershed_download_predicitons(request):
-    """
-    Controller AJAX for downloading prediction files for watershed
-    """
-    if request.is_ajax() and request.method == 'POST':
-        watershed_id = request.POST.get('watershed_id')
-        #make sure id is int
-        try:
-            int(watershed_id)
-        except TypeError, ValueError:
-            return JsonResponse({'error' : 'Watershed ID need to be an integer.'})
-
-        #initialize session
-        session = SettingsSessionMaker()
-        watershed = session.query(Watershed).get(watershed_id)
-
-        #load prediction datasets for watershed
-        load_watershed(watershed)
-        
-        session.close()
-        return JsonResponse({'success' : 'Watershed Prediction Download Success!'})
-
 @user_passes_test(user_permission_test)
 def watershed_delete(request):
     """
