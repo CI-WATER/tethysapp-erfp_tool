@@ -285,7 +285,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                     var xhr_ecmwf_rapid = null;
                     //give user information
                     addInfoMessage("Submiting data. Please be patient! " +
-                    "This may take a few minutes due to downloading prediction datasets.");
+                    "This may take a few minutes ...");
                     submit_button.text('Submitting ...');
                     //update database
                     if (geoserver_id == 1 || $('#shp-upload-toggle').bootstrapSwitch('state')) {
