@@ -897,7 +897,8 @@ def watershed_ecmwf_rapid_file_upload(request):
             tmp_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                              'tmp')
 
-            ecmwf_rapid_input_zip = "%s-%s-rapid.zip" % (watershed.file_name, watershed.folder_name)
+            ecmwf_rapid_input_zip = "%s-%s-rapid.zip" % (watershed.ecmwf_data_store_watershed_name, 
+                                                         watershed.ecmwf_data_store_subbasin_name)
             handle_uploaded_file(ecmwf_rapid_input_file,
                                  tmp_file_location, 
                                  ecmwf_rapid_input_zip)
@@ -916,8 +917,8 @@ def watershed_ecmwf_rapid_file_upload(request):
             #upload file to CKAN
             upload_file = os.path.join(tmp_file_location, ecmwf_rapid_input_zip)
             resource_info = data_manager.upload_model_resource(upload_file, 
-                                               watershed.folder_name, 
-                                               watershed.file_name)
+                                                               watershed.ecmwf_data_store_watershed_name, 
+                                                               watershed.ecmwf_data_store_subbasin_name)
             
             #update watershed
             watershed.ecmwf_rapid_input_resource_id = resource_info['result']['id']
