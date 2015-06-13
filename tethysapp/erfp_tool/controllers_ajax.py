@@ -459,7 +459,7 @@ def ecmwf_get_hydrograph(request):
     
         #find/check current output datasets
         path_to_output_files = os.path.join(path_to_rapid_output, watershed_name, subbasin_name)
-        basin_files, start_date = ecmwf_find_most_current_files(path_to_output_files, subbasin_name, start_folder)
+        basin_files, start_date = ecmwf_find_most_current_files(path_to_output_files, start_folder)
         if not basin_files or not start_date:
             return JsonResponse({'error' : 'ECMWF forecast for %s (%s) not found.' % (watershed_name, subbasin_name)})
     
@@ -1252,6 +1252,17 @@ def watershed_update(request):
         if(ecmwf_data_store_watershed_name != watershed.ecmwf_data_store_watershed_name or 
            ecmwf_data_store_subbasin_name != watershed.ecmwf_data_store_subbasin_name):
             delete_old_watershed_prediction_files(watershed,forecast="ecmwf")
+            #delete old ecmwf-rapid input files
+            #get dataset manager
+            data_manager = RAPIDInputDatasetManager(watershed.data_store.api_endpoint,
+                                                    watershed.data_store.api_key,
+                                                    "ecmwf",
+                                                    main_settings.app_instance_id)
+
+            #remove RAPID input files on CKAN if exists
+            if watershed.ecmwf_rapid_input_resource_id.strip():
+                data_manager.dataset_engine.delete_resource(watershed.ecmwf_rapid_input_resource_id)
+                watershed.ecmwf_rapid_input_resource_id = ""
 
         if(wrf_hydro_data_store_watershed_name != watershed.wrf_hydro_data_store_watershed_name or 
            wrf_hydro_data_store_subbasin_name != watershed.wrf_hydro_data_store_subbasin_name):

@@ -186,7 +186,7 @@ def delete_old_watershed_files(watershed, ecmwf_local_prediction_files_location,
                                           )
         data_manager.dataset_engine.delete_resource(watershed.ecmwf_rapid_input_resource_id)
 
-def ecmwf_find_most_current_files(path_to_watershed_files, basin_name, start_folder):
+def ecmwf_find_most_current_files(path_to_watershed_files, start_folder):
     """""
     Finds the current output from downscaled ECMWF forecasts
     """""
@@ -204,8 +204,7 @@ def ecmwf_find_most_current_files(path_to_watershed_files, basin_name, start_fol
             time = directory.split(".")[-1]
             path_to_files = os.path.join(path_to_watershed_files, directory)
             if os.path.exists(path_to_files):
-                basin_files = glob(os.path.join(path_to_files,
-                                                "*"+basin_name+"*.nc"))
+                basin_files = glob(os.path.join(path_to_files,"*.nc"))
                 if len(basin_files)>0:
                     hour = int(time)/100
                     return basin_files, date + datetime.timedelta(0,int(hour)*60*60)
@@ -222,9 +221,8 @@ def wrf_hydro_find_most_current_file(path_to_watershed_files, date_string):
     if(date_string=="most_recent"):
         if not os.path.exists(path_to_watershed_files):
             return None
-        prediction_files = sorted([d for d in os.listdir(path_to_watershed_files) \
-                        if not os.path.isdir(os.path.join(path_to_watershed_files, d))],
-                        reverse=True)
+        prediction_files = sorted(glob(os.path.join(path_to_watershed_files,"*.nc")),
+                                  reverse=True)
     else:
         #RapidResult_20150405T2300Z_CF.nc
         prediction_files = ["RapidResult_%s_CF.nc" % date_string]
