@@ -48,8 +48,9 @@ See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site
 ##Updating the App:
 Update the local repository and Tethys Platform instance.
 ```
+$ . /usr/lib/tethys/bin/activate
 $ cd tethysapp-erfp_tool
-$ gii pull
+$ git pull
 $ git submodule update
 $ tethys syncstores erfp_tool
 $ python /usr/lib/tethys/src/manage.py collectstatic
