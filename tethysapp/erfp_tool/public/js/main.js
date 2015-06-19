@@ -391,11 +391,14 @@ function submitRowData(submit_button, data, safe_to_submit) {
     }
 }
 //delete row data
-function deleteRowData(submit_button, data) {
+function deleteRowData(submit_button, data, div_id) {
     if (window.confirm("Are you sure?")) {
         var parent_row = submit_button.parent().parent().parent();
+        if (typeof div_id == 'undefined') {
+            div_id = 'message';
+        }
         //give user information
-        addInfoMessage("Deleting Data. Please Wait.");
+        addInfoMessage("Deleting Data. Please Wait.", div_id);
         var submit_button_html = submit_button.html();
         submit_button.text('Deleting ...');
     
@@ -403,8 +406,13 @@ function deleteRowData(submit_button, data) {
         xhr.done(function(data) {
             if ('success' in data) {
                 parent_row.remove();
+                addSuccessMessage(data['success'], div_id);
             }
-        }).always(function(){
+        })
+        .fail(function(xhr, status, error) {
+            addErrorMessage(error, div_id);
+        })
+        .always(function(){
             submit_button.html(submit_button_html);
         });
         return xhr;

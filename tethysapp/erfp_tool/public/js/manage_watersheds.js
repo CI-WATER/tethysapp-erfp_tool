@@ -492,7 +492,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                 watershed_id: $(this).parent().parent().parent().find('.watershed-name').data('watershed_id')
             };
             //update database
-            var xhr = deleteRowData($(this), data);
+            var xhr = deleteRowData($(this), data, "main_message");
             if (xhr != null) {
                 xhr.done(function (data) { 
                     if('success' in data) {
