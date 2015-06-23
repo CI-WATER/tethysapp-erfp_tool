@@ -175,7 +175,8 @@ var WATERML = (function() {
     *************************************************************************/
     var log10, roundToSignificantFigures, parseISO8601Date, convertUnits,
         convertPointUnits, getWMLVersion, getUnits, getObservations,  
-        getSiteName, getObservedProperty, getPropertyDefaults, getValues;
+        getSiteName, getObservedProperty, getPropertyDefaults, getValues,
+        getActiveAHPSSeriesName;
 
     /************************************************************************
     *                    PRIVATE FUNCTION IMPLEMENTATIONS
@@ -360,6 +361,16 @@ var WATERML = (function() {
         }        
         return result;
     };
+
+    getActiveAHPSSeriesName = function(observation){
+        var result = null;
+        if(m_waterml_version == 2){
+            var query1 = m_include_namespace ? "om\\:parameter" : "parameter";
+            var query2 = m_include_namespace ? "om\\:name" : "name";
+            result=$($(observation).find(query1).find(query2)[0]).attr("xlink:title");
+        }        
+        return result;
+    };
     
     getObservedProperty = function(observation) {
         var query;
@@ -501,7 +512,7 @@ var WATERML = (function() {
     * functions of the library because of JavaScript function scope.
     */
     m_public_interface = {
-        get_json_from_streamflow_waterml: function(waterml_doc, display_units) {
+        get_json_from_streamflow_waterml: function(waterml_doc, display_units, query_series_name) {
             // Initialize Global Variables
             m_include_namespace = null;
             m_waterml_version = null;
@@ -522,7 +533,7 @@ var WATERML = (function() {
                 var observations = getObservations(xml); 
                 for (var i=0;i<observations.length;i++) {
                     //Get series metadata
-                    var seriesName = getSiteName(observations[i]);
+                    var siteName = getSiteName(observations[i]);
                     var observedProperty = getObservedProperty(observations[i]);
                     var sourceUnits = getUnits(observations[i]);
                     var seriesValues = getValues(observations[i]);
@@ -532,9 +543,21 @@ var WATERML = (function() {
                         if(typeof display_units != undefined && display_units == "english") {
                             displayUnits = "cfs"
                         }
-                        //Convert series units
-                        all_series.push(convertPointUnits(seriesValues,"L^3/T", 
-                                        sourceUnits, displayUnits));
+                        //for AHPS series, get the valid forecast
+                        if (typeof query_series_name != 'undefined') {
+                            var seriesName = getActiveAHPSSeriesName(observations[i]);
+                            if (seriesName != 'undefined' && seriesName != null) {
+                                if (seriesName.toLowerCase() == query_series_name.toLowerCase()) {
+                                    //Convert series units
+                                    all_series.push(convertPointUnits(seriesValues,"L^3/T", 
+                                                    sourceUnits, displayUnits));
+                                }
+                            }
+                        } else {
+                            //Convert series units
+                            all_series.push(convertPointUnits(seriesValues,"L^3/T", 
+                                            sourceUnits, displayUnits));
+                        }
                     }
                 }
                 if (all_series.length > 0) {

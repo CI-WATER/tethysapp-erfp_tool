@@ -62,7 +62,7 @@ var ERFP_MAP = (function() {
         clearOldChart, dateToUTCString, clearChartSelect2, getChartData,
         displayHydrograph, loadHydrographFromFeature,resetChartSelectMessage,
         addECMWFSeriesToCharts, addSeriesToCharts, isThereDataToLoad, 
-        checkCleanString, dateToUTCDateTimeString;
+        checkCleanString, dateToUTCDateTimeString, getValidSeries;
 
 
     /************************************************************************
@@ -151,7 +151,7 @@ var ERFP_MAP = (function() {
         }
         time_series.map(function(data_row) {
             var new_data_array = [data_row[0]];
-            for (var i =1; i<data_row.length; i++) {
+            for (var i = 1; i<data_row.length; i++) {
                 new_data_array.push(parseFloat((data_row[i]*conversion_factor).toFixed(5)));
             }
             new_time_series.push(new_data_array);
@@ -209,6 +209,26 @@ var ERFP_MAP = (function() {
         for(var key in obj.getProperties()){
             if(prop == key.toLowerCase()){
                 return checkCleanString(obj.get(key));
+            }
+        }
+        return null;
+    };
+
+    //FUNCTION: get series with actual data
+    getValidSeries = function(series_array){
+        if (series_array != null) {
+            var valid_series;
+            for (var i=0; i<series_array.length; i++) {
+                valid_series = true;
+                for (var j=0; j<series_array[i].length; j++) {
+                    if (series_array[i][j][1] < 0) {
+                        valid_series = false;
+                        break;
+                    }
+                }
+                if (valid_series) {
+                    return series_array[i];
+                }
             }
         }
         return null;
@@ -759,23 +779,21 @@ var ERFP_MAP = (function() {
                         endPosition:  dateToUTCDateTimeString(date_nws_end), 
                     },
                     success: function(data) {
-                        var series_data = WATERML.get_json_from_streamflow_waterml(data, m_units);
-                        console.log(series_data);
+                        //var series_data = getValidSeries(WATERML.get_json_from_streamflow_waterml(data, m_units));
+                        var series_data = WATERML.get_json_from_streamflow_waterml(data, m_units, "T0 (Time of analysis)");
                         if(series_data == null) {
-                            appendErrorMessage("No data found for AHPS (" + m_selected_nws_id + ")", "ahps_error", "message-error");
-                        } else if (series_data.length > 2) {
-
+                            appendErrorMessage("No valid recent data found for AHPS (" + 
+                                                m_selected_nws_id + ")", "ahps_error", "message-error");
+                        } else {
                             var ahps_series = {
                                             name: "AHPS (" + m_selected_nws_id + ")",
-                                            data: series_data[2],
+                                            data: series_data[0],
                                             dashStyle: 'longdash',
                                             color: Highcharts.getOptions().colors[4],
                             };
                         
                             addSeriesToCharts(ahps_series);
                             $('#long-term-chart').removeClass('hidden');
-                        } else {
-                            appendErrorMessage("No data found for AHPS (" + m_selected_nws_id + ")", "ahps_error", "message-error");
                         }
 
                     },
