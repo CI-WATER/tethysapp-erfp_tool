@@ -281,6 +281,7 @@ var WATERML = (function() {
         //dimensions represents the standard dimensional abbreviation (L for length, M for mass, etc.)
         var fromConversion = -1;
         var toConversion = -1;
+        
         for(var i=0;i<m_units_list.dimensions.length;i++){
             if (m_units_list.dimensions[i].name.toLowerCase() == dimensions.toLowerCase()){
                 for (var j=0;j<m_units_list.dimensions[i].units.length;j++){
@@ -380,7 +381,8 @@ var WATERML = (function() {
             query = m_include_namespace ? "ns1\\:unitCode" : "unitCode";
             result=$($(observation).find(query)[0]).text();                                        
         } else {
-            query = m_include_namespace ? "wml2\\:uom" : "uom";                
+            query = m_include_namespace ? "wml2\\:uom" : "uom"; 
+            //<wml2:uom uom="CFS"/>               
             result = $($(observation).find(query)[0]).attr("code");
             //some WML services use attribute "uom" or "title" rather than "code". 
             if (result == undefined) {
@@ -499,7 +501,7 @@ var WATERML = (function() {
     * functions of the library because of JavaScript function scope.
     */
     m_public_interface = {
-        get_json_from_waterml: function(waterml_doc, display_units) {
+        get_json_from_streamflow_waterml: function(waterml_doc, display_units) {
             // Initialize Global Variables
             m_include_namespace = null;
             m_waterml_version = null;
@@ -523,19 +525,16 @@ var WATERML = (function() {
                     var seriesName = getSiteName(observations[i]);
                     var observedProperty = getObservedProperty(observations[i]);
                     var sourceUnits = getUnits(observations[i]);
-                    var propertyDefaults = getPropertyDefaults(observedProperty, sourceUnits, observations[i]);
-                    //Get series values
                     var seriesValues = getValues(observations[i]);
                     if (seriesValues.length > 0){
                         //assume only dealing with flow
+                        var displayUnits = "cms";
                         if(typeof display_units != undefined && display_units == "english") {
-                            propertyDefaults.displayUnits = "cfs"
-                        } else {
-                            propertyDefaults.displayUnits = "cms"
+                            displayUnits = "cfs"
                         }
                         //Convert series units
-                        all_series.push(convertPointUnits(seriesValues,propertyDefaults.dimensions, 
-                                        propertyDefaults.sourceUnits, propertyDefaults.displayUnits));
+                        all_series.push(convertPointUnits(seriesValues,"L^3/T", 
+                                        sourceUnits, displayUnits));
                     }
                 }
                 if (all_series.length > 0) {

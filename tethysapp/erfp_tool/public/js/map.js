@@ -62,7 +62,7 @@ var ERFP_MAP = (function() {
         clearOldChart, dateToUTCString, clearChartSelect2, getChartData,
         displayHydrograph, loadHydrographFromFeature,resetChartSelectMessage,
         addECMWFSeriesToCharts, addSeriesToCharts, isThereDataToLoad, 
-        checkCleanString;
+        checkCleanString, dateToUTCDateTimeString;
 
 
     /************************************************************************
@@ -442,6 +442,10 @@ var ERFP_MAP = (function() {
               datePadString(1 + date.getUTCMonth()) + "-" +
               datePadString(date.getUTCDate());
     };
+    //FUNCTION: converts date to UTC string in the format yyyy-mm-dd
+    dateToUTCDateTimeString = function(date) {
+        return dateToUTCString(date) + "T00:00:00";
+    };
 
     //FUNCTION: adds a series to both the chart
     addECMWFSeriesToCharts = function(series_name, series_data, series_color, series_type){
@@ -737,33 +741,42 @@ var ERFP_MAP = (function() {
                 }
             }
             //Get AHPS data if NWD ID attribute exists
-            if(!isNaN(m_selected_nws_id) && m_selected_nws_id != null) {
+            if(m_selected_nws_id != null) {
 
                 m_downloading_nws = true;
                 //get NWS data
+                //Example URL: http://ua-fews.ua.edu/WaterMlService/waterml?
+                //             request=GetObservation&featureId=ACRT2&observedProperty=QINE 
+                //             &beginPosition=2015-01-01T00:00:00&endPosition=2015-06-22T00:00:00
                 var chart_nws_data_ajax_handle = jQuery.ajax({
                     type: "GET",
-                    url: "http://wwokiweb01.cloudapp.net:8080/KiWIS/KiWIS",
-                    dataType: "json",
+                    url: "http://ua-fews.ua.edu/WaterMlService/waterml",
                     data: {
-                        service: 'kisters',
-                        type: 'queryServices',
-                        request: 'getTimeseriesValues',
-                        datasource: '0',
-                        format: 'json',
-                        ts_id: m_selected_nws_id,
-                        from: dateToUTCString(date_nws_start),
-                        to:  dateToUTCString(date_nws_end), 
+                        request: 'GetObservation',
+                        observedProperty: 'QINE',
+                        featureId: m_selected_nws_id,
+                        beginPosition: dateToUTCDateTimeString(date_nws_start),
+                        endPosition:  dateToUTCDateTimeString(date_nws_end), 
                     },
                     success: function(data) {
-                        var ahps_series = {
-                                        name: "AHPS (" + m_selected_nws_id + ")",
-                                        data: convertTimeSeriesEnglishToMetric(data[0].data, "NWS"),
-                                        dashStyle: 'longdash',
-                                        color: Highcharts.getOptions().colors[4],
-                        };
-                        addSeriesToCharts(ahps_series);
-                        $('#long-term-chart').removeClass('hidden');
+                        var series_data = WATERML.get_json_from_streamflow_waterml(data, m_units);
+                        console.log(series_data);
+                        if(series_data == null) {
+                            appendErrorMessage("No data found for AHPS (" + m_selected_nws_id + ")", "ahps_error", "message-error");
+                        } else if (series_data.length > 2) {
+
+                            var ahps_series = {
+                                            name: "AHPS (" + m_selected_nws_id + ")",
+                                            data: series_data[2],
+                                            dashStyle: 'longdash',
+                                            color: Highcharts.getOptions().colors[4],
+                            };
+                        
+                            addSeriesToCharts(ahps_series);
+                            $('#long-term-chart').removeClass('hidden');
+                        } else {
+                            appendErrorMessage("No data found for AHPS (" + m_selected_nws_id + ")", "ahps_error", "message-error");
+                        }
 
                     },
                     error: function(request, status, error) {
@@ -789,11 +802,10 @@ var ERFP_MAP = (function() {
                         endDate:  dateToUTCString(date_observed_end), 
                     },
                     success: function(data) {
-                        var series_data = WATERML.get_json_from_waterml(data, m_units);
+                        var series_data = WATERML.get_json_from_streamflow_waterml(data, m_units);
                         if(series_data == null) {
                             appendErrorMessage("No data found for WorldWater", "hydro_server_error", "message-error");
                         } else {
-
                             var hydro_server_series = {
                                             name: "HydroServer",
                                             data: series_data[0],
