@@ -315,18 +315,19 @@ var ERFP_MAP = (function() {
                                 url: encodeURI(url),
                                 dataType: 'jsonp',
                                 jsonpCallback: 'searchFeatures',
-                                success: function(response) {
-                                    if (response.totalFeatures > 0) {
-                                        var features = drainage_line_layer.getSource().readFeatures(response);
-                                        m_map.getView().fitExtent(features[0].getGeometry().getExtent(), m_map.getSize());
-                                        m_select_interaction.getFeatures().clear();
-                                        m_select_interaction.getFeatures().push(features[0]);
-                                    } else {
-                                        $("#reach-id-help-message").text('Reach ID ' + reach_id + ' not found');
-                                        $("#reach-id-help-message").parent().addClass('alert-danger');
-                                    }
-                                },
-                            }).always(function() {
+                            })
+                            .done(function(response) {
+                                if (response.totalFeatures > 0) {
+                                    var features = drainage_line_layer.getSource().readFeatures(response);
+                                    m_map.getView().fitExtent(features[0].getGeometry().getExtent(), m_map.getSize());
+                                    m_select_interaction.getFeatures().clear();
+                                    m_select_interaction.getFeatures().push(features[0]);
+                                } else {
+                                    $("#reach-id-help-message").text('Reach ID ' + reach_id + ' not found');
+                                    $("#reach-id-help-message").parent().addClass('alert-danger');
+                                }
+                            })
+                            .always(function() {
                                 m_searching_for_reach = false;
                                 search_id_button.html(search_id_button_html);
                             });
@@ -514,8 +515,6 @@ var ERFP_MAP = (function() {
             }
             var default_chart_settings = {
                 title: { text: "Forecast"},
-                subtitle: {text: toTitleCase(m_selected_ecmwf_watershed) + " (" +
-                                 toTitleCase(m_selected_ecmwf_subbasin) + "): " + m_selected_reach_id},
                 chart: {
                     zoomType: 'x',
                 },
@@ -540,6 +539,19 @@ var ERFP_MAP = (function() {
                     min: 0
                 },
             };
+            //handle subtitles - ECMWF first priority
+            var subtitle = null;
+            if(m_selected_ecmwf_watershed != null && m_selected_ecmwf_subbasin != null) {
+                subtitle = {text: toTitleCase(m_selected_ecmwf_watershed) + " (" +
+                             toTitleCase(m_selected_ecmwf_subbasin) + "): " + m_selected_reach_id}
+            } else if (m_selected_wrf_hydro_watershed != null && m_selected_wrf_hydro_subbasin != null) {
+                subtitle = {text: toTitleCase(m_selected_wrf_hydro_watershed) + " (" +
+                             toTitleCase(m_selected_wrf_hydro_subbasin) + "): " + m_selected_reach_id}
+            }
+
+            if (subtitle != null) {
+                default_chart_settings.subtitle = subtitle;
+            }
 
             $("#long-term-chart").highcharts(default_chart_settings);
 
