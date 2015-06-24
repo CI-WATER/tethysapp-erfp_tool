@@ -33,8 +33,6 @@ from functions import (check_shapefile_input_files,
                        handle_uploaded_file, 
                        user_permission_test)
 
-from load_datasets import load_watershed
-
 from model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
 
@@ -360,8 +358,7 @@ def ecmwf_get_avaialable_dates(request):
             time = directory.split(".")[-1]
             path_to_files = os.path.join(path_to_watershed_files, directory)
             if os.path.exists(path_to_files):
-                basin_files = glob(os.path.join(path_to_files,
-                                                "*"+subbasin_name+"*.nc"))
+                basin_files = glob(os.path.join(path_to_files,"*.nc"))
                 #only add directory to the list if valid                                    
                 if len(basin_files) >0: # and get_reach_index(reach_id, basin_files):
                     hour = int(time)/100
@@ -548,6 +545,75 @@ def ecmwf_get_hydrograph(request):
         return_data["success"] = "ECMWF Data analysis complete!"
         return JsonResponse(return_data)
                     
+def era_interim_get_hydrograph(request):
+    """""
+    Returns ERA Interim hydrograph
+    """""
+    if request.method == 'GET':
+        #Query DB for path to rapid output
+        session = SettingsSessionMaker()
+        main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+        session.close()
+        path_to_era_interim_data = main_settings.era_interim_rapid_directory
+        if not os.path.exists(path_to_era_interim_data):
+            return JsonResponse({'error' : 'Location of ERA-Interim files faulty. Please check settings.'})
+
+        #get information from GET request
+        get_info = request.GET
+        watershed_name = format_name(get_info['watershed_name']) if 'watershed_name' in get_info else None
+        subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
+        reach_id = get_info.get('reach_id')
+        date_string = get_info.get('date_string')
+        if not reach_id or not watershed_name or not subbasin_name or not date_string:
+            return JsonResponse({'error' : 'ERA Interim AJAX request input faulty.'})
+
+        #find/check current output datasets
+        path_to_output_files = os.path.join(path_to_era_interim_data, watershed_name, subbasin_name)
+        forecast_file = glob(os.path.join(path_to_output_files, "*.nc"))[0]
+        if not forecast_file:
+            return JsonResponse({'error' : 'ERA Interim data for %s (%s) not found.' % (watershed_name, subbasin_name)})
+
+        #get/check the index of the reach
+        reach_index = get_reach_index(reach_id, forecast_file)
+        if reach_index == None:
+            return JsonResponse({'error' : 'ERA Interim reach with id: %s not found.' % reach_id})
+
+        #get information from dataset
+        data_nc = NET.Dataset(forecast_file, mode="r")
+        qout_dimensions = data_nc.variables['Qout'].dimensions
+        if qout_dimensions[0].lower() == 'comid' and \
+            qout_dimensions[1].lower() == 'time':
+            data_values = data_nc.variables['Qout'][reach_index,:]
+        else:
+            data_nc.close()
+            return JsonResponse({'error' : "Invalid ERA-Interim file"})
+
+        variables = data_nc.variables.keys()
+        if 'time' in variables:
+            time = [t*1000 for t in data_nc.variables['time'][:]]
+        else:
+            data_nc.close()
+            return JsonResponse({'error' : "Invalid ERA-Interim file"})
+        data_nc.close()
+        
+        sorted_values = np.sort(data_values)[::-1]
+        
+        #TODO: make this not hard coded
+        
+        rt_twenty_five = sorted_values[9]
+        rt_ten = sorted_values[24]
+        rt_five = sorted_values[29]
+        rt_two = sorted_values[32]
+
+        return JsonResponse({
+                "success" : "ERA-Interim data analysis complete!",
+                "era_interim" : zip(time, data_values.tolist()),
+                "twenty_five" : str(rt_twenty_five),
+                "ten" : str(rt_ten),
+                "five" : str(rt_five),
+                "two" : str(rt_two),
+        })
+
 def wrf_hydro_get_hydrograph(request):
     """""
     Returns WRF-Hydro hydrograph
@@ -616,6 +682,7 @@ def settings_update(request):
         base_layer_id = post_info.get('base_layer_id')
         api_key = post_info.get('api_key')
         ecmwf_rapid_prediction_directory = post_info.get('ecmwf_rapid_location')
+        era_interim_rapid_directory = post_info.get('era_interim_rapid_location')
         wrf_hydro_rapid_prediction_directory = post_info.get('wrf_hydro_rapid_location')
 
         #update cron jobs
@@ -643,6 +710,7 @@ def settings_update(request):
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         main_settings.base_layer_id = base_layer_id
         main_settings.ecmwf_rapid_prediction_directory = ecmwf_rapid_prediction_directory    
+        main_settings.era_interim_rapid_directory = era_interim_rapid_directory    
         main_settings.wrf_hydro_rapid_prediction_directory = wrf_hydro_rapid_prediction_directory    
         main_settings.base_layer.api_key = api_key
         session.commit()

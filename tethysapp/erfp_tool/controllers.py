@@ -237,6 +237,7 @@ def map(request):
                                 'on_style': 'success',
                                 'initial': True,
                               }
+
         wrf_toggle_switch = {
                                 'display_text' : "WRF-Hydro",
                                 'name': 'wrf-toggle',
@@ -311,6 +312,14 @@ def settings(request):
                 'icon_append':'glyphicon glyphicon-folder-open',
                 'initial': main_settings.ecmwf_rapid_prediction_directory,
               }
+
+    era_interim_rapid_directory_input = {
+                'display_text': 'Server Folder Location of ERA Interim RAPID files',
+                'name': 'era-interim-rapid-location-input',
+                'placeholder': 'e.g.: /home/username/work/rapid/era_interim',
+                'icon_append':'glyphicon glyphicon-folder-open',
+                'initial': main_settings.era_interim_rapid_directory,
+              }
               
     wrf_hydro_rapid_directory_input = {
                 'display_text': 'Server Folder Location of WRF-Hydro RAPID files',
@@ -333,6 +342,7 @@ def settings(request):
                 'base_layer_select_input': base_layer_select_input,
                 'base_layer_api_key_input': base_layer_api_key_input,
                 'ecmwf_rapid_input': ecmwf_rapid_directory_input,
+                'era_interim_rapid_input': era_interim_rapid_directory_input,
                 'wrf_hydro_rapid_input':wrf_hydro_rapid_directory_input,
                 'submit_button': submit_button,
                 'base_layer_api_keys': json.dumps(base_layer_api_keys),

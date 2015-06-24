@@ -26,6 +26,7 @@ $('#submit-changes-settings').click(function(){
     //check output rapid-ecmwf files location
     var ecmwf_rapid_location = checkInputWithError($('#ecmwf-rapid-location-input'),safe_to_submit);
     var wrf_hydro_rapid_location = checkInputWithError($('#wrf-hydro-rapid-location-input'),safe_to_submit);
+    var era_interim_rapid_location = checkInputWithError($('#era-interim-rapid-location-input'),safe_to_submit);
 
     //submit if inputs are ok
     if(safe_to_submit.val) {
@@ -41,6 +42,7 @@ $('#submit-changes-settings').click(function(){
                 base_layer_id: base_layer_id,
                 api_key: api_key,
                 ecmwf_rapid_location: ecmwf_rapid_location,
+                era_interim_rapid_location: era_interim_rapid_location,
                 wrf_hydro_rapid_location: wrf_hydro_rapid_location,                    
                 };
 

@@ -33,6 +33,7 @@ var ERFP_MAP = (function() {
         m_selected_nws_id,
         m_selected_hydroserver_url,
         m_downloading_ecmwf_hydrograph,
+        m_downloading_era_interim_hydrograph,
         m_downloading_long_term_select,
         m_downloading_short_term_select,
         m_downloading_wrf_hydro_hydrograph,
@@ -238,7 +239,8 @@ var ERFP_MAP = (function() {
     isNotLoadingPastRequest = function() {
         return !m_downloading_ecmwf_hydrograph && !m_downloading_long_term_select &&
             !m_downloading_usgs && !m_downloading_nws && !m_downloading_hydroserver &&
-            !m_downloading_short_term_select && !m_downloading_wrf_hydro_hydrograph;
+            !m_downloading_short_term_select && !m_downloading_wrf_hydro_hydrograph &&
+            !m_downloading_era_interim_hydrograph;
     };
 
     //FUNCTION: zooms to all kml files
@@ -570,43 +572,42 @@ var ERFP_MAP = (function() {
                         reach_id: m_selected_reach_id,
                         start_folder: m_ecmwf_start_folder,
                     },
-
-                    success: function (data) {
-                        if ("success" in data) {
-                            if ("mean" in data) {
-                                addECMWFSeriesToCharts("ECMWF", data['mean'], 
-                                                        Highcharts.getOptions().colors[2]);
-                            }
-                            if ("outer_range" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Outer Range",
-                                                        data['outer_range'], 
-                                                        Highcharts.getOptions().colors[2], 
-                                                        'arearange');
-                            }
-                            if ("std_dev_range" in data) {
-                                addECMWFSeriesToCharts("ECMWF - Std. Dev.", 
-                                                       data['std_dev_range'], 
-                                                       Highcharts.getOptions().colors[2], 
-                                                       'arearange');
-                            }
-                            if ("high_res" in data) {
-                                addECMWFSeriesToCharts("ECMWF - High Res.",
-                                                       data['high_res'],
-                                                       Highcharts.getOptions().colors[1]);
-                            }
-                            $('.long-term-select').removeClass('hidden');
-                            $('#long-term-chart').removeClass('hidden');
-                        } else {
-                            m_long_term_chart_data_ajax_load_failed = true;
-                            appendErrorMessage(data["error"], "ecmwf_error", "message-error");
-                            clearChartSelect2('long-term');
+                })
+                .done(function (data) {
+                    if ("success" in data) {
+                        if ("mean" in data) {
+                            addECMWFSeriesToCharts("ECMWF", data.mean, 
+                                                    Highcharts.getOptions().colors[2]);
                         }
-                    },
-                    error: function (request, status, error) {
+                        if ("outer_range" in data) {
+                            addECMWFSeriesToCharts("ECMWF - Outer Range",
+                                                    data.outer_range, 
+                                                    Highcharts.getOptions().colors[2], 
+                                                    'arearange');
+                        }
+                        if ("std_dev_range" in data) {
+                            addECMWFSeriesToCharts("ECMWF - Std. Dev.", 
+                                                   data.std_dev_range, 
+                                                   Highcharts.getOptions().colors[2], 
+                                                   'arearange');
+                        }
+                        if ("high_res" in data) {
+                            addECMWFSeriesToCharts("ECMWF - High Res.",
+                                                   data.high_res,
+                                                   Highcharts.getOptions().colors[1]);
+                        }
+                        $('.long-term-select').removeClass('hidden');
+                        $('#long-term-chart').removeClass('hidden');
+                    } else {
+                        m_long_term_chart_data_ajax_load_failed = true;
+                        appendErrorMessage(data["error"], "ecmwf_error", "message-error");
+                        clearChartSelect2('long-term');
+                    }
+                })
+                .fail(function (request, status, error) {
                         m_long_term_chart_data_ajax_load_failed = true;
                         appendErrorMessage("Error: " + error, "ecmwf_error", "message-error");
                         clearChartSelect2('long-term');
-                    },
                 })
                 .always(function () {
                     m_downloading_ecmwf_hydrograph = false;
@@ -615,6 +616,82 @@ var ERFP_MAP = (function() {
                         clearInfoMessages();
                     }
                 });
+
+                m_downloading_era_interim_hydrograph = true;
+                jQuery.ajax({
+                    type: "GET",
+                    url: "era-interim-get-hydrograph",
+                    dataType: "json",
+                    data: {
+                        watershed_name: m_selected_ecmwf_watershed,
+                        subbasin_name: m_selected_ecmwf_subbasin,
+                        reach_id: m_selected_reach_id,
+                        date_string: m_wrf_hydro_date_string,
+                    },
+                })
+                .done(function (data) {
+                    if ("success" in data) {
+                        //wrf_hydro
+                        if ("era_interim" in data) {
+                            var era_interim_series = {
+                                name: "ERA Interim",
+                                data: convertTimeSeriesMetricToEnglish(data.era_interim),
+                                dashStyle: 'longdash',
+                                color: Highcharts.getOptions().colors[10],
+                            };
+                            var long_term_chart = $("#long-term-chart").highcharts();
+                            long_term_chart.addSeries(era_interim_series);
+
+
+                            var extremes = long_term_chart.yAxis[0].getExtremes();
+                            var maxY = extremes.max;
+                            long_term_chart.yAxis[0].addPlotBand({
+                                from: parseFloat(data.twenty_five),
+                                to: maxY,
+                                color: 'rgba(255,0,255,0.5)',
+                                id: '25-yr'
+                            });
+                            long_term_chart.yAxis[0].addPlotBand({
+                                from: parseFloat(data.ten),
+                                to: parseFloat(data.twenty_five),
+                                color: 'rgba(255,0,0,0.5)',
+                                id: '10-yr'
+                            });
+                            long_term_chart.yAxis[0].addPlotBand({
+                                from: parseFloat(data.five),
+                                to: parseFloat(data.ten),
+                                color: 'rgba(255,69,0,0.5)',
+                                id: '5-yr'
+                            });
+                            long_term_chart.yAxis[0].addPlotBand({
+                                from: parseFloat(data.two),
+                                to: parseFloat(data.five),
+                                color: 'rgba(255,255,0,0.5)',
+                                id: '2-yr'
+                            });
+
+                            $(long_term_chart.series).each(function(){
+                                if (this.name == "ERA Interim") {
+                                    this.hide();
+                                }
+                            });
+                            $('#long-term-chart').removeClass('hidden');
+                        }
+                    } else {
+                        appendErrorMessage("Error: " + data.error, "era_interim_error", "message-error");
+                    }
+                })
+                .fail(function (request, status, error) {
+                    appendErrorMessage("Error: " + error, "era_interim_error", "message-error");
+                })
+                .always(function () {
+                    m_downloading_era_interim_hydrograph = false;
+                    m_map.addInteraction(m_select_interaction);
+                    if(isNotLoadingPastRequest()){
+                        clearInfoMessages();
+                    }
+                });
+
             }
             //if there is a wrf watershed & subbasin attribute
             if (m_wrf_show && m_selected_wrf_hydro_watershed != null 
@@ -631,8 +708,8 @@ var ERFP_MAP = (function() {
                         reach_id: m_selected_reach_id,
                         date_string: m_wrf_hydro_date_string,
                     },
-
-                    success: function (data) {
+                })
+                .done(function (data) {
                         if ("success" in data) {
                             //wrf_hydro
                             if ("wrf_hydro" in data) {
@@ -652,12 +729,11 @@ var ERFP_MAP = (function() {
                             appendErrorMessage("Error: " + data["error"], "wrf_hydro_error", "message-error");
                             clearChartSelect2('short-term');
                         }
-                    },
-                    error: function (request, status, error) {
+                })
+                .fail(function (request, status, error) {
                         m_short_term_chart_data_ajax_load_failed = true;
                         appendErrorMessage("Error: " + error, "wrf_hydro_error", "message-error");
                         clearChartSelect2('short-term');
-                    },
                 })
                 .always(function () {
                     m_downloading_wrf_hydro_hydrograph = false;
@@ -743,26 +819,26 @@ var ERFP_MAP = (function() {
                             endDT: dateToUTCString(date_observed_end),
                             parameterCd: '00060',
                         },
-                        success: function (data) {
-                            if (typeof data != 'undefined') {
-                                try {
-                                    var usgs_series = {
-                                        name: "USGS (" + m_selected_usgs_id + ")",
-                                        data: convertTimeSeriesEnglishToMetric(data.value.timeSeries[0].values[0].value, "USGS"),
-                                        dashStyle: 'longdash',
-                                        color: Highcharts.getOptions().colors[0]
-                                    };
-                                    addSeriesToCharts(usgs_series);
-                                } catch (e) {
-                                    if (e instanceof TypeError) {
-                                        appendErrorMessage("Recent USGS data not found.", "usgs_error", "message-error");
-                                    }
+                    })
+                    .done(function (data) {
+                        if (typeof data != 'undefined') {
+                            try {
+                                var usgs_series = {
+                                    name: "USGS (" + m_selected_usgs_id + ")",
+                                    data: convertTimeSeriesEnglishToMetric(data.value.timeSeries[0].values[0].value, "USGS"),
+                                    dashStyle: 'longdash',
+                                    color: Highcharts.getOptions().colors[0]
+                                };
+                                addSeriesToCharts(usgs_series);
+                            } catch (e) {
+                                if (e instanceof TypeError) {
+                                    appendErrorMessage("Recent USGS data not found.", "usgs_error", "message-error");
                                 }
                             }
-                        },
-                        error: function (request, status, error) {
-                            appendErrorMessage("USGS Error: " + error, "usgs_error", "message-error");
-                        },
+                        }
+                    })
+                    .fail(function (request, status, error) {
+                        appendErrorMessage("USGS Error: " + error, "usgs_error", "message-error");
                     })
                     .always(function () {
                         m_downloading_usgs = false;
@@ -790,28 +866,27 @@ var ERFP_MAP = (function() {
                         beginPosition: dateToUTCDateTimeString(date_nws_start),
                         endPosition:  dateToUTCDateTimeString(date_nws_end), 
                     },
-                    success: function(data) {
-                        //var series_data = getValidSeries(WATERML.get_json_from_streamflow_waterml(data, m_units));
-                        var series_data = WATERML.get_json_from_streamflow_waterml(data, m_units, "T0 (Time of analysis)");
-                        if(series_data == null) {
-                            appendErrorMessage("No valid recent data found for AHPS (" + 
-                                                m_selected_nws_id + ")", "ahps_error", "message-error");
-                        } else {
-                            var ahps_series = {
-                                            name: "AHPS (" + m_selected_nws_id + ")",
-                                            data: series_data[0],
-                                            dashStyle: 'longdash',
-                                            color: Highcharts.getOptions().colors[4],
-                            };
-                        
-                            addSeriesToCharts(ahps_series);
-                            $('#long-term-chart').removeClass('hidden');
-                        }
-
-                    },
-                    error: function(request, status, error) {
-                        appendErrorMessage("AHPS Error: " + error, "ahps_error", "message-error");
-                    },
+                })
+                .done(function(data) {
+                    //var series_data = getValidSeries(WATERML.get_json_from_streamflow_waterml(data, m_units));
+                    var series_data = WATERML.get_json_from_streamflow_waterml(data, m_units, "T0 (Time of analysis)");
+                    if(series_data == null) {
+                        appendErrorMessage("No valid recent data found for AHPS (" + 
+                                            m_selected_nws_id + ")", "ahps_error", "message-error");
+                    } else {
+                        var ahps_series = {
+                                        name: "AHPS (" + m_selected_nws_id + ")",
+                                        data: series_data[0],
+                                        dashStyle: 'longdash',
+                                        color: Highcharts.getOptions().colors[4],
+                        };
+                    
+                        addSeriesToCharts(ahps_series);
+                        $('#long-term-chart').removeClass('hidden');
+                    }
+                })
+                .fail(function(request, status, error) {
+                    appendErrorMessage("AHPS Error: " + error, "ahps_error", "message-error");
                 })
                 .always(function() {
                     m_downloading_nws = false;
@@ -831,23 +906,23 @@ var ERFP_MAP = (function() {
                         startDate: dateToUTCString(date_observed_start),
                         endDate:  dateToUTCString(date_observed_end), 
                     },
-                    success: function(data) {
-                        var series_data = WATERML.get_json_from_streamflow_waterml(data, m_units);
-                        if(series_data == null) {
-                            appendErrorMessage("No data found for WorldWater", "hydro_server_error", "message-error");
-                        } else {
-                            var hydro_server_series = {
-                                            name: "HydroServer",
-                                            data: series_data[0],
-                                            dashStyle: 'longdash',
-                                            color: Highcharts.getOptions().colors[5],
-                                        };
-                            addSeriesToCharts(hydro_server_series);
-                        }
-                    },
-                    error: function(request, status, error) {
-                        appendErrorMessage("Error: " + error, "hydro_server_error", "message-error");
-                    },
+                })
+                .done(function(data) {
+                    var series_data = WATERML.get_json_from_streamflow_waterml(data, m_units);
+                    if(series_data == null) {
+                        appendErrorMessage("No data found for WorldWater", "hydro_server_error", "message-error");
+                    } else {
+                        var hydro_server_series = {
+                                        name: "HydroServer",
+                                        data: series_data[0],
+                                        dashStyle: 'longdash',
+                                        color: Highcharts.getOptions().colors[5],
+                                    };
+                        addSeriesToCharts(hydro_server_series);
+                    }
+                })
+                .fail(function(request, status, error) {
+                    appendErrorMessage("Error: " + error, "hydro_server_error", "message-error");
                 })
                 .always(function() {
                     m_downloading_hydroserver = false;
@@ -906,7 +981,7 @@ var ERFP_MAP = (function() {
                             data: data.output_directories,
                             placeholder: "Select a Date"
                         });
-                        if (m_downloading_ecmwf_hydrograph) {
+                        if (m_downloading_ecmwf_hydrograph && m_downloading_era_interim_hydrograph) {
                             $('.long-term-select').addClass('hidden');
                         }
                         //add on change event handler
@@ -1081,6 +1156,7 @@ var ERFP_MAP = (function() {
         m_selected_nws_id = null;
         m_selected_hydroserver_url = null;
         m_downloading_ecmwf_hydrograph = false;
+        m_downloading_era_interim_hydrograph = false;
         m_downloading_long_term_select = false;
         m_downloading_wrf_hydro_hydrograph = false;
         m_downloading_short_term_select = false;
