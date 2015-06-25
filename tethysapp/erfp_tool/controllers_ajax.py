@@ -596,22 +596,16 @@ def era_interim_get_hydrograph(request):
             return JsonResponse({'error' : "Invalid ERA-Interim file"})
         data_nc.close()
         
-        sorted_values = np.sort(data_values)[::-1]
-        
-        #TODO: make this not hard coded
-        
-        rt_twenty_five = sorted_values[9]
-        rt_ten = sorted_values[24]
-        rt_five = sorted_values[29]
-        rt_two = sorted_values[32]
+        num_years = int(len(data_values)/365)
+        sorted_values = np.sort(data_values)[:num_years:-1]
 
         return JsonResponse({
                 "success" : "ERA-Interim data analysis complete!",
                 "era_interim" : zip(time, data_values.tolist()),
-                "twenty_five" : str(rt_twenty_five),
-                "ten" : str(rt_ten),
-                "five" : str(rt_five),
-                "two" : str(rt_two),
+                "twenty_five" : str(sorted_values[num_years-25]),
+                "ten" : str(sorted_values[num_years-10]),
+                "five" : str(sorted_values[num_years-5]),
+                "two" : str(sorted_values[num_years-2]),
         })
 
 def wrf_hydro_get_hydrograph(request):

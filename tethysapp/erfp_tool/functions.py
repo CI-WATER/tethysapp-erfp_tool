@@ -99,9 +99,9 @@ def delete_old_watershed_prediction_files(watershed, forecast="all"):
             .filter(Watershed.id != watershed.id) \
             .count()
         if num_wrf_hydro_watersheds_with_forecast <= 0:
-            delete_prediciton_files(watershed.ecmwf_data_store_watershed_name, 
-                                    watershed.ecmwf_data_store_subbasin_name, 
-                                    main_settings.ecmwf_rapid_prediction_directory)
+            delete_prediciton_files(watershed.wrf_hydro_data_store_watershed_name, 
+                                    watershed.wrf_hydro_data_store_subbasin_name, 
+                                    main_settings.wrf_hydro_rapid_prediction_directory)
     
     session.close()
               
