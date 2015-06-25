@@ -63,7 +63,8 @@ var ERFP_MAP = (function() {
         clearOldChart, dateToUTCString, clearChartSelect2, getChartData,
         displayHydrograph, loadHydrographFromFeature,resetChartSelectMessage,
         addECMWFSeriesToCharts, addSeriesToCharts, isThereDataToLoad, 
-        checkCleanString, dateToUTCDateTimeString, getValidSeries;
+        checkCleanString, dateToUTCDateTimeString, getValidSeries, 
+        convertValueMetricToEnglish;
 
 
     /************************************************************************
@@ -143,6 +144,17 @@ var ERFP_MAP = (function() {
                || m_selected_hydroserver_url != null);
     };
     
+
+    //FUNCTION: convert units from metric to english
+    convertValueMetricToEnglish = function(data_value) {
+        var conversion_factor = 1;
+        if(m_units=="english") {
+            conversion_factor = 35.3146667;
+        }
+        return data_value * conversion_factor;
+    };
+
+
     //FUNCTION: convert units from metric to english
     convertTimeSeriesMetricToEnglish = function(time_series) {
         var new_time_series = [];
@@ -646,27 +658,27 @@ var ERFP_MAP = (function() {
                             var extremes = long_term_chart.yAxis[0].getExtremes();
                             var maxY = extremes.max;
                             long_term_chart.yAxis[0].addPlotBand({
-                                from: parseFloat(data.twenty_five),
-                                to: maxY,
-                                color: 'rgba(255,0,255,0.5)',
+                                from: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
+                                to: convertValueMetricToEnglish(maxY),
+                                color: 'rgba(255,0,255,0.3)',
                                 id: '25-yr'
                             });
                             long_term_chart.yAxis[0].addPlotBand({
-                                from: parseFloat(data.ten),
-                                to: parseFloat(data.twenty_five),
-                                color: 'rgba(255,0,0,0.5)',
+                                from: convertValueMetricToEnglish(parseFloat(data.ten)),
+                                to: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
+                                color: 'rgba(255,0,0,0.3)',
                                 id: '10-yr'
                             });
                             long_term_chart.yAxis[0].addPlotBand({
-                                from: parseFloat(data.five),
-                                to: parseFloat(data.ten),
-                                color: 'rgba(255,69,0,0.5)',
+                                from: convertValueMetricToEnglish(parseFloat(data.five)),
+                                to: convertValueMetricToEnglish(parseFloat(data.ten)),
+                                color: 'rgba(255,69,0,0.3)',
                                 id: '5-yr'
                             });
                             long_term_chart.yAxis[0].addPlotBand({
-                                from: parseFloat(data.two),
-                                to: parseFloat(data.five),
-                                color: 'rgba(255,255,0,0.5)',
+                                from: convertValueMetricToEnglish(parseFloat(data.two)),
+                                to: convertValueMetricToEnglish(parseFloat(data.five)),
+                                color: 'rgba(255,255,0,0.3)',
                                 id: '2-yr'
                             });
 
