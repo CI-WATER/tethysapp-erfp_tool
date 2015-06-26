@@ -49,7 +49,10 @@ var ERFP_MAP = (function() {
         m_wrf_hydro_date_string,
         m_units,
         m_ecmwf_show,
-        m_wrf_show;
+        m_wrf_show,
+        m_return_25_features_source,
+        m_return_10_features_source,
+        m_return_2_features_source;
 
 
 
@@ -1189,6 +1192,105 @@ var ERFP_MAP = (function() {
         m_wrf_show = $('#wrf-toggle').bootstrapSwitch('state');
         m_ecmwf_show = $('#ecmwf-toggle').bootstrapSwitch('state');
 
+        //create symbols for warnings
+        var twenty_five_symbols = [new ol.style.RegularShape({
+                                              points: 3,
+                                              radius: 2,
+                                              fill: new ol.style.Fill({
+                                                color: 'rgba(255,0,255,0.3)'
+                                              }),
+                                              stroke: new ol.style.Stroke({
+                                                color: 'rgba(255,0,255,1)',
+                                                width: 1
+                                              }),
+                    }),new ol.style.RegularShape({
+                                              scale: 1.0,
+                                              radius: 5,
+                                              fill: new ol.style.Fill({
+                                                color: 'rgba(255,0,255,0.3)'
+                                              }),
+                                              stroke: new ol.style.Stroke({
+                                                color: 'rgba(255,0,255,1)',
+                                                width: 1
+                                              }),
+                    }),new ol.style.RegularShape({
+                                              points: 3,
+                                              radius: 9,
+                                              fill: new ol.style.Fill({
+                                                color: 'rgba(255,0,255,0.3)'
+                                              }),
+                                              stroke: new ol.style.Stroke({
+                                                color: 'rgba(255,0,255,1)',
+                                                width: 1
+                                              }),
+                    })];
+
+        //symbols
+        var ten_symbols = [new ol.style.RegularShape({
+                                              points: 3,
+                                              radius: 2,
+                                              fill: new ol.style.Fill({
+                                                color: 'rgba(255,0,0,0.3)'
+                                              }),
+                                              stroke: new ol.style.Stroke({
+                                                color: 'rgba(255,0,0,1)',
+                                                width: 1
+                                              }),
+                    }),new ol.style.RegularShape({
+                                              points: 3,
+                                              radius: 5,
+                                              fill: new ol.style.Fill({
+                                                color: 'rgba(255,0,0,0.3)'
+                                              }),
+                                              stroke: new ol.style.Stroke({
+                                                color: 'rgba(255,0,0,1)',
+                                                width: 1
+                                              }),
+                    }),new ol.style.RegularShape({
+                                              points: 3,
+                                              radius: 9,
+                                              fill: new ol.style.Fill({
+                                                color: 'rgba(255,0,0,0.3)'
+                                              }),
+                                              stroke: new ol.style.Stroke({
+                                                color: 'rgba(255,0,0,1)',
+                                                width: 1
+                                              }),
+                    })];
+
+        //symbols
+        var two_symbols = [new ol.style.RegularShape({
+                                              points: 3,
+                                              radius: 2,
+                                              fill: new ol.style.Fill({
+                                                color: 'rgba(255,255,0,0.3)'
+                                              }),
+                                              stroke: new ol.style.Stroke({
+                                                color: 'rgba(255,255,0,1)',
+                                                width: 1
+                                              }),
+                    }),new ol.style.RegularShape({
+                                              points: 3,
+                                              radius: 5,
+                                              fill: new ol.style.Fill({
+                                                color: 'rgba(255,255,0,0.3)'
+                                              }),
+                                              stroke: new ol.style.Stroke({
+                                                color: 'rgba(255,255,0,1)',
+                                                width: 1
+                                              }),
+                    }),new ol.style.RegularShape({
+                                              points: 3,
+                                              radius: 9,
+                                              fill: new ol.style.Fill({
+                                                color: 'rgba(255,255,0,0.3)'
+                                              }),
+                                              stroke: new ol.style.Stroke({
+                                                color: 'rgba(255,255,0,1)',
+                                                width: 1
+                                              }),
+                    })];
+
         //load base layer
         var base_layer_info = JSON.parse($("#map").attr('base-layer-info'));
         
@@ -1363,6 +1465,160 @@ var ERFP_MAP = (function() {
                     m_drainage_line_layers.push(drainage_line_layer);
                 }
             }
+            //create empty layers to add data to later
+            var return_25_layer = new ol.layer.Vector({
+                source: new ol.source.Cluster({
+                                                source: new ol.source.Vector({ source: []}),
+                                                distance: 20
+                                             }),
+                style: function(feature, resolution) {
+                    var features = feature.get("features");
+                    var size = -1
+                    if (typeof features != 'undefined') {
+                        size = features.length;
+                    } 
+                    var style;
+                    if (size > 3) {
+                        style = [new ol.style.Style({
+                            image: new ol.style.RegularShape({
+                              points: 3,
+                              radius: 12,
+                              stroke: new ol.style.Stroke({
+                                color: '#fff'
+                              }),
+                              fill: new ol.style.Fill({
+                                color: 'rgba(255,0,255,0.6)'
+                              })
+                            }),
+                            text: new ol.style.Text({
+                              text: size.toString(),
+                              fill: new ol.style.Fill({
+                                color: '#fff'
+                              })
+                            })
+                        })];
+                    } else if (size < 0) {
+                        style = [];
+                    } else {
+                        style = [];
+                        for (var i=0; i<size; i++) {
+                            style.push(new ol.style.Style({
+                                image: twenty_five_symbols[features[i].get('point_size')]
+                              }));
+                        }
+                    }
+                    return style;
+                }
+            });
+            return_25_layer.set('layer_id', 'layer' + group_index + 'g' + 3);
+            return_25_layer.set('layer_type', 'warning_points');
+            return_25_layer.set('return_period', 25);
+            return_25_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
+            return_25_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
+            layers.push(return_25_layer);
+    
+            var return_10_layer = new ol.layer.Vector({
+                source: new ol.source.Cluster({
+                                                source: new ol.source.Vector({ source: []}),
+                                                distance: 20
+                                             }),
+                style: function(feature, resolution) {
+                    var features = feature.get("features");
+                    var size = -1
+                    if (typeof features != 'undefined') {
+                        var size = features.length;
+                    } 
+                    var style;
+                    if (size > 3) {
+                        style = [new ol.style.Style({
+                            image: new ol.style.RegularShape({
+                              points: 3,
+                              radius: 12,
+                              stroke: new ol.style.Stroke({
+                                color: '#fff'
+                              }),
+                              fill: new ol.style.Fill({
+                                color: 'rgba(255,0,0,0.6)'
+                              })
+                            }),
+                            text: new ol.style.Text({
+                              text: size.toString(),
+                              fill: new ol.style.Fill({
+                                color: '#fff'
+                              })
+                            })
+                        })];
+                    } else if (size < 0) {
+                        style = [];
+                    } else {
+                        style = [];
+                        for (var i=0; i<size; i++) {
+                            style.push(new ol.style.Style({
+                                image: ten_symbols[features[i].get('point_size')]
+                              }));
+                        }
+                    }
+                    return style;
+                }
+            });
+           return_10_layer.set('layer_id', 'layer' + group_index + 'g' + 4);
+           return_10_layer.set('layer_type', 'warning_points');
+           return_10_layer.set('return_period', 10);
+           return_10_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
+           return_10_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
+           layers.push(return_10_layer);
+    
+            var return_2_layer = new ol.layer.Vector({
+                source: new ol.source.Cluster({
+                                                source: new ol.source.Vector({ source: []}),
+                                                distance: 20
+                                             }),
+                style: function(feature, resolution) {
+                    var features = feature.get("features");
+                    var size = -1
+                    if (typeof features != 'undefined') {
+                        var size = features.length;
+                    } 
+                    var style;
+                    if (size > 3) {
+                        style = [new ol.style.Style({
+                            image: new ol.style.RegularShape({
+                              points: 3,
+                              radius: 12,
+                              stroke: new ol.style.Stroke({
+                                color: '#fff'
+                              }),
+                              fill: new ol.style.Fill({
+                                color: 'rgba(255,255,0,0.6)'
+                              })
+                            }),
+                            text: new ol.style.Text({
+                              text: size.toString(),
+                              fill: new ol.style.Fill({
+                                color: '#fff'
+                              })
+                            })
+                        })];
+                    } else if (size < 0) {
+                        style = [];
+                    } else {
+                        style = [];
+                        for (var i=0; i<size; i++) {
+                            style.push(new ol.style.Style({
+                                image: two_symbols[features[i].get('point_size')]
+                              }));
+                        }
+                    }
+                    return style;
+    
+                }
+            });
+            return_2_layer.set('layer_id', 'layer' + group_index + 'g' + 5);
+            return_2_layer.set('layer_type', 'warning_points');
+            return_2_layer.set('return_period', 2);
+            return_2_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
+            return_2_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
+            layers.push(return_2_layer);
             //make sure there are layers to add
             if (layers.length > 0) {
                 var group_layer = new ol.layer.Group({ 
@@ -1377,7 +1633,6 @@ var ERFP_MAP = (function() {
         if (m_drainage_line_layers.length <= 0) {
             appendErrorMessage('No valid drainage line layers found. Please upload to begin.', "drainage_line_error", "message-error");
         }
-
         //make drainage line layers selectable
         m_select_interaction = new ol.interaction.Select({
                                     layers: m_drainage_line_layers,
@@ -1401,7 +1656,7 @@ var ERFP_MAP = (function() {
             view: new ol.View({
                 center: [-33519607, 5616436],
                 zoom: 8
-            })
+            }),
         });
         //wait for kml layers to load and then zoom to them
         all_group_layers.forEach(function(group_layer){
@@ -1421,12 +1676,54 @@ var ERFP_MAP = (function() {
                         bindInputs('#'+vector_layer.get('layer_id'), vector_layer);
                         ol.extent.extend(m_map_extent, vector_layer.get('extent'));
                         m_map.getView().fitExtent(m_map_extent, m_map.getSize());
+                    } else if (vector_layer.get('layer_type') == "warning_points") {
+                        var layer_id = '#'+vector_layer.get('layer_id');
+                        bindInputs(layer_id, vector_layer);
+                        //get warning points for map
+                        jQuery.ajax({
+                            type: "GET",
+                            url: 'get-warning-points',
+                            dataType: "json",
+                            data: {
+                                watershed_name: vector_layer.get('ecmwf_watershed_name'),
+                                subbasin_name: vector_layer.get('ecmwf_subbasin_name'),
+                                return_period: vector_layer.get('return_period'),
+                            },
+                        })
+                        .done(function (data) {
+                            if ("success" in data) {
+                                $(layer_id).parent().removeClass('hidden');
+                                //symbols
+                                var feature_count = data.warning_points.length
+                                var features = [];
+                                var feature, geometry, symbol;
+                                for (var i = 0; i < feature_count; ++i) {
+                                  geometry = new ol.geom.Point(ol.proj.transform([data.warning_points[i].lon, 
+                                                                                 data.warning_points[i].lat], 
+                                                                                'EPSG:4326', m_map_projection));
+                                  feature = new ol.Feature({
+                                                            geometry: geometry,
+                                                            point_size: data.warning_points[i].size
+                                                            });
+                                  features.push(feature);
+                                }
+                                var vector_source = vector_layer.getSource().getSource();
+                                vector_source.addFeatures(features);
+                                m_map.render();
+            
+                            } else {
+                                console.log(data.error);
+                                //appendErrorMessage("Error: " + data["error"], "warning_points_error", "message-error");
+                            }
+                        })
+                        .fail(function (request, status, error) {
+                            console.log(error);
+                            //appendErrorMessage("Error: " + error, "warning_points_error", "message-error");
+                        });
                     }
                 });
             }
         });
-
-        
 
         //when selected, call function to make hydrograph
         m_select_interaction.getFeatures().on('change:length', function(e) {
@@ -1435,7 +1732,6 @@ var ERFP_MAP = (function() {
           } else {
             // this means there is at least 1 feature selected
             var selected_feature = e.target.item(0); // 1st feature in Collection
-
             loadHydrographFromFeature(selected_feature);
 
           }

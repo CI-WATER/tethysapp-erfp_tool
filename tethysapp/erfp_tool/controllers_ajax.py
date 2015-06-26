@@ -1,6 +1,7 @@
 from crontab import CronTab
 import datetime
 from glob import glob
+from json import load as json_load
 import netCDF4 as NET
 import numpy as np
 import os
@@ -29,7 +30,8 @@ from functions import (check_shapefile_input_files,
                        wrf_hydro_find_most_current_file,
                        format_name,
                        get_cron_command,
-                       get_reach_index, 
+                       get_reach_index,
+                       get_comids_in_lookup_comid_list,
                        handle_uploaded_file, 
                        user_permission_test)
 
@@ -663,7 +665,63 @@ def wrf_hydro_get_hydrograph(request):
                 "success" : "WRF-Hydro data analysis complete!",
                 "wrf_hydro" : zip(time, data_values.tolist()),
         })
-
+        
+@user_passes_test(user_permission_test)
+def generate_warning_points(request):
+    """
+    Controller for getting warning points for user on map
+    """
+    if request.method == 'GET':
+        #Query DB for path to rapid output
+        session = SettingsSessionMaker()
+        main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+        session.close()
+        path_to_ecmwf_rapid_output = main_settings.ecmwf_rapid_prediction_directory
+        path_to_era_interim_data = main_settings.era_interim_rapid_directory
+        if not os.path.exists(path_to_ecmwf_rapid_output) or not os.path.exists(path_to_era_interim_data):
+            return JsonResponse({'error' : 'Location of RAPID output files faulty. Please check settings.'})    
+    
+        #get/check information from AJAX request
+        get_info = request.GET
+        watershed_name = format_name(get_info['watershed_name']) if 'watershed_name' in get_info else None
+        subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
+        return_period = get_info.get('return_period')
+        if not watershed_name or not subbasin_name or not return_period:
+            return JsonResponse({'error' : 'Warning point request input faulty.'})
+        
+        try:
+            return_period = int(return_period)
+        except TypeError, ValueError:
+            return JsonResponse({'error' : 'Invalid return period.'})
+        
+        path_to_output_files = os.path.join(path_to_ecmwf_rapid_output, watershed_name, subbasin_name)
+        if os.path.exists(path_to_output_files):
+            recent_directory = sorted([d for d in os.listdir(path_to_output_files) \
+                                if os.path.isdir(os.path.join(path_to_output_files, d))],
+                                 reverse=True)[0]
+        else:
+            return JsonResponse({'error' : 'No files found for watershed.'})
+                             
+        if return_period == 25:
+            #get warning points to load in
+            warning_points_file = os.path.join(path_to_output_files,recent_directory, "return_25_points.txt")
+        elif return_period == 10:
+            warning_points_file = os.path.join(path_to_output_files,recent_directory, "return_10_points.txt")
+        elif return_period == 2:
+            warning_points_file = os.path.join(path_to_output_files,recent_directory, "return_2_points.txt")
+        else:
+            return JsonResponse({'error' : 'Invalid return period.'})
+ 
+        warning_points = []
+        if os.path.exists(warning_points_file):
+            with open(warning_points_file, 'rb') as infile:
+                warning_points = json_load(infile)
+        else:
+            return JsonResponse({'error' : 'Warning points file not found.'})
+                
+        return JsonResponse({ 'success': "Warning Points Sucessfully Returned!",
+                             'warning_points' : warning_points,
+                            })
 
 @user_passes_test(user_permission_test)
 def settings_update(request):

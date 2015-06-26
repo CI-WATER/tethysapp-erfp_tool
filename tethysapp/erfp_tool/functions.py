@@ -309,6 +309,18 @@ def get_reach_index(reach_id, prediction_file, guess_index=None):
         pass
     return reach_index                
 
+def get_comids_in_lookup_comid_list(search_reach_id_list, lookup_reach_id_list):
+    """
+    Gets the subset comid_index_list, reordered_comid_list from the netcdf file
+    """
+    try:
+        #get where comids are in search_list
+        search_reach_indices_list = np.where(np.in1d(search_reach_id_list, lookup_reach_id_list))[0]
+    except Exception as ex:
+        print ex
+
+    return search_reach_indices_list, lookup_reach_id_list[search_reach_indices_list]
+
 def get_subbasin_list(file_path):
     """
     Gets a list of subbasins in the watershed

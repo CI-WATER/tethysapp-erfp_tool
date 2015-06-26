@@ -95,11 +95,17 @@ def map(request):
         #add kml urls to list and add their navigation items as well
         group_id = 0
         for watershed in watersheds:
+            ecmwf_watershed_name = watershed.ecmwf_data_store_watershed_name if \
+                                   watershed.ecmwf_data_store_watershed_name else watershed.watershed_name
+            ecmwf_subbasin_name = watershed.ecmwf_data_store_subbasin_name if \
+                                   watershed.ecmwf_data_store_subbasin_name else watershed.subbasin_name
             #if on the local server
             if watershed.geoserver_id == 1:
                 file_path = os.path.join(kml_file_location, format_name(watershed.watershed_name))
-                kml_info = {'watershed':watershed.folder_name, 
-                            'subbasin':watershed.file_name,
+                kml_info = {'watershed' : watershed.folder_name, 
+                            'subbasin' : watershed.file_name,
+                            'ecmwf_watershed' : ecmwf_watershed_name,
+                            'ecmwf_subbasin' : ecmwf_subbasin_name
                             }
                 #prepare kml files
                 drainage_line_kml = os.path.join(file_path, watershed.kml_drainage_line_layer)
@@ -127,9 +133,11 @@ def map(request):
             #if geoserver
             else: # (get geoserver info)
                 geoserver_info = {'watershed':watershed.folder_name, 
-                            'subbasin':watershed.file_name,
-                            'geoserver_url': "%s/wms" % watershed.geoserver.url,
-                            }
+                                  'subbasin':watershed.file_name,
+                                  'ecmwf_watershed' : ecmwf_watershed_name,
+                                  'ecmwf_subbasin' : ecmwf_subbasin_name,
+                                  'geoserver_url': "%s/wms" % watershed.geoserver.url,
+                                  }
                 engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
                                                        username=watershed.geoserver.username,
                                                        password=watershed.geoserver.password)

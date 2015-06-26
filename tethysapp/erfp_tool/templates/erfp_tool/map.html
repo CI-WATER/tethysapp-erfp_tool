@@ -145,6 +145,39 @@
                         </ul>
                     </li>
             {% endif%}
+                    <li class="dropdown hidden">
+                        <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">25-Year Warnings<span class="caret"></span></a>
+                        <ul id="layer{{forloop.counter0}}g3" class="dropdown-menu" role="menu">
+                            <li><a class="zoom-to-layer" href="#">Zoom To Layer</a></li>
+                            <li class="divider"></li>
+                            <li><p style="margin-left:20px;"><input class="visible" type="checkbox"> Visibility </p></li>
+                            <li><label style="margin-left:15px;">Opacity</label>
+                                <input style="margin-left:15px; width:80%;" class="opacity" type="range" min="0" max="1" step="0.01">
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown hidden">
+                        <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">10-Year Warinings<span class="caret"></span></a>
+                        <ul id="layer{{forloop.counter0}}g4" class="dropdown-menu" role="menu">
+                            <li><a class="zoom-to-layer" href="#">Zoom To Layer</a></li>
+                            <li class="divider"></li>
+                            <li><p style="margin-left:20px;"><input class="visible" type="checkbox"> Visibility </p></li>
+                            <li><label style="margin-left:15px;">Opacity</label>
+                                <input style="margin-left:15px; width:80%;" class="opacity" type="range" min="0" max="1" step="0.01">
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown hidden">
+                        <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">2-Year Warnings<span class="caret"></span></a>
+                        <ul id="layer{{forloop.counter0}}g5" class="dropdown-menu" role="menu">
+                            <li><a class="zoom-to-layer" href="#">Zoom To Layer</a></li>
+                            <li class="divider"></li>
+                            <li><p style="margin-left:20px;"><input class="visible" type="checkbox"> Visibility </p></li>
+                            <li><label style="margin-left:15px;">Opacity</label>
+                                <input style="margin-left:15px; width:80%;" class="opacity" type="range" min="0" max="1" step="0.01">
+                            </li>
+                        </ul>
+                    </li>
                     </ul>
                 </div> <!-- div: {{watershed.watershed}}-{{watershed.subbasin}}-layers -->
             </div><!-- div: {{watershed.watershed}}-{{watershed.subbasin}}-control -->
