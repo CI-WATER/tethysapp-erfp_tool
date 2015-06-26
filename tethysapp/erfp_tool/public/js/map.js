@@ -1195,101 +1195,71 @@ var ERFP_MAP = (function() {
         //create symbols for warnings
         var twenty_five_symbols = [new ol.style.RegularShape({
                                               points: 3,
-                                              radius: 2,
-                                              fill: new ol.style.Fill({
-                                                color: 'rgba(255,0,255,0.3)'
-                                              }),
-                                              stroke: new ol.style.Stroke({
-                                                color: 'rgba(255,0,255,1)',
-                                                width: 1
-                                              }),
-                    }),new ol.style.RegularShape({
-                                              scale: 1.0,
                                               radius: 5,
                                               fill: new ol.style.Fill({
-                                                color: 'rgba(255,0,255,0.3)'
+                                                color: 'rgba(255,0,255,0.7)'
                                               }),
                                               stroke: new ol.style.Stroke({
                                                 color: 'rgba(255,0,255,1)',
                                                 width: 1
                                               }),
-                    }),new ol.style.RegularShape({
-                                              points: 3,
-                                              radius: 9,
-                                              fill: new ol.style.Fill({
-                                                color: 'rgba(255,0,255,0.3)'
-                                              }),
-                                              stroke: new ol.style.Stroke({
-                                                color: 'rgba(255,0,255,1)',
-                                                width: 1
-                                              }),
-                    })];
+                                    }),new ol.style.RegularShape({
+                                                              points: 3,
+                                                              radius: 9,
+                                                              fill: new ol.style.Fill({
+                                                                color: 'rgba(255,0,255,0.3)'
+                                                              }),
+                                                              stroke: new ol.style.Stroke({
+                                                                color: 'rgba(255,0,255,1)',
+                                                                width: 1
+                                                              }),
+                                    })];
 
         //symbols
         var ten_symbols = [new ol.style.RegularShape({
                                               points: 3,
-                                              radius: 2,
-                                              fill: new ol.style.Fill({
-                                                color: 'rgba(255,0,0,0.3)'
-                                              }),
-                                              stroke: new ol.style.Stroke({
-                                                color: 'rgba(255,0,0,1)',
-                                                width: 1
-                                              }),
-                    }),new ol.style.RegularShape({
-                                              points: 3,
                                               radius: 5,
                                               fill: new ol.style.Fill({
-                                                color: 'rgba(255,0,0,0.3)'
+                                                color: 'rgba(255,0,0,0.7)'
                                               }),
                                               stroke: new ol.style.Stroke({
                                                 color: 'rgba(255,0,0,1)',
                                                 width: 1
                                               }),
-                    }),new ol.style.RegularShape({
-                                              points: 3,
-                                              radius: 9,
-                                              fill: new ol.style.Fill({
-                                                color: 'rgba(255,0,0,0.3)'
-                                              }),
-                                              stroke: new ol.style.Stroke({
-                                                color: 'rgba(255,0,0,1)',
-                                                width: 1
-                                              }),
-                    })];
+                        }),new ol.style.RegularShape({
+                                                  points: 3,
+                                                  radius: 9,
+                                                  fill: new ol.style.Fill({
+                                                    color: 'rgba(255,0,0,0.3)'
+                                                  }),
+                                                  stroke: new ol.style.Stroke({
+                                                    color: 'rgba(255,0,0,1)',
+                                                    width: 1
+                                                  }),
+                        })];
 
         //symbols
         var two_symbols = [new ol.style.RegularShape({
                                               points: 3,
-                                              radius: 2,
-                                              fill: new ol.style.Fill({
-                                                color: 'rgba(255,255,0,0.3)'
-                                              }),
-                                              stroke: new ol.style.Stroke({
-                                                color: 'rgba(255,255,0,1)',
-                                                width: 1
-                                              }),
-                    }),new ol.style.RegularShape({
-                                              points: 3,
                                               radius: 5,
                                               fill: new ol.style.Fill({
-                                                color: 'rgba(255,255,0,0.3)'
+                                                color: 'rgba(255,255,0,0.7)'
                                               }),
                                               stroke: new ol.style.Stroke({
                                                 color: 'rgba(255,255,0,1)',
                                                 width: 1
                                               }),
-                    }),new ol.style.RegularShape({
-                                              points: 3,
-                                              radius: 9,
-                                              fill: new ol.style.Fill({
-                                                color: 'rgba(255,255,0,0.3)'
-                                              }),
-                                              stroke: new ol.style.Stroke({
-                                                color: 'rgba(255,255,0,1)',
-                                                width: 1
-                                              }),
-                    })];
+                        }),new ol.style.RegularShape({
+                                                  points: 3,
+                                                  radius: 9,
+                                                  fill: new ol.style.Fill({
+                                                    color: 'rgba(255,255,0,0.3)'
+                                                  }),
+                                                  stroke: new ol.style.Stroke({
+                                                    color: 'rgba(255,255,0,1)',
+                                                    width: 1
+                                                  }),
+                        })];
 
         //load base layer
         var base_layer_info = JSON.parse($("#map").attr('base-layer-info'));
@@ -1503,7 +1473,7 @@ var ERFP_MAP = (function() {
                         style = [];
                         for (var i=0; i<size; i++) {
                             style.push(new ol.style.Style({
-                                image: twenty_five_symbols[features[i].get('point_size')]
+                                image: twenty_five_symbols[features[i].get('point_size')],
                               }));
                         }
                     }
@@ -1515,7 +1485,6 @@ var ERFP_MAP = (function() {
             return_25_layer.set('return_period', 25);
             return_25_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
             return_25_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
-            layers.push(return_25_layer);
     
             var return_10_layer = new ol.layer.Vector({
                 source: new ol.source.Cluster({
@@ -1566,7 +1535,6 @@ var ERFP_MAP = (function() {
            return_10_layer.set('return_period', 10);
            return_10_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
            return_10_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
-           layers.push(return_10_layer);
     
             var return_2_layer = new ol.layer.Vector({
                 source: new ol.source.Cluster({
@@ -1618,7 +1586,10 @@ var ERFP_MAP = (function() {
             return_2_layer.set('return_period', 2);
             return_2_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
             return_2_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
+
             layers.push(return_2_layer);
+            layers.push(return_10_layer);
+            layers.push(return_25_layer);
             //make sure there are layers to add
             if (layers.length > 0) {
                 var group_layer = new ol.layer.Group({ 
@@ -1703,7 +1674,8 @@ var ERFP_MAP = (function() {
                                                                                 'EPSG:4326', m_map_projection));
                                   feature = new ol.Feature({
                                                             geometry: geometry,
-                                                            point_size: data.warning_points[i].size
+                                                            point_size: data.warning_points[i].size,
+                                                            comid: data.warning_points[i].comid
                                                             });
                                   features.push(feature);
                                 }
