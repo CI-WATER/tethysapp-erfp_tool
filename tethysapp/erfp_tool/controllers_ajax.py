@@ -607,7 +607,6 @@ def era_interim_get_hydrograph(request):
                 "max" : str(sorted_values[0]),
                 "twenty_five" : str(sorted_values[num_years-25]),
                 "ten" : str(sorted_values[num_years-10]),
-                "five" : str(sorted_values[num_years-5]),
                 "two" : str(sorted_values[num_years-2]),
         })
 

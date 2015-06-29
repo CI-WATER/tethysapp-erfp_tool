@@ -664,7 +664,7 @@ var ERFP_MAP = (function() {
                                 long_term_chart.yAxis[0].addPlotBand({
                                     from: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
                                     to: convertValueMetricToEnglish(maxY),
-                                    color: 'rgba(255,0,255,0.3)',
+                                    color: 'rgba(128,0,128,0.4)',
                                     id: '25-yr'
                                 });
                                 long_term_chart.yAxis[0].addPlotBand({
@@ -674,14 +674,8 @@ var ERFP_MAP = (function() {
                                     id: '10-yr'
                                 });
                                 long_term_chart.yAxis[0].addPlotBand({
-                                    from: convertValueMetricToEnglish(parseFloat(data.five)),
-                                    to: convertValueMetricToEnglish(parseFloat(data.ten)),
-                                    color: 'rgba(255,69,0,0.3)',
-                                    id: '5-yr'
-                                });
-                                long_term_chart.yAxis[0].addPlotBand({
                                     from: convertValueMetricToEnglish(parseFloat(data.two)),
-                                    to: convertValueMetricToEnglish(parseFloat(data.five)),
+                                    to: convertValueMetricToEnglish(parseFloat(data.ten)),
                                     color: 'rgba(255,255,0,0.3)',
                                     id: '2-yr'
                                 });
@@ -1199,20 +1193,20 @@ var ERFP_MAP = (function() {
                                               points: 3,
                                               radius: 5,
                                               fill: new ol.style.Fill({
-                                                color: 'rgba(255,0,255,0.7)'
+                                                color: 'rgba(128,0,128,0.8)'
                                               }),
                                               stroke: new ol.style.Stroke({
-                                                color: 'rgba(255,0,255,1)',
+                                                color: 'rgba(128,0,128,1)',
                                                 width: 1
                                               }),
                                     }),new ol.style.RegularShape({
                                                               points: 3,
                                                               radius: 9,
                                                               fill: new ol.style.Fill({
-                                                                color: 'rgba(255,0,255,0.3)'
+                                                                color: 'rgba(128,0,128,0.3)'
                                                               }),
                                                               stroke: new ol.style.Stroke({
-                                                                color: 'rgba(255,0,255,1)',
+                                                                color: 'rgba(128,0,128,1)',
                                                                 width: 1
                                                               }),
                                     })];
@@ -1459,7 +1453,7 @@ var ERFP_MAP = (function() {
                                 color: '#fff'
                               }),
                               fill: new ol.style.Fill({
-                                color: 'rgba(255,0,255,0.6)'
+                                color: 'rgba(128,0,128,0.7)'
                               })
                             }),
                             text: new ol.style.Text({
