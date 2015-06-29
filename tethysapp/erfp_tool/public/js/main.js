@@ -122,7 +122,7 @@ function checkTableCellInputWithError(input, safe_to_submit, error_msg) {
     }
 }
 //add error message to #message div
-function appendErrorMessage(error, div_id) {
+function addErrorMessage(error, div_id) {
     var div_id_string = '#message';
     if (typeof div_id != 'undefined') {
         div_id_string = '#'+div_id;
