@@ -604,6 +604,7 @@ def era_interim_get_hydrograph(request):
         return JsonResponse({
                 "success" : "ERA-Interim data analysis complete!",
                 "era_interim" : zip(time, data_values.tolist()),
+                "max" : str(sorted_values[0]),
                 "twenty_five" : str(sorted_values[num_years-25]),
                 "ten" : str(sorted_values[num_years-10]),
                 "five" : str(sorted_values[num_years-5]),
