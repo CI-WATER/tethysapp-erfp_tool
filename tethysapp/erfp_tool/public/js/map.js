@@ -665,19 +665,31 @@ var ERFP_MAP = (function() {
                                     from: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
                                     to: convertValueMetricToEnglish(maxY),
                                     color: 'rgba(128,0,128,0.4)',
-                                    id: '25-yr'
+                                    id: '25-yr',
+                                    label: {
+                                        text: '25-yr',
+                                        align: 'right',
+                                    }
                                 });
                                 long_term_chart.yAxis[0].addPlotBand({
                                     from: convertValueMetricToEnglish(parseFloat(data.ten)),
                                     to: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
                                     color: 'rgba(255,0,0,0.3)',
-                                    id: '10-yr'
+                                    id: '10-yr',
+                                    label: {
+                                        text: '10-yr',
+                                        align: 'right',
+                                    }
                                 });
                                 long_term_chart.yAxis[0].addPlotBand({
                                     from: convertValueMetricToEnglish(parseFloat(data.two)),
                                     to: convertValueMetricToEnglish(parseFloat(data.ten)),
                                     color: 'rgba(255,255,0,0.3)',
-                                    id: '2-yr'
+                                    id: '2-yr',
+                                    label: {
+                                        text: '2-yr',
+                                        align: 'right',
+                                    }
                                 });
     
                                 $(long_term_chart.series).each(function(){
@@ -1771,4 +1783,4 @@ var ERFP_MAP = (function() {
 
 }()); // End of package wrapper 
 // NOTE: that the call operator (open-closed parenthesis) is used to invoke the library wrapper 
-// function immediately after being parsed.
+// function immediately after being parsed.                                                                                                                                                                                 
