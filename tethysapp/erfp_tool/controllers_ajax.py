@@ -571,10 +571,11 @@ def era_interim_get_hydrograph(request):
 
         #find/check current output datasets
         path_to_output_files = os.path.join(path_to_era_interim_data, watershed_name, subbasin_name)
-        forecast_file = glob(os.path.join(path_to_output_files, "*.nc"))[0]
-        if not forecast_file:
+        forecast_files = glob(os.path.join(path_to_output_files, "*.nc"))
+        if not forecast_files:
             return JsonResponse({'error' : 'ERA Interim data for %s (%s) not found.' % (watershed_name, subbasin_name)})
 
+        forecast_file = forecast_files[0]
         #get/check the index of the reach
         reach_index = get_reach_index(reach_id, forecast_file)
         if reach_index == None:
