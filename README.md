@@ -34,13 +34,22 @@ $ cd tethysapp-erfp_tool
 $ git submodule init
 $ git submodule update
 ```
-Then install the app in Tethys Platform:
+Then install the app in Tethys Platform.
+
+###Installation for App Development:
+```
+$ . /usr/lib/tethys/bin/activate
+$ cd tethysapp-erfp_tool
+$ python setup.py develop
+$ tethys syncstores erfp_tool
+```
+###Installation for Production:
 ```
 $ . /usr/lib/tethys/bin/activate
 $ cd tethysapp-erfp_tool
 $ python setup.py install
 $ tethys syncstores erfp_tool
-$ python /usr/lib/tethys/src/manage.py collectstatic
+$ tethys manage collectstatic
 ```
 Restart the Apache Server:
 See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site-and-restart-apache
@@ -52,8 +61,10 @@ $ . /usr/lib/tethys/bin/activate
 $ cd tethysapp-erfp_tool
 $ git pull
 $ git submodule update
-$ tethys syncstores erfp_tool
-$ python /usr/lib/tethys/src/manage.py collectstatic
+```
+Reset the database if changes are made to the database (this will delete your old database and regenerate a new app instance id):
+```
+$ tethys syncstores erfp_tool -r
 ```
 Restart the Apache Server:
 See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site-and-restart-apache
