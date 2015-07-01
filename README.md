@@ -1,11 +1,11 @@
 #Streamflow Prediction Tool App
 *tethysapp-erfp_tool*
 
-**This app is created to run in the Teyths programming environment.
-See: https://github.com/CI-WATER/tethys and http://tethys-platform.readthedocs.org/en/1.0.0/**
+**This app is created to run in the Teyths programming environment with GeoServer and CKAN.
+See: https://github.com/CI-WATER/tethys and http://docs.tethys.ci-water.org**
 
 *This app requires you to have the ECMWF-RAPID preprocessing completed 
-separately. See: https://github.com/CI-WATER/erfp_data_process_ubuntu or https://github.com/CI-WATER/erfp_data_process_ubuntu_aws*
+separately. See: https://github.com/CI-WATER/erfp_data_process_ubuntu_aws*
 
 ##Prerequisites:
 - Tethys Platform (CKAN, PostgresQL, GeoServer)
