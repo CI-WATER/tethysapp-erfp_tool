@@ -57,3 +57,4 @@ target/
 *~
 *.kml
 *.nc
+*.egg-info
