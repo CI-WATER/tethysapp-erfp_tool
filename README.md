@@ -1,7 +1,7 @@
 #Streamflow Prediction Tool App
 *tethysapp-erfp_tool*
 
-**This app is created to run in the Teyths programming environment with GeoServer and CKAN.
+**This app is created to run in the Teyths Platform programming environment.
 See: https://github.com/CI-WATER/tethys and http://docs.tethys.ci-water.org**
 
 *This app requires you to have the ECMWF-RAPID preprocessing completed 
@@ -55,7 +55,7 @@ $ tethys syncstores erfp_tool
 $ tethys manage collectstatic
 ```
 Restart the Apache Server:
-See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site-and-restart-apache
+See: http://docs.tethys.ci-water.org/en/1.1.0/production/installation.html#enable-site-and-restart-apache
 
 ##Updating the App:
 Update the local repository and Tethys Platform instance.
