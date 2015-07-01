@@ -13,9 +13,12 @@ separately. See: https://github.com/CI-WATER/erfp_data_process_ubuntu or https:/
 
 ###Install netCDF4-python on Ubuntu:
 ```
-$ apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev 
+$ sudo apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
+$ sudo su
+$ . /usr/lib/tethys/bin/activate
 $ pip install numpy
 $ pip install netCDF4
+$ exit
 ```
 ###Install netCDF4-python on Redhat:
 *Note: this app was desgined and tested in Ubuntu*
