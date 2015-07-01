@@ -1,11 +1,11 @@
 #Streamflow Prediction Tool App
 *tethysapp-erfp_tool*
 
-**This app is created to run in the Teyths programming environment.
-See: https://github.com/CI-WATER/tethys and http://tethys-platform.readthedocs.org/en/1.0.0/**
+**This app is created to run in the Teyths Platform programming environment.
+See: https://github.com/CI-WATER/tethys and http://docs.tethys.ci-water.org**
 
 *This app requires you to have the ECMWF-RAPID preprocessing completed 
-separately. See: https://github.com/CI-WATER/erfp_data_process_ubuntu or https://github.com/CI-WATER/erfp_data_process_ubuntu_aws*
+separately. See: https://github.com/CI-WATER/erfp_data_process_ubuntu_aws*
 
 ##Prerequisites:
 - Tethys Platform (CKAN, PostgresQL, GeoServer)
@@ -37,16 +37,25 @@ $ cd tethysapp-erfp_tool
 $ git submodule init
 $ git submodule update
 ```
-Then install the app in Tethys Platform:
+Then install the app in Tethys Platform.
+
+###Installation for App Development:
+```
+$ . /usr/lib/tethys/bin/activate
+$ cd tethysapp-erfp_tool
+$ python setup.py develop
+$ tethys syncstores erfp_tool
+```
+###Installation for Production:
 ```
 $ . /usr/lib/tethys/bin/activate
 $ cd tethysapp-erfp_tool
 $ python setup.py install
 $ tethys syncstores erfp_tool
-$ python /usr/lib/tethys/src/manage.py collectstatic
+$ tethys manage collectstatic
 ```
 Restart the Apache Server:
-See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site-and-restart-apache
+See: http://docs.tethys.ci-water.org/en/1.1.0/production/installation.html#enable-site-and-restart-apache
 
 ##Updating the App:
 Update the local repository and Tethys Platform instance.
@@ -55,8 +64,10 @@ $ . /usr/lib/tethys/bin/activate
 $ cd tethysapp-erfp_tool
 $ git pull
 $ git submodule update
+```
+Reset the database if changes are made to the database (this will delete your old database and regenerate a new app instance id):
+```
 $ tethys syncstores erfp_tool -r
-$ python /usr/lib/tethys/src/manage.py collectstatic
 ```
 Restart the Apache Server:
 See: http://tethys-platform.readthedocs.org/en/1.0.0/production.html#enable-site-and-restart-apache

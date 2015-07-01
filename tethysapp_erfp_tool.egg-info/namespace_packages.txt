@@ -1,2 +1,0 @@
-tethysapp
-tethysapp.erfp_tool
