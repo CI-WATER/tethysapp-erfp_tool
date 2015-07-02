@@ -210,7 +210,7 @@ def geoserver_add(request):
                        password=geoserver_password.strip())
             main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
             resource_workspace = 'spt-%s' % main_settings.app_instance_id
-            engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+            engine.create_workspace(workspace_id=resource_workspace, uri=main_settings.app_instance_id)
         except Exception, ex:
             return JsonResponse({'error' : "GeoServer Error: %s" % ex})
   
@@ -309,7 +309,7 @@ def geoserver_update(request):
                            password=geoserver_password.strip())
                 resource_workspace = 'erfp'
                 engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
-            except Exception, ex:
+            except Exception as ex:
                 return JsonResponse({'error' : "GeoServer Error: %s" % ex})
                 
             geoserver.name = geoserver_name.strip()
@@ -889,7 +889,7 @@ def watershed_add(request):
                        
             main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
             resource_workspace = 'spt-%s' % main_settings.app_instance_id
-            engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+            engine.create_workspace(workspace_id=resource_workspace, uri=main_settings.app_instance_id)
             #DRAINAGE LINE
             resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
             geoserver_drainage_line_layer = '{0}:{1}'.format(resource_workspace, resource_name)
@@ -1255,7 +1255,7 @@ def watershed_update(request):
             geoserver_ahps_station_uploaded = watershed.geoserver_ahps_station_uploaded
             
             resource_workspace = 'spt-%s' % main_settings.app_instance_id
-            engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
+            engine.create_workspace(workspace_id=resource_workspace, uri=main_settings.app_instance_id)
             
             #UPDATE DRAINAGE LINE
             if drainage_line_shp_file:
