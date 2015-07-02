@@ -105,7 +105,9 @@ def map(request):
                 kml_info = {'watershed' : watershed.folder_name, 
                             'subbasin' : watershed.file_name,
                             'ecmwf_watershed' : ecmwf_watershed_name,
-                            'ecmwf_subbasin' : ecmwf_subbasin_name
+                            'ecmwf_subbasin' : ecmwf_subbasin_name,
+                            'title' : format_watershed_title(watershed.watershed_name,
+                                                            watershed.subbasin_name)
                             }
                 #prepare kml files
                 drainage_line_kml = os.path.join(file_path, watershed.kml_drainage_line_layer)
@@ -127,96 +129,144 @@ def map(request):
                                             % (watershed.folder_name,
                                                watershed.kml_gage_layer)
         
-                kml_info['title'] = format_watershed_title(watershed.watershed_name,
-                                                            watershed.subbasin_name)
                 layers_info.append(kml_info)
             #if geoserver
             else: # (get geoserver info)
-                geoserver_info = {'watershed':watershed.folder_name, 
-                                  'subbasin':watershed.file_name,
+                geoserver_info = {'watershed': watershed.folder_name, 
+                                  'subbasin': watershed.file_name,
                                   'ecmwf_watershed' : ecmwf_watershed_name,
                                   'ecmwf_subbasin' : ecmwf_subbasin_name,
                                   'geoserver_url': "%s/wms" % watershed.geoserver.url,
+                                  'title' : format_watershed_title(watershed.watershed_name,
+                                                                watershed.subbasin_name)
                                   }
+                                  
                 engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % watershed.geoserver.url, 
                                                        username=watershed.geoserver.username,
                                                        password=watershed.geoserver.password)
-                #load drainage line layer if exists
-                drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer.strip())
-                if drainage_line_info['success']:
-                    #check layers attributes to see if valid
-                    layer_attributes = drainage_line_info['result']['attributes']
-                    missing_attributes = []
-                    contained_attributes = []
-                    #check required attributes
-                    #necessary_attributes = ['COMID','watershed', 'subbasin', 'wwatershed','wsubbasin']
-                    
-                    def find_add_attribute_ci(attribute, layer_attributes, contained_attributes):
-                        """
-                        Case insensitive attribute search and add
-                        """
-                        for layer_attribute in layer_attributes:    
-                            if layer_attribute.lower() == attribute.lower():
-                                contained_attributes.append(layer_attribute)
-                                return True
-                        return False
+                #LOAD DRAINAGE LINE
+                try:
+                    #load drainage line layer if exists
+                    drainage_line_info = engine.get_resource(resource_id=watershed.geoserver_drainage_line_layer.strip())
+                    if drainage_line_info['success']:
+                        #check layers attributes to see if valid
+                        layer_attributes = drainage_line_info['result']['attributes']
+                        missing_attributes = []
+                        contained_attributes = []
+                        #check required attributes
+                        #necessary_attributes = ['COMID','watershed', 'subbasin', 'wwatershed','wsubbasin']
+                        
+                        def find_add_attribute_ci(attribute, layer_attributes, contained_attributes):
+                            """
+                            Case insensitive attribute search and add
+                            """
+                            for layer_attribute in layer_attributes:    
+                                if layer_attribute.lower() == attribute.lower():
+                                    contained_attributes.append(layer_attribute)
+                                    return True
+                            return False
+                                
+                        #check COMID/HydroID attribute
+                        if not find_add_attribute_ci('COMID', layer_attributes, contained_attributes):
+                            missing_attributes.append('COMID')
+                            if not find_add_attribute_ci('HydroID', layer_attributes, contained_attributes):
+                                missing_attributes.append('HydroID')
+                        
+                        #check ECMWF watershed/subbasin attributes
+                        if not find_add_attribute_ci('watershed', layer_attributes, contained_attributes) \
+                        or not find_add_attribute_ci('subbasin', layer_attributes, contained_attributes):
+                            missing_attributes.append('watershed')
+                            missing_attributes.append('subbasin')
                             
-                    #check COMID/HydroID attribute
-                    if not find_add_attribute_ci('COMID', layer_attributes, contained_attributes):
-                        missing_attributes.append('COMID')
-                        if not find_add_attribute_ci('HydroID', layer_attributes, contained_attributes):
-                            missing_attributes.append('HydroID')
-                    
-                    #check ECMWF watershed/subbasin attributes
-                    if not find_add_attribute_ci('watershed', layer_attributes, contained_attributes) \
-                    or not find_add_attribute_ci('subbasin', layer_attributes, contained_attributes):
-                        missing_attributes.append('watershed')
-                        missing_attributes.append('subbasin')
-                        
-                    #check WRF-Hydro watershed/subbasin attributes
-                    if not find_add_attribute_ci('wwatershed', layer_attributes, contained_attributes) \
-                    or not find_add_attribute_ci('wsubbasin', layer_attributes, contained_attributes):
-                        missing_attributes.append('wwatershed')
-                        missing_attributes.append('wsubbasin')
-                        
-                    #check optional attributes
-                    optional_attributes = ['usgs_id', 'nws_id', 'hydroserve']
-                    for optional_attribute in optional_attributes:
-                        find_add_attribute_ci(optional_attribute, layer_attributes, contained_attributes)
-                        
-                    latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
-                    geoserver_info['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
-                                                       'geojsonp': drainage_line_info['result']['wfs']['geojsonp'],
-                                                       'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
-                                                       'projection': drainage_line_info['result']['projection'],
-                                                       'contained_attributes': contained_attributes,
-                                                       'missing_attributes': missing_attributes,
-                                                       }
-                    #check if needed attribute is there to perfrom query based rendering of layer
-                    if 'Natur_Flow' not in layer_attributes:
-                        geoserver_info['drainage_line']['geoserver_method'] = "simple"
+                        #check WRF-Hydro watershed/subbasin attributes
+                        if not find_add_attribute_ci('wwatershed', layer_attributes, contained_attributes) \
+                        or not find_add_attribute_ci('wsubbasin', layer_attributes, contained_attributes):
+                            missing_attributes.append('wwatershed')
+                            missing_attributes.append('wsubbasin')
+                            
+                        #check optional attributes
+                        optional_attributes = ['usgs_id', 'nws_id', 'hydroserve']
+                        for optional_attribute in optional_attributes:
+                            find_add_attribute_ci(optional_attribute, layer_attributes, contained_attributes)
+                            
+                        latlon_bbox = drainage_line_info['result']['latlon_bbox'][:4]
+                        geoserver_info['drainage_line'] = {'name': watershed.geoserver_drainage_line_layer,
+                                                           'geojsonp': drainage_line_info['result']['wfs']['geojsonp'],
+                                                           'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                                           'projection': drainage_line_info['result']['projection'],
+                                                           'contained_attributes': contained_attributes,
+                                                           'missing_attributes': missing_attributes,
+                                                           }
+                        #check if needed attribute is there to perfrom query based rendering of layer
+                        if 'Natur_Flow' not in layer_attributes:
+                            geoserver_info['drainage_line']['geoserver_method'] = "simple"
+                        else:
+                            geoserver_info['drainage_line']['geoserver_method'] = "natur_flow_query"
                     else:
-                        geoserver_info['drainage_line']['geoserver_method'] = "natur_flow_query"
+                        geoserver_info['drainage_line'] = {'error': drainage_line_info['error']}
+                        
+                except Exception:
+                    geoserver_info['drainage_line'] = {'error': "Invalid layer or GeoServer error. Recommended projection for layers is GCS_WGS_1984."}
+                    pass
+                
+                if watershed.geoserver_catchment_layer:
+                    #LOAD CATCHMENT
+                    try:
+                        #load catchment layer if exists
+                        catchment_info = engine.get_resource(resource_id=watershed.geoserver_catchment_layer.strip())
+                        if catchment_info['success']: 
+                            latlon_bbox = catchment_info['result']['latlon_bbox'][:4]
+                            geoserver_info['catchment'] = {'name': watershed.geoserver_catchment_layer,
+                                                           'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                                           'projection': catchment_info['result']['projection'],
+                                                      }
+                        else:
+                            geoserver_info['catchment'] = {'error': catchment_info['error']}
+                                                      
+                    except Exception:
+                        geoserver_info['catchment'] = {'error': "Invalid layer or GeoServer error. Recommended projection for layers is GCS_WGS_1984."}
+                        pass
 
-                #load catchment layer if exists
-                catchment_info = engine.get_resource(resource_id=watershed.geoserver_catchment_layer.strip())
-                if catchment_info['success']: 
-                    latlon_bbox = catchment_info['result']['latlon_bbox'][:4]
-                    geoserver_info['catchment'] = {'name': watershed.geoserver_catchment_layer,
-                                                   'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
-                                                   'projection': catchment_info['result']['projection'],
-                                                  }
-                #load gage layer if exists
-                gage_info = engine.get_resource(resource_id=watershed.geoserver_gage_layer.strip())
-                if gage_info['success']: 
-                    latlon_bbox = gage_info['result']['latlon_bbox'][:4]
-                    geoserver_info['gage'] = {'name': watershed.geoserver_gage_layer,
-                                              'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
-                                              'projection': gage_info['result']['projection'],
-                                             }
-                geoserver_info['title'] = format_watershed_title(watershed.watershed_name,
-                                                            watershed.subbasin_name)
-                layers_info.append(geoserver_info)
+                if watershed.geoserver_gage_layer:
+                    #LOAD GAGE
+                    try:
+                        #load gage layer if exists
+                        gage_info = engine.get_resource(resource_id=watershed.geoserver_gage_layer.strip())
+                        if gage_info['success']: 
+                            latlon_bbox = gage_info['result']['latlon_bbox'][:4]
+                            geoserver_info['gage'] = {'name': watershed.geoserver_gage_layer,
+                                                      'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                                      'projection': gage_info['result']['projection'],
+                                                     }
+                        else:
+                            geoserver_info['gage'] = {'error': gage_info['error']}
+                            
+                    except Exception:
+                        geoserver_info['gage'] = {'error': "Invalid layer or GeoServer error. Recommended projection for layers is GCS_WGS_1984." }
+                        pass
+
+                if watershed.geoserver_ahps_station_layer:
+                    #LOAD AHPS STATION
+                    try:
+                        #load gage layer if exists
+                        ahps_station_info = engine.get_resource(resource_id=watershed.geoserver_ahps_station_layer.strip())
+                        if ahps_station_info['success']: 
+                            latlon_bbox = ahps_station_info['result']['latlon_bbox'][:4]
+                            geoserver_info['ahps_station'] = {'name': watershed.geoserver_ahps_station_layer,
+                                                              'geojsonp': ahps_station_info['result']['wfs']['geojsonp'],
+                                                              'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                                              'projection': ahps_station_info['result']['projection'],
+                                                             }
+                        else:
+                            geoserver_info['ahps_station'] = {'error': ahps_station_info['error']}
+                            
+                    except Exception:
+                        geoserver_info['ahps_station'] = {'error': "Invalid layer or GeoServer error. Recommended projection for layers is GCS_WGS_1984."}
+                        pass
+                
+                
+                if geoserver_info:                
+                    layers_info.append(geoserver_info)
 
             group_id += 1
             
@@ -460,6 +510,13 @@ def add_watershed(request):
                 'placeholder': 'e.g.: erfp:gage',
                 'icon_append':'glyphicon glyphicon-link',
               }
+
+    geoserver_ahps_station_input = {
+                'display_text': 'Geoserver AHPS Station Layer',
+                'name': 'geoserver-ahps-station-input',
+                'placeholder': 'e.g.: erfp:ahps-station',
+                'icon_append':'glyphicon glyphicon-link',
+              }
               
     shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
                 'name': 'shp-upload-toggle',
@@ -493,6 +550,7 @@ def add_watershed(request):
                 'geoserver_drainage_line_input': geoserver_drainage_line_input,
                 'geoserver_catchment_input': geoserver_catchment_input,
                 'geoserver_gage_input': geoserver_gage_input,
+                'geoserver_ahps_station_input': geoserver_ahps_station_input,
                 'shp_upload_toggle_switch': shp_upload_toggle_switch,
                 'add_button': add_button,
               }
@@ -691,6 +749,13 @@ def edit_watershed(request):
                     'icon_append':'glyphicon glyphicon-link',
                     'initial' : watershed.geoserver_gage_layer
                   }
+        geoserver_ahps_station_input = {
+                    'display_text': 'Geoserver AHPS Station Layer (Optional)',
+                    'name': 'geoserver-ahps-station-input',
+                    'placeholder': 'e.g.: erfp:ahps-station',
+                    'icon_append':'glyphicon glyphicon-link',
+                    'initial' : watershed.geoserver_ahps_station_layer
+                  }
         shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
                     'name': 'shp-upload-toggle',
                     'on_label': 'Yes',
@@ -723,6 +788,7 @@ def edit_watershed(request):
                     'geoserver_drainage_line_input': geoserver_drainage_line_input,
                     'geoserver_catchment_input': geoserver_catchment_input,
                     'geoserver_gage_input': geoserver_gage_input,
+                    'geoserver_ahps_station_input': geoserver_ahps_station_input,
                     'shp_upload_toggle_switch': shp_upload_toggle_switch,
                     'add_button': add_button,
                     'watershed' : watershed,

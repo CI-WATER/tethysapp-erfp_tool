@@ -127,9 +127,11 @@ class Watershed(Base):
     geoserver_drainage_line_layer = Column(String)
     geoserver_catchment_layer = Column(String)
     geoserver_gage_layer = Column(String)
+    geoserver_ahps_station_layer = Column(String)
     geoserver_drainage_line_uploaded = Column(Boolean)
     geoserver_catchment_uploaded = Column(Boolean)
     geoserver_gage_uploaded = Column(Boolean)
+    geoserver_ahps_station_uploaded = Column(Boolean)
     kml_drainage_line_layer = Column(String)
     kml_catchment_layer = Column(String)
     kml_gage_layer = Column(String)
@@ -141,8 +143,9 @@ class Watershed(Base):
                  ecmwf_data_store_watershed_name, ecmwf_data_store_subbasin_name,
                  wrf_hydro_data_store_watershed_name, wrf_hydro_data_store_subbasin_name,
                  geoserver_id, geoserver_drainage_line_layer, geoserver_catchment_layer, 
-                 geoserver_gage_layer, geoserver_drainage_line_uploaded, 
-                 geoserver_catchment_uploaded, geoserver_gage_uploaded, 
+                 geoserver_gage_layer, geoserver_ahps_station_layer,
+                 geoserver_drainage_line_uploaded, geoserver_catchment_uploaded, 
+                 geoserver_gage_uploaded, geoserver_ahps_station_uploaded, 
                  kml_drainage_line_layer, kml_catchment_layer, kml_gage_layer):
 
         self.watershed_name = watershed_name
@@ -159,9 +162,11 @@ class Watershed(Base):
         self.geoserver_drainage_line_layer = geoserver_drainage_line_layer
         self.geoserver_catchment_layer = geoserver_catchment_layer
         self.geoserver_gage_layer = geoserver_gage_layer
+        self.geoserver_ahps_station_layer = geoserver_ahps_station_layer
         self.geoserver_drainage_line_uploaded = geoserver_drainage_line_uploaded
         self.geoserver_catchment_uploaded = geoserver_catchment_uploaded
         self.geoserver_gage_uploaded = geoserver_gage_uploaded
+        self.geoserver_ahps_station_uploaded = geoserver_ahps_station_uploaded
         self.kml_drainage_line_layer = kml_drainage_line_layer
         self.kml_catchment_layer = kml_catchment_layer
         self.kml_gage_layer = kml_gage_layer

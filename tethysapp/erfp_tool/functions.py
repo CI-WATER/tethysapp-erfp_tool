@@ -159,11 +159,18 @@ def delete_old_watershed_geoserver_files(watershed):
     if watershed.geoserver_drainage_line_uploaded:
         purge_remove_geoserver_layer(watershed.geoserver_drainage_line_layer, 
                                      engine)
+                                     
     if watershed.geoserver_catchment_uploaded:
         purge_remove_geoserver_layer(watershed.geoserver_catchment_layer,
                                      engine)
+                                     
     if watershed.geoserver_gage_uploaded:
-        purge_remove_geoserver_layer(watershed.geoserver_gage_layer, engine) 
+        purge_remove_geoserver_layer(watershed.geoserver_gage_layer,
+                                     engine) 
+
+    if watershed.geoserver_ahps_station_uploaded:
+        purge_remove_geoserver_layer(watershed.geoserver_ahps_station_layer,
+                                     engine) 
 
 def delete_old_watershed_files(watershed, ecmwf_local_prediction_files_location,
                                wrf_hydro_local_prediction_files_location):

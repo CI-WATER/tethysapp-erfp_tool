@@ -69,7 +69,7 @@
         <input id="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the watershed basin. Need .shp, .shx, .prj, .dbf files.</p>
-    <!-- gage Stations !-->
+    <!-- Gages !-->
     {% gizmo text_input geoserver_gage_input %}
     <div class="form-group kml">
         <label class="control-label" for="gage-kml-upload-input">Gage KML File (Optional)</label>
@@ -81,6 +81,13 @@
         <input id="gage-shp-upload-input" name="gage-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the gage stations. Need .shp, .shx, .prj, .dbf files.</p>
+    <!-- AHPS Stations !-->
+    {% gizmo text_input geoserver_ahps_station_input %}
+    <div class="form-group shapefile upload hidden">
+        <label class="control-label" for="ahps-station-shp-upload-input">AHPS Station Shapefile (Optional)</label>
+        <input id="ahps-station-shp-upload-input" name="ahps-station-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
+    </div>
+    <p class="help-block shapefile upload hidden">This is the shapefile file representing the AHPS stations. Need .shp, .shx, .prj, .dbf files.</p>
 {% gizmo button_group add_button %}
 {% endblock %}
 

@@ -31,7 +31,6 @@ from functions import (check_shapefile_input_files,
                        format_name,
                        get_cron_command,
                        get_reach_index,
-                       get_comids_in_lookup_comid_list,
                        handle_uploaded_file, 
                        user_permission_test)
 
@@ -209,7 +208,8 @@ def geoserver_add(request):
             engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver_url.strip(), 
                        username=geoserver_username.strip(),
                        password=geoserver_password.strip())
-            resource_workspace = 'erfp'
+            main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+            resource_workspace = 'spt-%s' % main_settings.app_instance_id
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
         except Exception, ex:
             return JsonResponse({'error' : "GeoServer Error: %s" % ex})
@@ -788,23 +788,13 @@ def watershed_add(request):
         #REQUIRED TO HAVE drainage_line from one of these
         #layer names
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
-        geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
-        geoserver_gage_layer = post_info.get('geoserver_gage_layer')
         kml_drainage_line_layer = ""
-        kml_catchment_layer = ""
-        kml_gage_layer = ""
         #shape files
         drainage_line_shp_file = request.FILES.getlist('drainage_line_shp_file')
-        catchment_shp_file = request.FILES.getlist('catchment_shp_file')
-        gage_shp_file = request.FILES.getlist('gage_shp_file')
         #kml files
         drainage_line_kml_file = request.FILES.get('drainage_line_kml_file')
-        catchment_kml_file = request.FILES.get('catchment_kml_file')
-        gage_kml_file = request.FILES.get('gage_kml_file')
         
         geoserver_drainage_line_uploaded = False
-        geoserver_catchment_uploaded = False
-        geoserver_gage_uploaded = False
         
         #CHECK DATA
         #make sure information exists 
@@ -867,16 +857,6 @@ def watershed_add(request):
                 if missing_extenstions:
                     return JsonResponse({'error' : 'Missing geoserver drainage line files with extensions %s.' % \
                                         (", ".join(missing_extenstions)) })
-            if catchment_shp_file:
-                missing_extenstions = check_shapefile_input_files(catchment_shp_file)
-                if missing_extenstions:
-                    return JsonResponse({'error' : 'Missing geoserver catchment files with extensions %s.' % \
-                                        (", ".join(missing_extenstions)) })
-            if gage_shp_file:
-                missing_extenstions = check_shapefile_input_files(gage_shp_file)
-                if missing_extenstions:
-                    return JsonResponse({'error' : 'Missing geoserver gage files with extensions %s.' % \
-                                        (", ".join(missing_extenstions)) })
         #check to see if duplicate exists
         num_similar_watersheds  = session.query(Watershed) \
             .filter(Watershed.folder_name == folder_name) \
@@ -896,16 +876,6 @@ def watershed_add(request):
                 kml_drainage_line_layer = "%s-drainage_line.kml" % file_name
                 handle_uploaded_file(drainage_line_kml_file,
                                      kml_file_location, kml_drainage_line_layer)
-                #upload catchment kml if exists
-                if catchment_kml_file:
-                    kml_catchment_layer = "%s-catchment.kml" % file_name
-                    handle_uploaded_file(catchment_kml_file,kml_file_location, 
-                                         kml_catchment_layer)
-                #uploade gage kml if exists
-                if gage_kml_file:
-                    kml_gage_layer = "%s-gage.kml" % file_name
-                    handle_uploaded_file(gage_kml_file,kml_file_location, 
-                                         kml_gage_layer)
             else:
                 session.close()
                 return JsonResponse({ 'error': "Drainage line KML file missing." })
@@ -916,7 +886,9 @@ def watershed_add(request):
             engine = GeoServerSpatialDatasetEngine(endpoint="%s/rest" % geoserver.url, 
                        username=geoserver.username,
                        password=geoserver.password)
-            resource_workspace = 'erfp'
+                       
+            main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+            resource_workspace = 'spt-%s' % main_settings.app_instance_id
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
             #DRAINAGE LINE
             resource_name = "%s-%s-%s" % (folder_name, file_name, 'drainage_line')
@@ -928,29 +900,6 @@ def watershed_add(request):
                                              overwrite=True)
             geoserver_drainage_line_uploaded = True
 
-            #CATCHMENT
-            if catchment_shp_file:
-                #upload file
-                resource_name = "%s-%s-%s" % (folder_name, file_name, 'catchment')
-                geoserver_catchment_layer = '{0}:{1}'.format(resource_workspace, resource_name)
-                # Do create shapefile
-                rename_shapefile_input_files(catchment_shp_file, resource_name)
-                engine.create_shapefile_resource(geoserver_catchment_layer, 
-                                                 shapefile_upload=catchment_shp_file,
-                                                 overwrite=True)
-                geoserver_catchment_uploaded = True
-                
-            #GAGE
-            if gage_shp_file:
-                #upload file
-                resource_name = "%s-%s-%s" % (folder_name, file_name, 'gage')
-                geoserver_gage_layer = '{0}:{1}'.format(resource_workspace, resource_name)
-                # Do create shapefile
-                rename_shapefile_input_files(gage_shp_file, resource_name)
-                engine.create_shapefile_resource(geoserver_gage_layer, 
-                                                 shapefile_upload=gage_shp_file,
-                                                 overwrite=True)
-                geoserver_gage_uploaded = True
         
         #add watershed
         watershed = Watershed(watershed_name.strip(), 
@@ -965,14 +914,16 @@ def watershed_add(request):
                               wrf_hydro_data_store_subbasin_name,
                               geoserver_id, 
                               geoserver_drainage_line_layer.strip(),
-                              geoserver_catchment_layer.strip(),
-                              geoserver_gage_layer.strip(),
+                              "",
+                              "",
+                              "",
                               geoserver_drainage_line_uploaded,
-                              geoserver_catchment_uploaded,
-                              geoserver_gage_uploaded,
+                              False,
+                              False,
+                              False,
                               kml_drainage_line_layer.strip(),
-                              kml_catchment_layer.strip(),
-                              kml_gage_layer.strip()
+                              "",
+                              ""
                               )
         session.add(watershed)
         session.commit()
@@ -985,11 +936,7 @@ def watershed_add(request):
                             'success': "Watershed Sucessfully Added!",
                             'watershed_id' : watershed_id,
                             'geoserver_drainage_line_layer': geoserver_drainage_line_layer,
-                            'geoserver_catchment_layer': geoserver_catchment_layer,
-                            'geoserver_gage_layer': geoserver_gage_layer,
                             'kml_drainage_line_layer': kml_drainage_line_layer,
-                            'kml_catchment_layer': kml_catchment_layer,
-                            'kml_gage_layer': kml_gage_layer,
                             })
 
     return JsonResponse({ 'error': "A problem with your request exists." })
@@ -1106,10 +1053,12 @@ def watershed_update(request):
         geoserver_drainage_line_layer = post_info.get('geoserver_drainage_line_layer')
         geoserver_catchment_layer = post_info.get('geoserver_catchment_layer')
         geoserver_gage_layer = post_info.get('geoserver_gage_layer')
+        geoserver_ahps_station_layer = post_info.get('geoserver_ahps_station_layer')
         #shape files
         drainage_line_shp_file = request.FILES.getlist('drainage_line_shp_file')
         catchment_shp_file = request.FILES.getlist('catchment_shp_file')
         gage_shp_file = request.FILES.getlist('gage_shp_file')
+        ahps_station_shp_file = request.FILES.getlist('ahps_station_shp_file')
         #kml files
         drainage_line_kml_file = request.FILES.get('drainage_line_kml_file')
         catchment_kml_file = request.FILES.get('catchment_kml_file')
@@ -1202,6 +1151,11 @@ def watershed_update(request):
                 if missing_extenstions:
                     return JsonResponse({'error' : 'Missing geoserver gage files with extensions %s.' % \
                                         (", ".join(missing_extenstions)) })
+            if ahps_station_shp_file:
+                missing_extenstions = check_shapefile_input_files(ahps_station_shp_file)
+                if missing_extenstions:
+                    return JsonResponse({'error' : 'Missing geoserver AHPS files with extensions %s.' % \
+                                        (", ".join(missing_extenstions)) })
             
         #COMMIT    
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
@@ -1213,6 +1167,7 @@ def watershed_update(request):
             geoserver_drainage_line_uploaded = False
             geoserver_catchment_uploaded = False
             geoserver_gage_uploaded = False
+            geoserver_ahps_station_uploaded = False
             #remove old geoserver files
             delete_old_watershed_geoserver_files(watershed)
             #move/rename kml files
@@ -1297,7 +1252,9 @@ def watershed_update(request):
             geoserver_drainage_line_uploaded = watershed.geoserver_drainage_line_uploaded
             geoserver_catchment_uploaded = watershed.geoserver_catchment_uploaded
             geoserver_gage_uploaded = watershed.geoserver_gage_uploaded
-            resource_workspace = 'erfp'
+            geoserver_ahps_station_uploaded = watershed.geoserver_ahps_station_uploaded
+            
+            resource_workspace = 'spt-%s' % main_settings.app_instance_id
             engine.create_workspace(workspace_id=resource_workspace, uri='tethys.ci-water.org')
             
             #UPDATE DRAINAGE LINE
@@ -1365,6 +1322,31 @@ def watershed_update(request):
                                                  shapefile_upload=gage_shp_file,
                                                  overwrite=True)
                 geoserver_gage_uploaded = True
+                
+            #UPDATE AHPS STATION
+            #delete old layer from geoserver if removed
+            geoserver_ahps_station_layer = "" if not geoserver_ahps_station_layer else geoserver_ahps_station_layer
+            if not geoserver_ahps_station_layer and watershed.geoserver_ahps_station_layer:
+                if watershed.geoserver_ahps_station_uploaded:
+                    purge_remove_geoserver_layer(watershed.geoserver_ahps_station_layer, 
+                                                 engine)
+
+                    
+            if ahps_station_shp_file:
+                #remove old geoserver layer if uploaded
+                if watershed.geoserver_ahps_station_uploaded \
+                    and (watershed.folder_name != folder_name
+                    or watershed.file_name != file_name):
+                    purge_remove_geoserver_layer(watershed.geoserver_ahps_station_layer,
+                                                 engine)
+                resource_name = "%s-%s-%s" % (folder_name, file_name, 'ahps_station')
+                geoserver_ahps_station_layer = '{0}:{1}'.format(resource_workspace, resource_name)
+                # Do create shapefile
+                rename_shapefile_input_files(ahps_station_shp_file, resource_name)
+                engine.create_shapefile_resource(geoserver_ahps_station_layer, 
+                                                 shapefile_upload=ahps_station_shp_file,
+                                                 overwrite=True)
+                geoserver_ahps_station_uploaded = True
             
             #remove old kml files           
             delete_old_watershed_kml_files(watershed)
@@ -1402,9 +1384,11 @@ def watershed_update(request):
         watershed.geoserver_drainage_line_layer = geoserver_drainage_line_layer.strip() if geoserver_drainage_line_layer else ""
         watershed.geoserver_catchment_layer = geoserver_catchment_layer.strip() if geoserver_catchment_layer else ""
         watershed.geoserver_gage_layer = geoserver_gage_layer.strip() if geoserver_gage_layer else ""
+        watershed.geoserver_ahps_station_layer = geoserver_ahps_station_layer.strip() if geoserver_ahps_station_layer else ""
         watershed.geoserver_drainage_line_uploaded = geoserver_drainage_line_uploaded
         watershed.geoserver_catchment_uploaded = geoserver_catchment_uploaded
         watershed.geoserver_gage_uploaded = geoserver_gage_uploaded
+        watershed.geoserver_ahps_station_uploaded = geoserver_ahps_station_uploaded
         watershed.kml_drainage_line_layer = kml_drainage_line_layer.strip() if kml_drainage_line_layer else ""
         watershed.kml_catchment_layer = kml_catchment_layer.strip() if kml_catchment_layer else ""
         watershed.kml_gage_layer = kml_gage_layer.strip() if kml_gage_layer else ""
@@ -1417,6 +1401,7 @@ def watershed_update(request):
                               'geoserver_drainage_line_layer': geoserver_drainage_line_layer,
                               'geoserver_catchment_layer': geoserver_catchment_layer,
                               'geoserver_gage_layer': geoserver_gage_layer,
+                              'geoserver_ahps_station_layer': geoserver_ahps_station_layer,
                               'kml_drainage_line_layer': kml_drainage_line_layer,
                               'kml_catchment_layer': kml_catchment_layer,
                               'kml_gage_layer': kml_gage_layer,
