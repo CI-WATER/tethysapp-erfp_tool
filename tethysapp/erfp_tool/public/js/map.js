@@ -1286,9 +1286,9 @@ var ERFP_MAP = (function() {
                 if('catchment' in layer_info) {
                     var catchment_layer_id = 'layer' + group_index + 'g' + 1
                     if ("error" in layer_info.catchment) {
-                        appendErrorMessage("Catchment Layer: " + layer_info.watershed + 
-                                           " (" + layer_info.subbasin + "): " + layer_info.catchment.error, 
-                                           'error_' + catchment_layer_id, "message-error");
+                        appendErrorMessage("Catchment Layer: " + layer_info.title + 
+                                            ": " + layer_info.catchment.error, 
+                                           "error_" + catchment_layer_id, "message-error");
                     } else {
                         layers.push(getTileLayer(layer_info['catchment'], layer_info['geoserver_url'], catchment_layer_id));
                     }
@@ -1297,8 +1297,8 @@ var ERFP_MAP = (function() {
                 if('gage' in layer_info) {
                     var gage_layer_id = 'layer' + group_index + 'g' + 2;
                     if ("error" in layer_info.gage) {
-                        appendErrorMessage("Gage Layer: " + layer_info.watershed + 
-                                           " (" + layer_info.subbasin + "): " + layer_info.gage.error, 
+                        appendErrorMessage("Gage Layer: " + layer_info.title + 
+                                           ": " + layer_info.gage.error, 
                                            'error_' + gage_layer_id, "message-error");
                     } else {
                         layers.push(getTileLayer(layer_info['gage'], layer_info['geoserver_url'], gage_layer_id));
@@ -1308,8 +1308,8 @@ var ERFP_MAP = (function() {
                 if('ahps_station' in layer_info) {
                     var ahps_station_layer_id = 'layer' + group_index + 'g' + 3;
                     if ("error" in layer_info.ahps_station) {
-                        appendErrorMessage("AHPS Station Layer: " + layer_info.watershed + 
-                                           " (" + layer_info.subbasin + "): " + layer_info.ahps_station.error, 
+                        appendErrorMessage("AHPS Station Layer: " + layer_info.title + 
+                                           ": " + layer_info.ahps_station.error, 
                                            'error_' + ahps_station_layer_id, "message-error")
                     } else {
                         var ahps_station_vector_source = new ol.source.ServerVector({
@@ -1364,8 +1364,8 @@ var ERFP_MAP = (function() {
                 if('drainage_line' in layer_info) {
                     var drainage_line_layer_id = 'layer' + group_index + 'g' + 0;
                     if ("error" in layer_info.drainage_line) {
-                        appendErrorMessage("Drainage Line Layer: " + layer_info.watershed + 
-                                           " (" + layer_info.subbasin + "): " + layer_info.gage.error, 
+                        appendErrorMessage("Drainage Line Layer: " + layer_info.title + 
+                                           ": " + layer_info.gage.error, 
                                            "error_" + drainage_line_layer_id, "message-error");
                     } else {
                         //check if required parameters exist
@@ -1504,40 +1504,40 @@ var ERFP_MAP = (function() {
                 //add catchment if exists
                 if('catchment' in layer_info) {
                     var catchment_layer_id = 'layer' + group_index + 'g' + 1;
-                    if ("error" in layer_info.catchment) {
-                        appendErrorMessage("Catchment Layer: " + layer_info.watershed + 
-                                          " (" + layer_info.subbasin + "): " + layer_info.catchment.error, 
-                                          'error_' + catchment_layer_id, "message-error")
-                    } else {
-                        layers.push(getKMLLayer(layer_info['catchment'], catchment_layer_id));
-                    }
+//                    if ("error" in layer_info.catchment) {
+//                        appendErrorMessage("Catchment Layer: " + layer_info.title + 
+//not functional                                          ": " + layer_info.catchment.error, 
+//                                          'error_' + catchment_layer_id, "message-error")
+//                    } else {
+                    layers.push(getKMLLayer(layer_info['catchment'], catchment_layer_id));
+//                    }
                 }
                 //add gage if exists
                 if('gage' in layer_info) {
                     var gage_layer_id = 'layer' + group_index + 'g' + 2;
-                    if ("error" in layer_info.gage) {
-                        appendErrorMessage("Gage Layer: " + layer_info.watershed + 
-                                           " (" + layer_info.subbasin + "): " + layer_info.gage.error,
-                                           'error_' + gage_layer_id, "message-error")
-                    } else {
-                        layers.push(getKMLLayer(layer_info['gage'], gage_layer_id));
-                    }
+//                    if ("error" in layer_info.gage) {
+//                        appendErrorMessage("Gage Layer: " + layer_info.title + 
+//                                           ": " + layer_info.gage.error,
+//not functional                                           'error_' + gage_layer_id, "message-error")
+//                    } else {
+                    layers.push(getKMLLayer(layer_info['gage'], gage_layer_id));
+//                    }
                 }
                 //add drainage line if exists
                 if('drainage_line' in layer_info) {
                     var drainage_line_layer_id = 'layer' + group_index + 'g' + 0;
-                    if ("error" in layer_info.drainage_line) {
-                        appendErrorMessage("Drainage Line Layer: " + layer_info.watershed +
-                                           " (" + layer_info.subbasin + "): " + layer_info.drainage_line.error,
-                                           "error_" + drainage_line_layer_id, "message-error");
-                    } else {
+//                    if ("error" in layer_info.drainage_line) {
+//                        appendErrorMessage("Drainage Line Layer: " + layer_info.title +
+//not functional                                           ": " + layer_info.drainage_line.error,
+//                                           "error_" + drainage_line_layer_id, "message-error");
+//                    } else {
                         var drainage_line_layer = getKMLLayer(layer_info['drainage_line'],
                                                               drainage_line_layer_id, 
                                                               layer_info['watershed'], 
                                                               layer_info['subbasin'])
                         layers.push(drainage_line_layer);
                         m_drainage_line_layers.push(drainage_line_layer);
-                    }
+//                    }
                 }
             }
             //create empty layers to add data to later
