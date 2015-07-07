@@ -439,7 +439,7 @@ $(document).ready(function(){
 
 (function() {
     if (window.location.pathname == "/apps/erfp-tool/getting-started/") {    
-        if (document.referrer == "http://127.0.0.1:8000/apps/erfp-tool/") {
+        if (document.referrer.slice(-15) == "apps/erfp-tool/") {
             $('#welcome').html("<h1>Welcome!</h1><p> Is this your first time running the Streamflow Prediction Tool? Or do you simply need a refresher on how it works? Either way, this page contains the information you need to get started using this application.</p>");
         }
     }
