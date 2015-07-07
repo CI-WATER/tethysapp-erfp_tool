@@ -201,9 +201,10 @@
     {% else %}
         <li class="title"> No Watersheds Found</li>
     {% endif %}
-
+    {% if user.is_superuser or user.is_staff %}
     <li class="separator"></li>
-    <li><a href="">Information</a></li>
+    <li><a href="../">Back to Admin Options</a></li>
+    {% endif %}    
 {% endblock %}
 
 {% block scripts %}

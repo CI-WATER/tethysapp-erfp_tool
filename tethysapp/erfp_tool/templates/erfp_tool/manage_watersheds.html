@@ -23,12 +23,6 @@
     <div id="manage_watershed_table" data-page="{{ initial_page }}" data-num_watersheds="{{ num_watersheds }}"></div>
 {% endblock %}
 
-{% block app_navigation_items %}
-  {{ block.super}}
-  <li class="separator"></li>
-  <li><a href="">Information</a></li>
-{% endblock %}
-
 {% block scripts %}
   {% gizmo message_box edit_modal %}
   {{ block.super }}
