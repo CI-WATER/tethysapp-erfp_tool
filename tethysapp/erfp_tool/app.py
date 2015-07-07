@@ -136,6 +136,9 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
                     UrlMap(name='delete-watershed-group-ajax',
                            url='erfp-tool/manage-watershed-groups/delete',
                            controller='erfp_tool.controllers_ajax.watershed_group_delete'),
+                    UrlMap(name='getting-started',
+                           url='erfp-tool/getting-started',
+                           controller='erfp_tool.controllers.getting_started')
         )
         return url_maps
         

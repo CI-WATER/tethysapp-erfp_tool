@@ -144,13 +144,9 @@ def purge_remove_geoserver_layer(layer_id, engine):
     """
     completely remove geoserver layer
     """
-    try:
-        engine.delete_layer(layer_id, purge=True, recurse=True)
-        engine.delete_resource(layer_id, purge=True, recurse=True)
-        engine.delete_store(layer_id, purge=True, recurse=True)
-    except Exception as ex:
-        print ex
-        pass
+    engine.delete_layer(layer_id, purge=True, recurse=True)
+    engine.delete_resource(layer_id, purge=True, recurse=True)
+    engine.delete_store(layer_id, purge=True, recurse=True)
 
 def delete_old_watershed_geoserver_files(watershed):
     """

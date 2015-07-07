@@ -428,3 +428,28 @@ $('#watershed_select').on('change',function(){
         $('#too-many-watersheds-alert').addClass('hidden');
     }
 });
+
+$(document).ready(function(){
+    if (window.location.pathname == "/apps/erfp-tool/") {
+        if ($('#redirect').text() == "Redirecting...") {
+            window.location.pathname = "/apps/erfp-tool/getting-started/";
+        }
+    }
+});
+
+(function() {
+    if (window.location.pathname == "/apps/erfp-tool/getting-started/") {    
+        if (document.referrer == "http://127.0.0.1:8000/apps/erfp-tool/") {
+            $('#welcome').html("<h1>Welcome!</h1><p> Is this your first time running the Streamflow Prediction Tool? Or do you simply need a refresher on how it works? Either way, this page contains the information you need to get started using this application.</p>");
+        }
+    }
+})();
+
+$('.t-o-c').on('click', function() {    
+        id = $(this).attr('id');
+        id = id.slice(0, id.length - 5);
+        id = '#' + id;
+        $('body').animate({
+            scrollTop: ($(id).offset().top - 110)
+        }, 500);
+});

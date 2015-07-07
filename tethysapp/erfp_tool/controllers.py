@@ -345,8 +345,7 @@ def settings(request):
 
     #Query DB for settings
     main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
-    
-    
+
     base_layer_select_input = {
                 'display_text': 'Select a Base Layer',
                 'name': 'base-layer-select',
@@ -360,7 +359,6 @@ def settings(request):
                 'name': 'api-key-input',
                 'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9',
                 'icon_append':'glyphicon glyphicon-lock',
-                'initial': main_settings.base_layer.api_key,
               }
               
     ecmwf_rapid_directory_input = {
@@ -1137,3 +1135,15 @@ def manage_watershed_groups_table(request):
     session.close()
 
     return table_html
+    
+@user_passes_test(user_permission_test)
+def getting_started(request):
+    """
+    Controller for the app home page.
+    """
+   
+    context = {
+                
+              }
+
+    return render(request, 'erfp_tool/getting_started.html', context)

@@ -4,6 +4,8 @@ $('#ecmwf-rapid-location-input').parent().parent().append(help_html);
 var help_html = '<p class="help-block hidden">No API Key specified.</p>';
 $('#api-key-input').parent().parent().append(help_html);
 
+$('#api-key-input').parent().parent().addClass('hidden');
+
 //handle the submit event
 $('#submit-changes-settings').click(function(){
      //scroll back to top
@@ -54,11 +56,14 @@ $('#submit-changes-settings').click(function(){
 //change api key based on the input
 $('#base-layer-select').change(function() {
     var base_layer_id = $(this).select2('data').id;
-    var api_keys = JSON.parse($('#base-layer-api-keys').attr('base-layer-api-keys'));
-    if(api_keys[base_layer_id]) {
-        $('#api-key-input').val(api_keys[base_layer_id]);
+    if(base_layer_id == 3) {    
+        $('#api-key-input').parent().parent().removeClass('hidden');
+        if ($('#api-key-input').attr('initial') = "none") {
+            $('#api-key-input').removeAttr('initial')
+        }
     }
-
-
+    else {
+        $('#api-key-input').parent().parent().addClass('hidden');
+    }
 
 });

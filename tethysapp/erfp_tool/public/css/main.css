@@ -14,3 +14,10 @@
 .table-button {
     width: 60px;
 }
+.screenshots {    
+    width: 90%;    
+    border: 2px solid black;
+}
+.t-o-c:hover{
+    text-decoration: none;
+}
