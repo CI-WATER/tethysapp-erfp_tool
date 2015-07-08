@@ -359,6 +359,7 @@ def settings(request):
                 'name': 'api-key-input',
                 'placeholder': 'e.g.: a1b2c3-d4e5d6-f7g8h9',
                 'icon_append':'glyphicon glyphicon-lock',
+                'initial': main_settings.base_layer.api_key
               }
               
     ecmwf_rapid_directory_input = {

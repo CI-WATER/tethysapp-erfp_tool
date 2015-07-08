@@ -54,12 +54,18 @@ $('#submit-changes-settings').click(function(){
 });
 
 //change api key based on the input
+$(document).ready(function() {
+    var base_layer_id = $('#base-layer-select').select2('data').id;
+    if (base_layer_id == 3) {
+        $('#api-key-input').parent().parent().removeClass('hidden');
+    }
+});
 $('#base-layer-select').change(function() {
     var base_layer_id = $(this).select2('data').id;
     if(base_layer_id == 3) {    
         $('#api-key-input').parent().parent().removeClass('hidden');
         if ($('#api-key-input').attr('initial') = "none") {
-            $('#api-key-input').removeAttr('initial')
+            //$('#api-key-input').removeAttr('initial')
         }
     }
     else {
