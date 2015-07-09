@@ -44,8 +44,10 @@
         {% endif %}
     {% else %}
         {% if user.is_superuser or user.is_staff %}
-            <h2>There appear to be no watersheds in the database at this time. To add one click <a href="{% url 'erfp_tool:add-watershed' %}">here</a></h2>
-            <br>Forgot how? Refresh yourself on the steps <a href="{% url 'erfp_tool:getting-started' %}">here</a>
+            <h2>There appear to be no watersheds in the database at this time.
+                <br>
+                To add one click <a href="{% url 'erfp_tool:add-watershed' %}">here</a></h2>
+            <br>Forgot how? Refresh yourself on the steps <a href="{% url 'erfp_tool:getting-started' %}">here</a>.
         {% else %}
             <h2>Sorry. There appear to be no watersheds in the database at this time.</h2>
         {% endif %}

@@ -21,12 +21,21 @@ def home(request):
     Controller for the app home page.
     """
     #if user's last login more than two weeks or if the user is a new (2 days or less) user, set redirect variable to true
+    user_not_logged_in = False #initialize exception check variable
     redirect_getting_started = False #initialize boolean
     now = datetime.now() #time that app is opened
-    last_login = request.user.last_login.replace(tzinfo=None) #time of user's last login
-    time_away = (now - last_login).seconds #time lapsed since last login
-    if (time_away > 14):
-        redirect_getting_started = True
+
+    try: #if user not logged in, an error occurs
+        last_login = request.user.last_login.replace(tzinfo=None) #time of user's last login
+    except Exception:
+        user_not_logged_in = True
+
+    if user_not_logged_in:
+        pass
+    else:
+        time_away = (now - last_login).seconds #time lapsed since last login
+        if (time_away > 14):
+            redirect_getting_started = True
 
     #get the base layer information
     session = SettingsSessionMaker()
