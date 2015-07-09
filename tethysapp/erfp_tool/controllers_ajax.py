@@ -77,7 +77,7 @@ def data_store_add(request):
                                                apikey=data_store_api_key)    
             result = dataset_engine.list_datasets()
             if not result or "success" not in result:
-                return JsonResponse({ 'error': "Data Store Credentials Invalid"})
+                return JsonResponse({ 'error': "Data Store Credentials Invalid. Password incorrect; Endpoint must end in \"api/3/action\""})
         except Exception, ex:
             return JsonResponse({ 'error': "%s" % ex })
         
@@ -152,7 +152,7 @@ def data_store_update(request):
                                                    apikey=data_store_api_key)    
                 result = dataset_engine.list_datasets()
                 if not result or "success" not in result:
-                    return JsonResponse({ 'error': "Data store credentials invalid."})
+                    return JsonResponse({ 'error': "Data Store Credentials Invalid. Endpoint must end in \"api/3/action\""})
             except Exception, ex:
                 return JsonResponse({ 'error': "%s" % ex })
                 

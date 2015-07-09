@@ -5,6 +5,8 @@ help_html = '<p class="help-block hidden">No data store type specified.</p>';
 $('#data-store-type-select').parent().append(help_html);
 help_html = '<p class="help-block hidden">No datastore API endpoint specified.</p>';
 $('#data-store-endpoint-input').parent().parent().append(help_html);
+help_html = '<p id="endpoint-error" class="help-block hidden">Endpoint must end in "api/3/action"</p>';
+$('#data-store-endpoint-input').parent().parent().append(help_html);
 help_html = '<p class="help-block hidden">No API key specified.</p>';
 $('#data-store-api-key-input').parent().parent().append(help_html);
 
@@ -56,5 +58,16 @@ $('#submit-add-data-store').click(function(){
             submit_button.html(submit_button_html);
         });
     }
+});
 
+$('#data-store-endpoint-input').change(function() {
+    if ($(this).val() == "") {
+        $("#endpoint-error").addClass('hidden');
+    }
+    else if ($(this).val().slice(-12) != "api/3/action") {
+        $("#endpoint-error").removeClass('hidden');
+    }
+    else {
+        $("#endpoint-error").addClass('hidden');
+    }
 });
