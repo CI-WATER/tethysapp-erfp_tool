@@ -1,9 +1,8 @@
 //initialize help blockss
 var help_html = '<p class="help-block hidden">No ECMWF-RAPID location specified.</p>';
 $('#ecmwf-rapid-location-input').parent().parent().append(help_html);
-var help_html = '<p class="help-block hidden">No API Key specified.</p>';
+help_html = '<p class="help-block hidden">No API Key specified.</p>';
 $('#api-key-input').parent().parent().append(help_html);
-
 $('#api-key-input').parent().parent().addClass('hidden');
 
 //handle the submit event
@@ -38,38 +37,34 @@ $('#submit-changes-settings').click(function(){
             api_keys[base_layer_id] = api_key;
             $('#base-layer-api-keys').attr('base-layer-api-keys', JSON.stringify(api_keys));
         }
-
         //update database
-        data = {
+        var data = {
                 base_layer_id: base_layer_id,
                 api_key: api_key,
                 ecmwf_rapid_location: ecmwf_rapid_location,
                 era_interim_rapid_location: era_interim_rapid_location,
-                wrf_hydro_rapid_location: wrf_hydro_rapid_location,                    
+                wrf_hydro_rapid_location: wrf_hydro_rapid_location
                 };
 
         ajax_update_database("update",data)
     }
-
 });
 
 //change api key based on the input
-$(document).ready(function() {
-    var base_layer_id = $('#base-layer-select').select2('data').id;
-    if (base_layer_id == 3) {
-        $('#api-key-input').parent().parent().removeClass('hidden');
+$(document).ready(function() { //once the document is loaded
+    var base_layer_id = $('#base-layer-select').select2('data').id; //store selected Base layer as variable
+    if (base_layer_id == 3) { //if BingMaps is selected
+        $('#api-key-input').parent().parent().removeClass('hidden'); //show the API key field
     }
 });
 $('#base-layer-select').change(function() {
     var base_layer_id = $(this).select2('data').id;
-    if(base_layer_id == 3) {    
-        $('#api-key-input').parent().parent().removeClass('hidden');
-        if ($('#api-key-input').attr('initial') = "none") {
-            //$('#api-key-input').removeAttr('initial')
-        }
+    console.log(base_layer_id);
+    if(base_layer_id == 3) { //if BingMaps is selected   
+        $('#api-key-input').parent().parent().removeClass('hidden'); //show the API key field
     }
-    else {
-        $('#api-key-input').parent().parent().addClass('hidden');
+    else { //if something other than BingMpas is selected
+        $('#api-key-input').attr('initial', 'none'); //set the initial API key field attribute to "none"
+        $('#api-key-input').parent().parent().addClass('hidden'); //hide the API key field
     }
-
-});
+});    

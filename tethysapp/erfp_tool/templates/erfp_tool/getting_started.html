@@ -3,7 +3,12 @@
 {% load staticfiles %}
 
 {% block app_content %}
-<div id="welcome"></div>
+<div id="welcome" class="hidden">
+    <h1>Welcome!</h1>
+    <p> Is this your first time running the Streamflow Prediction Tool? Or do you simply need a refresher on how it
+        works? Either way, this page contains the information you need to get started using this application.
+    </p>
+</div>
 <h1>Getting Started</h1>
 <p><strong>**The steps must be completed in the order given for the app to function properly**</strong></p>
 <p>
@@ -13,66 +18,69 @@
 <p>
     <strong>Click <a href="#" target="_blank">here</a> to open a new window.</strong>
 </p>
-<p>To jump to a specific section, click its name in this list:</p>
+<p>
+    <b>Jump to:</b>
+    <ol>
+        <li><a href="#" id="adjust-settings-link" class="t-o-c">Adjust App Settings</a></li>
+        <li><a href="#" id="add-geoserver-link" class="t-o-c" >Add a Geoserver</a></li>
+        <li><a href="#" id="add-data-store-link" class="t-o-c">Add a Data Store</a></li>
+        <li><a href="#" id="add-watershed-link" class="t-o-c">Add a Watershed</a></li>
+        <li><a href="#" id="view-watershed-link" class="t-o-c">View a Watershed</a></li>
+    </ol>
+</p>
+<p>
 <ol>
-    <b><li><a href="#" id="adjust-settings-link" class="t-o-c">Adjust your Settings</a></li>
-    <li><a href="#" id="add-geoserver-link" class="t-o-c" >Add a Geoserver</a></li>
-    <li><a href="#" id="add-data-store-link" class="t-o-c">Add a Data Store</a></li>
-    <li><a href="#" id="add-watershed-link" class="t-o-c">Add a Watershed</a></li>
-    <li><a href="#" id="view-watershed-link" class="t-o-c">View a Watershed</a></li></b>
-</ol>
-<ol>
-    <h2><li id="adjust-settings">Adjust your Settings</li></h2>        
+    <li id="adjust-settings" class="how-to-steps">Adjust App Settings</li>
+    <p>Before you can do anything, you must make sure that your app settings are correct. On the <strong>left menu bar</strong>
+    under the <strong>Configuration</strong> heading click the <strong>Settings</strong> option.</p>
+    <p>You should see the following screen:</p>
+    <br>
+    <img src="{% static 'erfp_tool/images/screenshot_settings.png' %}" class="screenshots">
+    <br><br>
+    <p>
+        This page contains the settings that pertain to your instance of the Streamflow Prediction
+        Tool. A description of each field shown is given here:
+    </p>
+    <p>
+        <ul>
+            <h4><li>App ID</li></h4>
+                <p>This is the ID assigned to your instance of the app. It is used in certain background tasks and assures that any data you upload is unique and does not tamper with that added by others.</p>
+            <h4><li>Select a Base Layer</li></h4>
+                <p>This specifies the source from which your map base layer in the map viewer will be pulled. There are currently three options: MapQuest, Esri, or BingMaps. If BingMaps is selected, you must provide an API key.</p>
+            <h4><li>Base Layer API Key</li></h4>
+                <p>
+                    This option only appears when the BingMaps base layer is selected. In this case, an API key must be provided
+                    or the map will not function properly. If you would like to use a BingMaps base layer but
+                    don't know how to get a Bing Maps key, click
+                    <a href="https://msdn.microsoft.com/en-us/library/ff428642.aspx" target="_blank">here</a>.
+                </p>
+            <h4><li>Server Folder Location of...</li></h4>
+                <p>
+                    These locations correspond to the local server directories where your uploaded files will be stored.
+                    <br><br>
+                    <strong>NOTE:</strong> This local server is the server on which the instance of the app that you are using is being hosted. For example, one instance of this app
+                    exists at <a href="http://apps.hydroshare.org/" target="_blank">apps.hydroshare.org</a> and is hosted by the hydroshare.org server.
+                    Another instance of this app exists at <a href="http://demo.tethys.ci-water.org/" target="_blank">demo.tethys.ci-water.org</a> and
+                    is hosted by the ci-water server. If you installed the Tethys Platform on your own computer, then your computer may serve as a local server.
+                    Whatever the host server may be, if you do not have access to it then <strong>DO NOT CHANGE THESE FILE PATHS</strong>.
+                    <br><br>
+                    There are three fields each corresponding to a different server foler location: one for ECMWF-RAPID files, one for ERA Interim RAPID files, and one for WRF-Hydro RAPID files.
+                    Each folder must have read and write permissions granted. To change permissions, locate the folder, right click on it
+                    and select either "Get Info" (MAC users), or "Properties" (Linux or Windows users). There will be a tab containing
+                    "Permissions" in its heading. Choose to change or edit these permissions and set them to both Read and Write.
+                    Or, if you are using a command prompt terminal simply type: <code>chmod - R 666 [directory path]</code>.
+                </p>
+        </ul>
+    <li id="add-geoserver" class="how-to-steps">Add a Geoserver</li>
         <p>
-            On the <strong>left menu bar</strong> under the <strong>Configuration</strong> 
-            heading click the <strong>Settings</strong> option.
-        </p>
-        <p>You should see the following screen:</p>
-        <br>        
-        <img src="{% static 'erfp_tool/images/screenshot_settings.png' %}" class="screenshots">
-        <br><br>        
-        <p>
-            This page contains the settings that pertain to your instance of the Streamflow Prediction
-            Tool. A description of each field shown is given here:
-        </p>
-        <p>
-            <ul>
-                <h4><li>App ID</li></h4>
-                    <p>This is the ID assigned to your instance of the app. It is used for certain background tasks.</p>
-                <h4><li>Select a Base Layer</li></h4>
-                    <p>
-                        The dropdown box contains three options: MapQuest, Esri, or BingMaps. This specifies the
-                        source from which your map will be drawn in the map viewer.
-                    </p>                       
-                <h4><li>Base Layer API Key</li></h4>
-                    <p>
-                        This option only appears when the BingMaps base layer is selected. An API key must be provided
-                        or the map will not function properly. If you would like to use a BingMaps base layer but
-                        don't know how to get a Bing Maps key, click 
-                        <a href="https://msdn.microsoft.com/en-us/library/ff428642.aspx" target="_blank">here</a>.
-                    </p>
-                <h4><li>Server Folder Location of...</li></h4>
-                    <p>
-                        There are three fields each corresponding to a different server foler location: one for ECMWF-RAPID files,
-                        one for ERA Interim RAPID files, and one for WRF-Hydro RAPID files. In each case, a local (existing
-                        on your computer) directory (folder) must be specified wherein the associated files are either currently found or will
-                        soon be placed.<br><br>
-                        NOTE: Each folder must have read and write permissions granted. To change permissions, locate the folder, right click on it and select
-                        either "Get Info" (MAC users), or "Properties" (Linux or Windows users). There will be a tab containing 
-                        "Permissions" in its heading. Choose to change or edit these permissions and set them to both Read and Write.
-                        There is also a much easier way if you are familiar with the Terminal. Simply type: <code>chmod - R 666 [directory path]</code>.
-                    </p>                       
-            </ul>
-    <h2><li id="add-geoserver">Add a Geoserver</li></h2>
-        <p>
-            On the <strong>left menu bar</strong> under the <strong>Add</strong> 
-            heading click the <strong>Add a Geoserver</strong> option.
+            Once your settings have been established, it's time to add a geoserver. On the <strong>left menu bar</strong>
+            under the <strong>Add</strong> heading click the <strong>Add a Geoserver</strong> option.
         </p>
         <p>You should see the following screen:</p>
         <img src="{% static 'erfp_tool/images/screenshot_add_geoserver.png' %}" class="screenshots">
         <br><br>        
         <p>
-            On this page you will add the geoserver that you will be working with. You can add as many geoservers as you would like. 
+            On this page you will add the geoserver(s) that you will be working with. You can add as many geoservers as you would like.
             These can later be managed (updated/deleted) on the <strong>Manage Geoservers</strong> page located on 
             the <strong>left menu bar</strong> under the <strong>Manage</strong> heading.
             For each geoserver you add, all fields shown must be completed. A description of each field is given here:
@@ -81,7 +89,7 @@
             <ul>
                 <h4><li>Geoserver Name</li></h4>
                     <p>
-                        Since you can add multiple geoservers, a unique name must be given to help you recognize each one.
+                        Since you can add multiple geoservers, a unique name must be given to help you recognize each one within this app.
                         This name can be anything you would like.
                     </p>
                 <h4><li>Geoserver Url</li></h4>
@@ -90,14 +98,15 @@
                     </p>                       
                 <h4><li>Geoserver Username</li></h4>
                     <p>
-                        This is a username you choose to associate with your geoserver.
+                        This is a username associated with your geoserver. In other words, this is the username you would use to login to the
+                        geoserver if you were to access it directly at the URL address listed above.
                     </p>
                 <h4><li>Geoserver Password</li></h4>
                     <p>
-                        This is a password you choose to associate with your geoserver.
+                        This is the password associated with the username given above.
                     </p>                       
             </ul>
-    <h2><li id="add-data-store">Add a Data Store</li></h2>
+    <li id="add-data-store" class="how-to-steps">Add a Data Store</li>
         <p>
             On the <strong>left menu bar</strong> under the <strong>Add</strong> 
             heading click the <strong>Add a Data Store</strong> option.
@@ -106,21 +115,22 @@
         <img src="{% static 'erfp_tool/images/screenshot_add_data_store.png' %}" class="screenshots">
         <br><br>        
         <p>
-            On this page you will add the data store that you will be working with. You can add as many data stores as you would like.
+            On this page you will add the data store(s) that you will be working with. You can add as you would like.
             These can later be managed (updated/deleted) on the <strong>Manage Data Stores</strong> page located on 
             the <strong>left menu bar</strong> under the <strong>Manage</strong> heading.            
-            For each data store, the fields shown must be completed. A description of each field is given here:
+            For each data store, all fields shown must be completed. A description of each field is given here:
         </p>
         <p>
             <ul>
                 <h4><li>Data Store Server Name</li></h4>
                     <p>
-                        Since you can add multiple data stores, a unique name must be given to help you recognize each one.
+                        Since you can add multiple data stores, a unique name must be given to help you recognize each one within this app.
                         This name can be anything you would like.
                     </p>
                 <h4><li>Data Store Type</li></h4>
                     <p>
                         This is the type of your data store. There are two options: CKAN or Hydroshare. CKAN is the only functional option at the moment.
+                        If you are unfamiliar with CKAN, learn about it <a href="http://ckan.org/" target="_blank">here</a>.
                         The Hydroshare capability will be added in the future.
                     </p>                       
                 <h4><li>Data Store API Endpoint</li></h4>
@@ -132,103 +142,112 @@
                         This is the unique key associated with the above data store API endpoint.
                     </p>                       
             </ul>
-    <h2><li id="add-watershed">Add a Watershed</li></h2>
+    <li id="add-watershed" class="how-to-steps">Add a Watershed</li>
         <p>
-            On the <strong>left menu bar</strong> under the <strong>Add</strong> heading click the <strong>Add a Watershed</strong> option.
+            Now you can get to the real bread and butter of this app: adding watersheds so we can view them. On
+            the <strong>left menu bar</strong> under the <strong>Add</strong> heading click the <strong>Add a
+            Watershed</strong> option.
         </p>
         <p>You should see the following screen:</p>
         <img src="{% static 'erfp_tool/images/screenshot_add_watershed.png' %}" class="screenshots">
         <br><br>        
         <p>
-            On this page you will add the watershed that you will be working with. You can add as many watersheds as you would like.
+            On this page you will add the watershed(s) that you will be working with. You can add as many watersheds as you would like.
             These can later be managed (updated/deleted) on the <strong>Manage Watersheds</strong> page located on 
             the <strong>left menu bar</strong> under the <strong>Manage</strong> heading.            
-            As this is a dynamic form, the total fields required will be based upon your selection in previous fields. A description of each possible field is given here:
+            As this is a dynamic form, the total fields required for submission will be based upon your selection in previous fields.
+            A description of each possible field is given here:
         </p>
-        <p>
-            <ul>
-                <h4><li>Watershed Display Name</li></h4>
-                    <p>
-                        Since you can add multiple watersheds, a unique name must be given to help you recognize each one.
-                        This name can be anything you would like.
-                    </p>
-                <h4><li>Subbasin Display Name</li></h4>
-                    <p>
-                        Since you can add multiple watersheds, each with its own subbasin, a unique name must be given to help you recognize each one.
-                        This name can be anything you would like.
-                    </p>                       
-                <h4><li>Select a Data Store</li></h4>
-                    <p>
-                        Whether you added a new data store or not, there is always at least one option: "Local Server (local)". This is a data store that cannot be tampered with. This option is not associated with any unique additional fields. The other options in the
-                        drop-down will correspond to the data stores that you have added previously. If one of the data stores added by you is selected, there are
-                        various additional fields that appear.
-                    </p>
-                        <ul>
-                            <h6><li>ECMWF Watershed Data Store Name</li></h6>
-                                <p>This is the name of the ECMWF watershed as it will be recorded on the data store server. Thus, this name differs from the display name given above.</p>
-                            <h6><li>ECMWF Subbasin Data Store Name</li></h6>
-                                <p>This is the name of the ECMWF subbasin as it will be recorded on the data store server. Thus, this name differs from the display name given above.</p>
-                            <h6><li>ECMWF RAPID Input Files (Optional)</li></h6>
-                                <p>You can choose to upload RAPID input files for your watershed if you have them.</p>
-                            <h6><li>WRF-Hydro Watershed Data Store Name</li></h6>
-                                <p>This is the name of the WRF-Hydro watershed as it will be recorded on the data store server. Thus, this name differs from the display name given above.</p>
-                            <h6><li>WRF-Hydro Subbasin Data Store Name</li></h6>
-                                <p>This is the name of the WRF-Hydro subbasin as it will be recorded on the data store server. Thus, this name differs from the display name given above.</p>
+        <ul>
+            <h4><li>Watershed Display Name</li></h4>
+                <p>
+                    Since you can add multiple watersheds, a unique name must be given to help you recognize each one.
+                    This name can be anything you would like.
+                </p>
+            <h4><li>Subbasin Display Name</li></h4>
+                <p>
+                    Since you can add multiple watersheds, each with its own subbasin, a unique name must be given to help you recognize each one.
+                    This name can be anything you would like.
+                </p>
+            <h4><li>Select a Data Store</li></h4>
+                <p>
+                    Whether you added a new data store or not, there is always at least one option: "Local Server (local)". This is a data store that cannot be tampered
+                    with (changed/removed) since it corresponds to the computer you are currently on. This option is not associated with any unique additional fields.
+                    The other options in the drop-down will correspond to the data stores that you have added previously.
+                </p>
+                <ul>
+                    <h5><li>Local Server (local)</li></h5>
+                    <p>No additional options are associated with this selection.</p>
 
-                        </ul>
-                    </p>
-                <h4><li>Select a Geoserver</li></h4>
-                    <p>Whether you added a new data store or not, there is always at least one option: "Local Server (media)". This is a geoserver that cannot be tampered with. There are three additional fields associated with this option.</p>
-                        <ul>
-                            <h5><li> Local Server (media) <br></h5>
-                            <ul>
-                                <h6><li>Drainage Line KML File</li></h6>
-                                    <p>You can upload a drainage line KML by choosing the file from your computer. This drainage line file is required as a bare minimum.</p>
-                                <h6><li>Catchment KML File (Optional)</li></h6>
-                                    <p>You can upload a catchment KML by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
-                                <h6><li>Gage KML File (Optional)</li></h6>
-                                    <p>You can upload a gage KML by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
-                            </ul>
-                            </li>
-                            The other options in the drop-down will correspond to the geoservers that you have added previously. If one of these geoservers added by you is selected, there are
-                            various additional fields that appear.
-                            <h5><li> (Custom Geoserver)<br></h5>
-                            <ul>
-                                <h6><li>Upload Shapefile?</li></h6>
-                                    <p> You can upload your own shapefiles to the selected geoserver if you have the files on your computer.
-                                    <ul>
-                                        <h6><li>Yes</li></h6>
-                                            <p>If "Yes" is selected, you will get the following options:</p>
-                                                <ul>
-                                                    <h6><li>Drainage Line Shapefile</li></h6>
-                                                        <p>You can upload a drainage line shapefile by choosing the file from your computer. This drainage line file is required as a bare minimum.</p>
-                                                    <h6><li>Catchment Shapefile (Optional)</li></h6>
-                                                        <p>You can upload a catchment shapefile by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
-                                                    <h6><li>Gage Shapefile (Optional)</li></h6>
-                                                        <p>You can upload a gage shapefile by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
-                                                    <h6><li>AHPS Station Shapefile (Optional)</li></h6>
-                                                        <p>You can upload an AHPS station shapefile by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
-                                                </ul>
-                                    </ul>
-                                    <ul>
-                                        <h6><li>No</li></h6>
-                                            <p>If "No" is selected, you will get the following options:</p>
-                                                <ul>
-                                                    <h6><li>Geoserver Drainage Line Layer</li></h6>
-                                                        <p>If this layer has already been uploaded previously to the selected geoserver (either by you or by someone else), you can specify the name of this layer as it is found on the geoserver.</p>
-                                                    <h6><li>Geoserver Catchment Layer</li></h6>
-                                                        <p>If this layer has already been uploaded previously to the selected geoserver (either by you or by someone else), you can specify the name of this layer as it is found on the geoserver.</p>
-                                                    <h6><li>Geoserver Gage Layer</li></h6>
-                                                        <p>If this layer has already been uploaded previously to the selected geoserver (either by you or by someone else), you can specify the name of this layer as it is found on the geoserver.</p>
-                                                    <h6><li>Geoserver AHPS Station Layer</li></h6>
-                                                        <p>If this layer has already been uploaded previously to the selected geoserver (either by you or by someone else), you can specify the name of this layer as it is found on the geoserver.</p>
-                                                </ul>
-                                    </ul>        
-                            </ul>
-                            </li>
+                    <h5><li>(User-added Data Store)</li></h5>
+                    <p>If this option is selected, the following associated fields dynamically appear:</p>
+                    <ul>
+                        <h6><li>ECMWF Watershed Data Store Name</li></h6>
+                        <p>This is the name of the ECMWF watershed as it will be recorded on the data store server. Thus, this name differs from the display name given above.</p>
+                        <h6><li>ECMWF Subbasin Data Store Name</li></h6>
+                        <p>This is the name of the ECMWF subbasin as it will be recorded on the data store server. Thus, this name differs from the display name given above.</p>
+                        <h6><li>ECMWF RAPID Input Files (Optional)</li></h6>
+                        <p>You can choose to upload RAPID input files for your watershed if you have them.</p>
+                        <h6><li>WRF-Hydro Watershed Data Store Name</li></h6>
+                        <p>This is the name of the WRF-Hydro watershed as it will be recorded on the data store server. Thus, this name differs from the display name given above.</p>
+                        <h6><li>WRF-Hydro Subbasin Data Store Name</li></h6>
+                        <p>This is the name of the WRF-Hydro subbasin as it will be recorded on the data store server. Thus, this name differs from the display name given above.</p>
                     </ul>
-        </ul>
-    <h2><li id="view-watershed">View a Watershed</li></h2>
+                </ul>
+            <h4><li>Select a Geoserver</li></h4>
+                <p>
+                    Whether you added a new data store or not, there is always at least one option: "Local Server (media)". This is a geoserver that cannot be tampered
+                    with (changed/removed) since it corresponds to the computer you are currently on. There are three dynamic fields associated with this option.
+                </p>
+                <ul>
+                    <h5><li> Local Server (media)</li></h5>
+                    <ul>
+                        <h6><li>Drainage Line KML File</li></h6>
+                            <p>You can upload a drainage line KML by choosing the file from your computer. This drainage line file is required as a bare minimum.</p>
+                        <h6><li>Catchment KML File (Optional)</li></h6>
+                            <p>You can upload a catchment KML by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
+                        <h6><li>Gage KML File (Optional)</li></h6>
+                            <p>You can upload a gage KML by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
+                    </ul>
+                    The other options in the drop-down will correspond to the geoservers that you have added previously. If one of these geoservers added by you is selected, there are
+                    various dynamic fields that appear.
+                    <h5><li> (Custom Geoserver)<br></h5>
+                    <ul>
+                        <h6><li>Upload Shapefile?</li></h6>
+                            <p> You can upload your own shapefiles to the selected geoserver if you have the files on your computer.
+                            <ul>
+                                <h6><li>Yes</li></h6>
+                                    <p>If "Yes" is selected, you will get the following options:</p>
+                                        <ul>
+                                            <h6><li>Drainage Line Shapefile</li></h6>
+                                                <p>You can upload a drainage line shapefile by choosing the file from your computer. This drainage line file is required as a bare minimum.</p>
+                                            <h6><li>Catchment Shapefile (Optional)</li></h6>
+                                                <p>You can upload a catchment shapefile by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
+                                            <h6><li>Gage Shapefile (Optional)</li></h6>
+                                                <p>You can upload a gage shapefile by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
+                                            <h6><li>AHPS Station Shapefile (Optional)</li></h6>
+                                                <p>You can upload an AHPS station shapefile by choosing the file from your computer. This is optional, as a watershed is funcional without it.</p>
+                                        </ul>
+                            </ul>
+                            <ul>
+                                <h6><li>No</li></h6>
+                                    <p>If "No" is selected, you will get the following options:</p>
+                                        <ul>
+                                            <h6><li>Geoserver Drainage Line Layer</li></h6>
+                                                <p>If this layer has already been uploaded previously to the selected geoserver (either by you or by someone else), you can specify the name of this layer as it is found on the geoserver.</p>
+                                            <h6><li>Geoserver Catchment Layer</li></h6>
+                                                <p>If this layer has already been uploaded previously to the selected geoserver (either by you or by someone else), you can specify the name of this layer as it is found on the geoserver.</p>
+                                            <h6><li>Geoserver Gage Layer</li></h6>
+                                                <p>If this layer has already been uploaded previously to the selected geoserver (either by you or by someone else), you can specify the name of this layer as it is found on the geoserver.</p>
+                                            <h6><li>Geoserver AHPS Station Layer</li></h6>
+                                                <p>If this layer has already been uploaded previously to the selected geoserver (either by you or by someone else), you can specify the name of this layer as it is found on the geoserver.</p>
+                                        </ul>
+                            </ul>
+                    </ul>
+                    </li>
+                </ul>
+            </ul>
+    <li id="view-watershed" class="how-to-steps">View a Watershed</li>
         <p>
             On the <strong>left menu bar</strong> under the <strong>App Navigation</strong> heading click the <strong>Select Watershed(s)</strong> option.
         </p>
@@ -237,7 +256,9 @@
         <br><br>        
         <p>
             Under the Select a Watershed heading is an empty field that when clicked will create a drop-down list of all of the watersheds that you have added. Simply select one (or more if you would like to 
-            view multiple simultaneously) and then click View Watersheds. NOTE: Viewing multiple watersheds simultaneously could cause the load time to increase significantly.
+            view multiple simultaneously) and then click View Watersheds.
+            <br><br>
+            NOTE: Viewing multiple watersheds simultaneously could cause the load time to increase significantly.
             
 </ol>
 {% endblock %}

@@ -20,7 +20,7 @@ function csrfSafeMethod(method) {
     // these HTTP methods do not require CSRF protection
     return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
-//add csrf token to approporiate ajax requests
+//add csrf token to appropriate ajax requests
 $(function() {
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
@@ -292,7 +292,7 @@ function ajax_update_database(ajax_url, ajax_data, div_id) {
 //ajax file submit
 //send data to database with error messages
 function ajax_update_database_with_file(ajax_url, ajax_data, div_id) {
-    //backslash at end of url is requred
+    //backslash at end of url is required
     if (ajax_url.substr(-1) !== "/") {
         ajax_url = ajax_url.concat("/");
     }
@@ -303,8 +303,8 @@ function ajax_update_database_with_file(ajax_url, ajax_data, div_id) {
         data: ajax_data,
         dataType: "json",
         processData: false, // Don't process the files
-        contentType: false, // Set content type to false as jQuery will tell the server its a query string request
-    })
+        contentType: false // Set content type to false as jQuery will tell the server its a query string request
+    });
     xhr.done(function(data) {
         if("success" in data) {
             addSuccessMessage(data['success'], div_id);
@@ -333,7 +333,7 @@ function ajax_update_database_multiple_files(ajax_url, ajax_data, custom_message
         dataType: "json",
         processData: false, // Don't process the files
         contentType: false, // Set content type to false as jQuery will tell the server it's a query string request
-    })
+    });
     xhr.done(function(data){
         if("success" in data) {
             addSuccessMessage(custom_message, div_id);
@@ -353,12 +353,12 @@ function upload_AJAX_ECMWF_RAPID_input(watershed_id, data_store_id) {
     var xhr_ecmwf_rapid = null;
     var ecmwf_rapid_input_file = null;
     if(data_store_id>1) {
-        ecmwf_rapid_input_file = $('#ecmwf-rapid-files-upload-input')[0].files[0]
+        ecmwf_rapid_input_file = $('#ecmwf-rapid-files-upload-input')[0].files[0];
         if(ecmwf_rapid_input_file != null) {
             appendInfoMessage("Uploading ECMWF RAPID Input Data ...",
                               "message_ecmwf_rapid_input");
             var data = new FormData();
-            data.append("watershed_id", watershed_id)
+            data.append("watershed_id", watershed_id);
             data.append("ecmwf_rapid_input_file",ecmwf_rapid_input_file);
             xhr_ecmwf_rapid = ajax_update_database_multiple_files("upload_ecmwf_rapid",
                                                                   data,
@@ -431,8 +431,10 @@ $('#watershed_select').on('change',function(){
 
 $(document).ready(function(){
     if (window.location.pathname == "/apps/erfp-tool/") {
-        if ($('#redirect').text() == "Redirecting...") {
-            window.location.pathname = "/apps/erfp-tool/getting-started/";
+        if (document.referrer.slice(-5) == "apps/") {
+            if ($('#redirect').text() == "Redirecting...") {
+                window.location.pathname = "/apps/erfp-tool/getting-started/";
+            }
         }
     }
 });
@@ -440,13 +442,16 @@ $(document).ready(function(){
 (function() {
     if (window.location.pathname == "/apps/erfp-tool/getting-started/") {    
         if (document.referrer.slice(-15) == "apps/erfp-tool/") {
-            $('#welcome').html("<h1>Welcome!</h1><p> Is this your first time running the Streamflow Prediction Tool? Or do you simply need a refresher on how it works? Either way, this page contains the information you need to get started using this application.</p>");
+            $('#welcome').removeClass('hidden');
         }
+    }
+    else {
+        $('#welcome').addClass('hidden');
     }
 })();
 
 $('.t-o-c').on('click', function() {    
-        id = $(this).attr('id');
+        var id = $(this).attr('id');
         id = id.slice(0, id.length - 5);
         id = '#' + id;
         $('body').animate({

@@ -1,9 +1,10 @@
 import json
 import os
+from datetime import datetime, timedelta
 
 #django imports
 from django.contrib.auth.decorators import user_passes_test
-from django.shortcuts import redirect, render 
+from django.shortcuts import redirect, render
 #from endless_pagination import utils
 
 #tethys imports
@@ -19,7 +20,14 @@ def home(request):
     """
     Controller for the app home page.
     """
-   
+    #if user's last login more than two weeks or if the user is a new (2 days or less) user, set redirect variable to true
+    redirect_getting_started = False #initialize boolean
+    now = datetime.now() #time that app is opened
+    last_login = request.user.last_login.replace(tzinfo=None) #time of user's last login
+    time_away = (now - last_login).seconds #time lapsed since last login
+    if (time_away > 14):
+        redirect_getting_started = True
+
     #get the base layer information
     session = SettingsSessionMaker()
     #Query DB for settings
@@ -55,6 +63,7 @@ def home(request):
                 'watersheds_length': len(watersheds),
                 'watershed_group_select' : watershed_group_select,
                 'watershed_group_length': len(groups),
+                "redirect": redirect_getting_started
               }
 
     return render(request, 'erfp_tool/home.html', context)
