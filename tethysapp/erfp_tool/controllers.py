@@ -15,6 +15,8 @@ from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings
                     SettingsSessionMaker, Watershed, WatershedGroup)
 from .functions import (format_name, format_watershed_title, 
                         user_permission_test)
+from tethys_apps.sdk.gizmos import MapView, MVView, MVLayer
+from tethys_apps.sdk import get_spatial_dataset_engine
 
 def home(request):
     """
@@ -53,6 +55,44 @@ def home(request):
     session.close()
     for group in groups:
         watershed_groups.append((group.name,group.id))
+
+    #map for selecting the NFIE regions
+    geoserver_engine = get_spatial_dataset_engine(name='default')
+    response = geoserver_engine.list_resources(workspace='first_responder')
+
+    layers_to_load=[]
+
+    if response['success']:
+        resourses = response['result']
+
+        for resourse in resourses:
+
+            resourse_layer = MVLayer(source='ImageWMS',
+                                  options={'url': 'http://127.0.0.1:8181/geoserver/wms',
+                                           'params': {'LAYERS': 'sfpt:' + resourse},
+                                           'serverType': 'geoserver'},
+                                  legend_title=resourse,
+                                  legend_extent=[-126, 24.5, -66.2, 49],
+                                  )
+            if resourse_layer not in layers_to_load:
+                layers_to_load.append(resourse_layer)
+
+    view_options = MVView(
+            projection='EPSG:4326',
+            center=[-100, 40],
+            zoom=3.5,
+            maxZoom=18,
+            minZoom=2
+            )
+    select_area_map = MapView(
+        height='600px',
+        width='100%',
+        controls=['ZoomSlider', 'Rotate', 'FullScreen',
+                  {'ZoomToExtent': {'projection': 'EPSG:4326', 'extent': [-130, 22, -65, 54]}}],
+        layers=layers_to_load,
+        view=view_options,
+        basemap='OpenStreetMap',
+        )
     
     watershed_select = {
                 'display_text': 'Select Watershed(s)',
@@ -72,7 +112,8 @@ def home(request):
                 'watersheds_length': len(watersheds),
                 'watershed_group_select' : watershed_group_select,
                 'watershed_group_length': len(groups),
-                "redirect": redirect_getting_started
+                "redirect": redirect_getting_started,
+                'select_area_map': select_area_map,
               }
 
     return render(request, 'erfp_tool/home.html', context)
