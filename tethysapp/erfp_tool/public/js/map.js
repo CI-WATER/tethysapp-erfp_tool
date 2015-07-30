@@ -662,7 +662,7 @@ var ERFP_MAP = (function() {
                                 var extremes = long_term_chart.yAxis[0].getExtremes();
                                 var maxY = Math.max(extremes.max, convertValueMetricToEnglish(parseFloat(data.max)));
                                 long_term_chart.yAxis[0].addPlotBand({
-                                    from: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
+                                    from: convertValueMetricToEnglish(parseFloat(data.twenty)),
                                     to: convertValueMetricToEnglish(maxY),
                                     color: 'rgba(128,0,128,0.4)',
                                     id: '20-yr',
@@ -673,7 +673,7 @@ var ERFP_MAP = (function() {
                                 });
                                 long_term_chart.yAxis[0].addPlotBand({
                                     from: convertValueMetricToEnglish(parseFloat(data.ten)),
-                                    to: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
+                                    to: convertValueMetricToEnglish(parseFloat(data.twenty)),
                                     color: 'rgba(255,0,0,0.3)',
                                     id: '10-yr',
                                     label: {
