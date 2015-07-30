@@ -1201,7 +1201,7 @@ var ERFP_MAP = (function() {
         m_ecmwf_show = $('#ecmwf-toggle').bootstrapSwitch('state');
 
         //create symbols for warnings
-        var twenty_five_symbols = [new ol.style.RegularShape({
+        var twenty_symbols = [new ol.style.RegularShape({
                                               points: 3,
                                               radius: 5,
                                               fill: new ol.style.Fill({
@@ -1578,7 +1578,7 @@ var ERFP_MAP = (function() {
                         style = [];
                         for (var i=0; i<size; i++) {
                             style.push(new ol.style.Style({
-                                image: twenty_five_symbols[features[i].get('point_size')],
+                                image: twenty_symbols[features[i].get('point_size')],
                               }));
                         }
                     }
