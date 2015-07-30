@@ -601,14 +601,18 @@ def era_interim_get_hydrograph(request):
         
         num_years = int(len(data_values)/365)
         sorted_values = np.sort(data_values)[:num_years:-1]
-
+        
+        rp_index_20 = round((num_years + 1)/20.0, 0)
+        rp_index_10 = round((num_years + 1)/10.0, 0)
+        rp_index_2 = round((num_years + 1)/2.0, 0)
+        
         return JsonResponse({
                 "success" : "ERA-Interim data analysis complete!",
                 "era_interim" : zip(time, data_values.tolist()),
                 "max" : str(sorted_values[0]),
-                "twenty_five" : str(sorted_values[num_years-25]),
-                "ten" : str(sorted_values[num_years-10]),
-                "two" : str(sorted_values[num_years-2]),
+                "twenty" : str(sorted_values[rp_index_20]),
+                "ten" : str(sorted_values[rp_index_10]),
+                "two" : str(sorted_values[rp_index_2]),
         })
 
 def wrf_hydro_get_hydrograph(request):
@@ -703,9 +707,9 @@ def generate_warning_points(request):
         else:
             return JsonResponse({'error' : 'No files found for watershed.'})
                              
-        if return_period == 25:
+        if return_period == 20:
             #get warning points to load in
-            warning_points_file = os.path.join(path_to_output_files,recent_directory, "return_25_points.txt")
+            warning_points_file = os.path.join(path_to_output_files,recent_directory, "return_20_points.txt")
         elif return_period == 10:
             warning_points_file = os.path.join(path_to_output_files,recent_directory, "return_10_points.txt")
         elif return_period == 2:
