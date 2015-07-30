@@ -50,7 +50,7 @@ var ERFP_MAP = (function() {
         m_units,
         m_ecmwf_show,
         m_wrf_show,
-        m_return_25_features_source,
+        m_return_20_features_source,
         m_return_10_features_source,
         m_return_2_features_source;
 
@@ -665,9 +665,9 @@ var ERFP_MAP = (function() {
                                     from: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
                                     to: convertValueMetricToEnglish(maxY),
                                     color: 'rgba(128,0,128,0.4)',
-                                    id: '25-yr',
+                                    id: '20-yr',
                                     label: {
-                                        text: '25-yr',
+                                        text: '20-yr',
                                         align: 'right',
                                     }
                                 });
@@ -1541,7 +1541,7 @@ var ERFP_MAP = (function() {
                 }
             }
             //create empty layers to add data to later
-            var return_25_layer = new ol.layer.Vector({
+            var return_20_layer = new ol.layer.Vector({
                 source: new ol.source.Cluster({
                                                 source: new ol.source.Vector({ source: []}),
                                                 distance: 20
@@ -1585,11 +1585,11 @@ var ERFP_MAP = (function() {
                     return style;
                 }
             });
-            return_25_layer.set('layer_id', 'layer' + group_index + 'g' + 4);
-            return_25_layer.set('layer_type', 'warning_points');
-            return_25_layer.set('return_period', 25);
-            return_25_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
-            return_25_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
+            return_20_layer.set('layer_id', 'layer' + group_index + 'g' + 4);
+            return_20_layer.set('layer_type', 'warning_points');
+            return_20_layer.set('return_period', 20);
+            return_20_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
+            return_20_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
     
             var return_10_layer = new ol.layer.Vector({
                 source: new ol.source.Cluster({
@@ -1694,7 +1694,7 @@ var ERFP_MAP = (function() {
 
             layers.push(return_2_layer);
             layers.push(return_10_layer);
-            layers.push(return_25_layer);
+            layers.push(return_20_layer);
             //make sure there are layers to add
             if (layers.length > 0) {
                 var group_layer = new ol.layer.Group({ 
@@ -1880,4 +1880,4 @@ var ERFP_MAP = (function() {
 
 }()); // End of package wrapper 
 // NOTE: that the call operator (open-closed parenthesis) is used to invoke the library wrapper 
-// function immediately after being parsed.                                                                                                                                                                                 
+// function immediately after being parsed.
