@@ -2,6 +2,9 @@
 
 {% load tethys_gizmos %}
 
+{% load staticfiles %}
+
+
 {% block app_content %}
     {% if user.is_superuser or user.is_staff %}
         {% if redirect %}
@@ -20,7 +23,9 @@
               </a>
             </div>
         </form>
-        {% gizmo map_view select_area_map %}
+        <div id="map-select" data-resources="{{data_resources}}">
+            {% gizmo map_view select_area_map %}
+        </div>
         {% if user.is_superuser or user.is_staff %}
             <p class="help-block">Don't see the watershed you want? Add one
             <a href="{% url 'erfp_tool:add-watershed' %}">here</a>.</p>
@@ -54,4 +59,9 @@
         {% endif %}
     {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+  {{ block.super }}
+  <script src="{% static 'erfp_tool/js/home.js' %}" type="text/javascript"></script>
 {% endblock %}

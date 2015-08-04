@@ -1479,6 +1479,7 @@ var ERFP_MAP = (function() {
                         }
                         var drainage_line = new ol.layer.Vector({
                             source: drainage_line_vector_source,
+                            //TODO see if adding a style will help clickability
                         });
     
                         layer_info['drainage_line']['contained_attributes'].some(function(attribute) {

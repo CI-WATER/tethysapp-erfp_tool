@@ -349,7 +349,7 @@ function ajax_update_database_multiple_files(ajax_url, ajax_data, custom_message
     .fail(function(xhr, status, error) {
         addWarningMessage("Submission failed");
         appendErrorMessage(error, div_id);
-        console.log(xhr.responseText);
+         console.log(xhr.responseText);
     });
     return xhr;
 }

@@ -57,25 +57,10 @@ def home(request):
         watershed_groups.append((group.name,group.id))
 
     #map for selecting the NFIE regions
-    geoserver_engine = get_spatial_dataset_engine(name='default')
-    response = geoserver_engine.list_resources(workspace='first_responder')
-
-    layers_to_load=[]
-
+    geoserver_engine = get_spatial_dataset_engine(name='ciwater')
+    response=geoserver_engine.list_resources(workspace='sfpt')
     if response['success']:
-        resourses = response['result']
-
-        for resourse in resourses:
-
-            resourse_layer = MVLayer(source='ImageWMS',
-                                  options={'url': 'http://127.0.0.1:8181/geoserver/wms',
-                                           'params': {'LAYERS': 'sfpt:' + resourse},
-                                           'serverType': 'geoserver'},
-                                  legend_title=resourse,
-                                  legend_extent=[-126, 24.5, -66.2, 49],
-                                  )
-            if resourse_layer not in layers_to_load:
-                layers_to_load.append(resourse_layer)
+        resources = response['result']
 
     view_options = MVView(
             projection='EPSG:4326',
@@ -89,7 +74,6 @@ def home(request):
         width='100%',
         controls=['ZoomSlider', 'Rotate', 'FullScreen',
                   {'ZoomToExtent': {'projection': 'EPSG:4326', 'extent': [-130, 22, -65, 54]}}],
-        layers=layers_to_load,
         view=view_options,
         basemap='OpenStreetMap',
         )
@@ -114,6 +98,7 @@ def home(request):
                 'watershed_group_length': len(groups),
                 "redirect": redirect_getting_started,
                 'select_area_map': select_area_map,
+                'data_resources':json.dumps(resources),
               }
 
     return render(request, 'erfp_tool/home.html', context)
@@ -575,7 +560,13 @@ def add_watershed(request):
                 'placeholder': 'e.g.: erfp:ahps-station',
                 'icon_append':'glyphicon glyphicon-link',
               }
-              
+    geoserver_outline_input = {
+                'display_text': 'Geoserver Outline Layer',
+                'name': 'geoserver-outline-input',
+                'placeholder': 'e.g.: erfp:outline',
+                'icon_append':'glyphicon glyphicon-link',
+              }
+
     shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
                 'name': 'shp-upload-toggle',
                 'on_label': 'Yes',
@@ -609,6 +600,7 @@ def add_watershed(request):
                 'geoserver_catchment_input': geoserver_catchment_input,
                 'geoserver_gage_input': geoserver_gage_input,
                 'geoserver_ahps_station_input': geoserver_ahps_station_input,
+                'geoserver_outline_input':geoserver_outline_input,
                 'shp_upload_toggle_switch': shp_upload_toggle_switch,
                 'add_button': add_button,
               }
@@ -648,7 +640,7 @@ def manage_watersheds_table(request):
     session = SettingsSessionMaker()
 
     # Query DB for watersheds
-    RESULTS_PER_PAGE = 5
+    RESULTS_PER_PAGE = 10
     page = int(request.GET.get('page'))
 
     watersheds = session.query(Watershed) \
@@ -814,6 +806,13 @@ def edit_watershed(request):
                     'icon_append':'glyphicon glyphicon-link',
                     'initial' : watershed.geoserver_ahps_station_layer
                   }
+        geoserver_outline_input = {
+                    'display_text': 'Geoserver Outline Layer',
+                    'name': 'geoserver-outline-input',
+                    'placeholder': 'e.g.: erfp:outline',
+                    'icon_append':'glyphicon glyphicon-link',
+                    'initial' : watershed.geoserver_outline_layer
+                  }
         shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
                     'name': 'shp-upload-toggle',
                     'on_label': 'Yes',
@@ -847,6 +846,7 @@ def edit_watershed(request):
                     'geoserver_catchment_input': geoserver_catchment_input,
                     'geoserver_gage_input': geoserver_gage_input,
                     'geoserver_ahps_station_input': geoserver_ahps_station_input,
+                    'geoserver_outline_input': geoserver_outline_input,
                     'shp_upload_toggle_switch': shp_upload_toggle_switch,
                     'add_button': add_button,
                     'watershed' : watershed,
