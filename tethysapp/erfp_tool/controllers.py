@@ -387,8 +387,17 @@ def settings(request):
         base_layer_list.append((base_layer.name, base_layer.id))
         base_layer_api_keys[base_layer.id] = base_layer.api_key
 
+    # Query DB for groups
+    watershed_groups = session.query(WatershedGroup).all()
+    watershed_groups_list = []
+    for watershed_group in watershed_groups:
+        watershed_groups_list.append((watershed_group.name, watershed_group.id))
+
+
+
     #Query DB for settings
     main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    default_group_index = main_settings.default_group_id
 
     base_layer_select_input = {
                 'display_text': 'Select a Base Layer',
@@ -405,7 +414,15 @@ def settings(request):
                 'icon_append':'glyphicon glyphicon-lock',
                 'initial': main_settings.base_layer.api_key
               }
-              
+
+    default_group_select_input = {
+                'display_text': 'Select a Default Watershed Group to Display on Home Page',
+                'name': 'default-group-select-input',
+                'multiple': False,
+                'options': watershed_groups_list,
+                'initial': watershed_groups_list[default_group_index-1][0],
+                }
+
     ecmwf_rapid_directory_input = {
                 'display_text': 'Server Folder Location of ECMWF-RAPID files',
                 'name': 'ecmwf-rapid-location-input',
@@ -438,10 +455,11 @@ def settings(request):
                                   }
                                 ],
                  }
-              
+
     context = {
                 'base_layer_select_input': base_layer_select_input,
                 'base_layer_api_key_input': base_layer_api_key_input,
+                'default_group_select_input': default_group_select_input,
                 'ecmwf_rapid_input': ecmwf_rapid_directory_input,
                 'era_interim_rapid_input': era_interim_rapid_directory_input,
                 'wrf_hydro_rapid_input':wrf_hydro_rapid_directory_input,

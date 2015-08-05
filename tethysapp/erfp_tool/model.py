@@ -20,15 +20,17 @@ class MainSettings(Base):
     id = Column(Integer, primary_key=True)
     base_layer_id = Column(Integer,ForeignKey('base_layer.id'))
     base_layer = relationship("BaseLayer")
+    default_group_id = Column(Integer)
     ecmwf_rapid_prediction_directory = Column(String)
     era_interim_rapid_directory = Column(String)
     wrf_hydro_rapid_prediction_directory = Column(String)
     app_instance_id = Column(String)
 
-    def __init__(self, base_layer_id, ecmwf_rapid_prediction_directory, 
+    def __init__(self, base_layer_id, ecmwf_rapid_prediction_directory, default_group_id,
                  era_interim_rapid_directory, wrf_hydro_rapid_prediction_directory):
 
         self.base_layer_id = base_layer_id
+        self.default_group_id = default_group_id
         self.ecmwf_rapid_prediction_directory = ecmwf_rapid_prediction_directory
         self.era_interim_rapid_directory = era_interim_rapid_directory
         self.wrf_hydro_rapid_prediction_directory = wrf_hydro_rapid_prediction_directory

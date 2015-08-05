@@ -734,6 +734,7 @@ def settings_update(request):
         post_info = request.POST
         base_layer_id = post_info.get('base_layer_id')
         api_key = post_info.get('api_key')
+        default_group_id = post_info.get('default_group_id')
         ecmwf_rapid_prediction_directory = post_info.get('ecmwf_rapid_location')
         era_interim_rapid_directory = post_info.get('era_interim_rapid_location')
         wrf_hydro_rapid_prediction_directory = post_info.get('wrf_hydro_rapid_location')
@@ -762,6 +763,7 @@ def settings_update(request):
         #update main settings
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         main_settings.base_layer_id = base_layer_id
+        main_settings.default_group_id = default_group_id
         main_settings.ecmwf_rapid_prediction_directory = ecmwf_rapid_prediction_directory    
         main_settings.era_interim_rapid_directory = era_interim_rapid_directory    
         main_settings.wrf_hydro_rapid_prediction_directory = wrf_hydro_rapid_prediction_directory    

@@ -256,14 +256,14 @@ function appendSuccessMessage(message, div_id) {
     $('#message').append(
       '<div '+ div_id_string +' class="alert alert-success" role="alert">' +
       '<br><span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>' +
-      '<span class="sr-only">Sucess:</span> ' + message + '</div>'
+      '<span class="sr-only">Success:</span> ' + message + '</div>'
     )
     .removeClass('hidden');
 }
 
 //send data to database with error messages
 function ajax_update_database(ajax_url, ajax_data, div_id) {
-    //backslash at end of url is requred
+    //backslash at end of url is required
     if (ajax_url.substr(-1) !== "/") {
         ajax_url = ajax_url.concat("/");
     }

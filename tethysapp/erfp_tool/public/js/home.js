@@ -11,7 +11,7 @@ var add_layer_to_map = function(layername){
     preview_vector_source = new ol.source.Vector({
         loader: function (extent, resolution, projection) {
             var url = 'http://ciwmap.chpc.utah.edu:8080/geoserver/wfs?service=WFS&' +
-                'version=1.1.0&request=GetFeature&typename=sfpt:' + layername +'&' +
+                'version=1.1.0&request=GetFeature&typename=spt-9bbf4592d00f501b82ef58c3297cec78:' + layername +'&' +
                 'outputFormat=text/javascript&format_options=callback:loadFeatures' +
                 '&srsname=EPSG:3857&bbox=' + extent.join(',') + ',EPSG:3857';
             // use jsonp: false to prevent jQuery from adding the "callback"
@@ -50,13 +50,13 @@ $(function(){
     /************************************************************************
     *                  INITIALIZATION / CONSTRUCTOR
     *************************************************************************/
-    nfie_regions= ['Colorado', 'California', ''];
+    nfie_regions= ['great_basin-nfie_region-outline', 'california-nfie_region-outline', 'colorado-nfie_region-outline','mississippi-nfie_region-outline', 'great_lakes-nfie_region-outline'];
     var map = TETHYS_MAP_VIEW.getMap();
     //var layers = map.getLayers();
 
     //http://127.0.0.1:8181/geoserver/
     //http://ciwmap.chpc.utah.edu:8080/geoserver/
-    for(var i = 0; i < 2; i++) {
+    for(var i = 0; i < nfie_regions.length; i++) {
         console.log(nfie_regions[i]);
         curr_region = nfie_regions[i];
         add_layer_to_map(curr_region);
