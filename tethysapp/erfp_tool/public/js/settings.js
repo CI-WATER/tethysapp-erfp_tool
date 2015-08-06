@@ -23,6 +23,7 @@ $('#submit-changes-settings').click(function(){
     var base_layer_id = checkInputWithError($('#base-layer-select'),safe_to_submit, true, true);
     //check API Key Input
     var api_key = checkInputWithError($('#api-key-input'),safe_to_submit);
+    //TODO what happens if there are no groups to select?
     var default_group_id =  checkInputWithError($('#default-group-select-input'),safe_to_submit,true, true);
     //check output rapid-ecmwf files location
     var ecmwf_rapid_location = checkInputWithError($('#ecmwf-rapid-location-input'),safe_to_submit);

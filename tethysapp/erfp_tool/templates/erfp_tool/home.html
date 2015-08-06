@@ -23,7 +23,7 @@
               </a>
             </div>
         </form>
-        <div id="map-select" data-resources="{{data_resources}}">
+        <div id="map-select" data-resources="{{default_watersheds_list}}">
             {% gizmo map_view select_area_map %}
         </div>
         {% if user.is_superuser or user.is_staff %}

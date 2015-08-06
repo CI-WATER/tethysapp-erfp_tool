@@ -56,11 +56,17 @@ def home(request):
     for group in groups:
         watershed_groups.append((group.name,group.id))
 
-    #map for selecting the NFIE regions
-    geoserver_engine = get_spatial_dataset_engine(name='ciwater')
-    response=geoserver_engine.list_resources(workspace='sfpt')
-    if response['success']:
-        resources = response['result']
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    default_group_id = main_settings.default_group_id
+    app_instance_id = main_settings.app_instance_id
+    default_group = session.query(WatershedGroup).filter(WatershedGroup.id==default_group_id).all()[0]
+    watersheds_default_group = default_group.watersheds
+    default_watersheds_list = []
+    for watershed in watersheds_default_group:
+        geoserver = session.query(Geoserver).filter(Geoserver.id == watershed.geoserver_id).all()[0]
+        geoserver_url = geoserver.url
+        default_watersheds_list.append([watershed.folder_name, watershed.file_name, geoserver_url, app_instance_id])
+    print default_watersheds_list
 
     view_options = MVView(
             projection='EPSG:4326',
@@ -98,7 +104,7 @@ def home(request):
                 'watershed_group_length': len(groups),
                 "redirect": redirect_getting_started,
                 'select_area_map': select_area_map,
-                'data_resources':json.dumps(resources),
+                'default_watersheds_list': json.dumps(default_watersheds_list)
               }
 
     return render(request, 'erfp_tool/home.html', context)

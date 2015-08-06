@@ -5,13 +5,17 @@
 var loadFeatures
 var map = TETHYS_MAP_VIEW.getMap();
 
-var add_layer_to_map = function(layername){
+var add_layer_to_map = function(watershed, subbasin, geoserver_url, app_instance_id){
     var map = TETHYS_MAP_VIEW.getMap();
     var geojson_format = new ol.format.GeoJSON();
-    preview_vector_source = new ol.source.Vector({
+
+    //TODO get the geoserver name from the controller
+
+    var preview_vector_source = new ol.source.Vector({
         loader: function (extent, resolution, projection) {
-            var url = 'http://ciwmap.chpc.utah.edu:8080/geoserver/wfs?service=WFS&' +
-                'version=1.1.0&request=GetFeature&typename=spt-9bbf4592d00f501b82ef58c3297cec78:' + layername +'&' +
+            var url = geoserver_url + '/wfs?service=WFS&' +
+                'version=1.1.0&request=GetFeature&typename=spt-'+ app_instance_id +':' +
+                watershed + '-' + subbasin + '-outline' +'&' +
                 'outputFormat=text/javascript&format_options=callback:loadFeatures' +
                 '&srsname=EPSG:3857&bbox=' + extent.join(',') + ',EPSG:3857';
             // use jsonp: false to prevent jQuery from adding the "callback"
@@ -27,7 +31,7 @@ var add_layer_to_map = function(layername){
             maxZoom: 19
         })),
     });
-
+    // TODO Add as a group for quicker response
     loadFeatures = function (response) {
         preview_vector_source.addFeatures(geojson_format.readFeatures(response));
     };
@@ -43,23 +47,23 @@ $(function(){
     /************************************************************************
     *                      MODULE LEVEL / GLOBAL VARIABLES
     *************************************************************************/
-    var map_layers,
-        nfie_regions,
-        preview_vector_source;
+    var map_layers;
 
     /************************************************************************
     *                  INITIALIZATION / CONSTRUCTOR
     *************************************************************************/
-    nfie_regions= ['great_basin-nfie_region-outline', 'california-nfie_region-outline', 'colorado-nfie_region-outline','mississippi-nfie_region-outline', 'great_lakes-nfie_region-outline'];
     var map = TETHYS_MAP_VIEW.getMap();
     //var layers = map.getLayers();
-
+    map_layers = $('#map-select').attr('data-resources');
+    map_layers = JSON.parse(map_layers);
+    console.log(map_layers);
     //http://127.0.0.1:8181/geoserver/
     //http://ciwmap.chpc.utah.edu:8080/geoserver/
-    for(var i = 0; i < nfie_regions.length; i++) {
-        console.log(nfie_regions[i]);
-        curr_region = nfie_regions[i];
-        add_layer_to_map(curr_region);
+    for(var i = 0; i < map_layers.length; i++) {
+        var watershed = map_layers[i][0];
+        var subbasin = map_layers[i][1];
+        var geoserver_url = map_layers[i][2];
+        var app_instance_id = map_layers[i][3];
+        add_layer_to_map(watershed, subbasin, geoserver_url, app_instance_id);
     }
-    var layers = map.getLayers();
 });
