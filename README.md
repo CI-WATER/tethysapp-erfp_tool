@@ -14,20 +14,22 @@ separately. See: https://github.com/CI-WATER/erfp_data_process_ubuntu_aws*
 ###Install netCDF4-python on Ubuntu:
 ```
 $ sudo apt-get install python-dev zlib1g-dev libhdf5-serial-dev libnetcdf-dev
-$ sudo su
 $ . /usr/lib/tethys/bin/activate
-$ pip install numpy
-$ pip install netCDF4
-$ exit
+$ pip install numpy netCDF4
+```
+###Install netCDF4-python on OSX:
+*Note: this app was desgined and tested in Ubuntu*
+```
+$ brew install homebrew/science/netcdf
+$ . /usr/lib/tethys/bin/activate
+$ pip install numpy netCDF4
 ```
 ###Install netCDF4-python on Redhat:
 *Note: this app was desgined and tested in Ubuntu*
 ```
-$ yum install netcdf4-python
-$ yum install hdf5-devel
-$ yum install netcdf-devel
-$ pip install numpy
-$ pip install netCDF4
+$ yum install netcdf4-python hdf5-devel netcdf-devel
+$ . /usr/lib/tethys/bin/activate
+$ pip install numpy netCDF4
 ```
 ##Installation:
 Clone the app into the directory you want:
