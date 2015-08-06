@@ -9,8 +9,6 @@ var add_layer_to_map = function(watershed, subbasin, geoserver_url, app_instance
     var map = TETHYS_MAP_VIEW.getMap();
     var geojson_format = new ol.format.GeoJSON();
 
-    //TODO get the geoserver name from the controller
-
     var preview_vector_source = new ol.source.Vector({
         loader: function (extent, resolution, projection) {
             var url = geoserver_url + '/wfs?service=WFS&' +
