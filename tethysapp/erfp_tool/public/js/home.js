@@ -1,15 +1,17 @@
-/**
- * Created by crae2244 on 7/23/15.
- */
+/*****************************************************************************
+ * FILE:    ECMWF-RAPID Home
+ * DATE:    6/6/15
+ * AUTHOR:  Curtis Rae
+ * COPYRIGHT: (c) 2014 Brigham Young University
+ * LICENSE: BSD 2-Clause
+ *****************************************************************************/
 
 var loadFeatures
 var map = TETHYS_MAP_VIEW.getMap();
 
-var add_layer_to_map = function(watershed, subbasin, geoserver_url, app_instance_id){
+var addLayerToMap = function(watershed, subbasin, geoserver_url, app_instance_id){
     var map = TETHYS_MAP_VIEW.getMap();
     var geojson_format = new ol.format.GeoJSON();
-
-    //TODO get the geoserver name from the controller
 
     var preview_vector_source = new ol.source.Vector({
         loader: function (extent, resolution, projection) {
@@ -39,11 +41,12 @@ var add_layer_to_map = function(watershed, subbasin, geoserver_url, app_instance
     var preview_vector = new ol.layer.Vector({
         source: preview_vector_source,
     });
-
+    //preview_vector.setOpacity(0);
     map.addLayer(preview_vector);
+    return preview_vector;
 };
 
-$(function(){
+$(document).ready(function(){
     /************************************************************************
     *                      MODULE LEVEL / GLOBAL VARIABLES
     *************************************************************************/
@@ -53,17 +56,39 @@ $(function(){
     *                  INITIALIZATION / CONSTRUCTOR
     *************************************************************************/
     var map = TETHYS_MAP_VIEW.getMap();
-    //var layers = map.getLayers();
+    var layers_loaded = [];
+    var selected_feature = null;
     map_layers = $('#map-select').attr('data-resources');
     map_layers = JSON.parse(map_layers);
-    console.log(map_layers);
-    //http://127.0.0.1:8181/geoserver/
-    //http://ciwmap.chpc.utah.edu:8080/geoserver/
     for(var i = 0; i < map_layers.length; i++) {
         var watershed = map_layers[i][0];
         var subbasin = map_layers[i][1];
         var geoserver_url = map_layers[i][2];
         var app_instance_id = map_layers[i][3];
-        add_layer_to_map(watershed, subbasin, geoserver_url, app_instance_id);
+        var layer = addLayerToMap(watershed, subbasin, geoserver_url, app_instance_id);
+        layers_loaded.push(layer);
     }
+
+    var selectionInteraction = new ol.interaction.Select({
+                                    layers: layers_loaded,
+                                });
+
+    map.addInteraction(selectionInteraction);
+
+    selectionInteraction.getFeatures().on('change:length', function(e){
+        if (e.target.getArray().length === 0) {
+            // this means it's changed to no features selected
+        } else {
+            selected_feature = e.target.item(0);
+            for(var key in selected_feature.getProperties()){
+                if('watershed' == key.toLowerCase()){
+                    for (var i = 0; i < map_layers.length; i++){
+                        if((selected_feature.get(key)).toLowerCase() == map_layers[i][0]){
+                            $('#watershed_select').select2('val',map_layers[i][4]);
+                        }
+                    }
+                }
+            }
+        }
+    });
 });

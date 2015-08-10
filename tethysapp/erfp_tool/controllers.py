@@ -65,8 +65,26 @@ def home(request):
     for watershed in watersheds_default_group:
         geoserver = session.query(Geoserver).filter(Geoserver.id == watershed.geoserver_id).all()[0]
         geoserver_url = geoserver.url
-        default_watersheds_list.append([watershed.folder_name, watershed.file_name, geoserver_url, app_instance_id])
-    print default_watersheds_list
+        default_watersheds_list.append([watershed.folder_name, watershed.file_name, geoserver_url, app_instance_id, watershed.id])
+
+    outline_layers = []
+
+    for item in default_watersheds_list:
+        geoserver_layer = MVLayer(source='ImageWMS',
+                              options={'url': '{0}/wms'.format(item[2]),
+                                       'params': {'LAYERS': 'spt-{0}:{1}-{2}-outline'\
+                                            .format(item[3],
+                                              item[0],
+                                              item[1])},
+                                       'serverType': 'geoserver'},
+                              legend_title= '',
+                              )
+        print '{0}/wms'.format(item[2])
+        print 'spt-{0}:{1}-{2}-outline'\
+                                            .format(item[3],
+                                              item[0],
+                                              item[1])
+        outline_layers.append(geoserver_layer)
 
     view_options = MVView(
             projection='EPSG:4326',
@@ -81,6 +99,7 @@ def home(request):
         controls=['ZoomSlider', 'Rotate', 'FullScreen',
                   {'ZoomToExtent': {'projection': 'EPSG:4326', 'extent': [-130, 22, -65, 54]}}],
         view=view_options,
+        layers= [], #outline_layers,
         basemap='OpenStreetMap',
         )
     
