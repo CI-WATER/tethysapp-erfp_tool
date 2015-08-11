@@ -24,6 +24,7 @@
             </div>
         </form>
         <div id="map-select" data-resources="{{default_watersheds_list}}">
+            <p><em>Hold SHIFT to select multiple watersheds on map</em></p>
             {% gizmo map_view select_area_map %}
         </div>
         {% if user.is_superuser or user.is_staff %}

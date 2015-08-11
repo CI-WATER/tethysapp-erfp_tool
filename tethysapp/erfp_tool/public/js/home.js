@@ -9,6 +9,7 @@
 var loadFeatures
 var map = TETHYS_MAP_VIEW.getMap();
 
+//add the vector layers to the map
 var addLayerToMap = function(watershed, subbasin, geoserver_url, app_instance_id){
     var map = TETHYS_MAP_VIEW.getMap();
     var geojson_format = new ol.format.GeoJSON();
@@ -69,26 +70,36 @@ $(document).ready(function(){
         layers_loaded.push(layer);
     }
 
+    //make layers selectable
     var selectionInteraction = new ol.interaction.Select({
                                     layers: layers_loaded,
                                 });
 
     map.addInteraction(selectionInteraction);
 
+    //based on where the user clicks, populate the select2
     selectionInteraction.getFeatures().on('change:length', function(e){
         if (e.target.getArray().length === 0) {
             // this means it's changed to no features selected
-        } else {
-            selected_feature = e.target.item(0);
-            for(var key in selected_feature.getProperties()){
-                if('watershed' == key.toLowerCase()){
-                    for (var i = 0; i < map_layers.length; i++){
-                        if((selected_feature.get(key)).toLowerCase() == map_layers[i][0]){
-                            $('#watershed_select').select2('val',map_layers[i][4]);
+            $('#watershed_select').select2('val', '');
+        }else{
+            array_length = (e.target.getArray().length);
+            var layer_id_list = [];
+            for (var j = 0; j < array_length; j++) {
+                selected_feature = e.target.item(j);
+                for (var key in selected_feature.getProperties()) {
+                    if ('watershed' == key.toLowerCase()) {
+                        var key_feature = (selected_feature.get(key)).toLowerCase();
+                        for (var i = 0; i < map_layers.length; i++) {
+                            if (key_feature == map_layers[i][0]) {
+                                layer_id_list.push(map_layers[i][4]);
+                            }
                         }
                     }
                 }
             }
+            $('#watershed_select').select2('val', layer_id_list);
+            $('#watershed_select').trigger('change');
         }
     });
 });
