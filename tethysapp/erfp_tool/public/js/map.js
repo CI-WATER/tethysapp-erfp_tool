@@ -1132,7 +1132,11 @@ var ERFP_MAP = (function() {
                 m_selected_nws_id = nws_id;
                 m_selected_hydroserver_url = hydroserver_url;
 
-                displayHydrograph(); 
+                displayHydrograph();
+                var url = "export-data?reach_id=" + encodeURIComponent(m_selected_reach_id)
+                                        + "&watershed_name=" + encodeURIComponent(m_selected_ecmwf_watershed)
+                                        + "&subbasin_name=" + encodeURIComponent(m_selected_ecmwf_subbasin);
+                $('#btn-export-data').attr('href', url);
             } else {
                 appendErrorMessage('The attributes in the file are faulty. Please fix and upload again.',
                                     "file_attr_error",
@@ -1806,11 +1810,14 @@ var ERFP_MAP = (function() {
         m_select_interaction.getFeatures().on('change:length', function(e) {
           if (e.target.getArray().length === 0) {
             // this means it's changed to no features selected
+            //hide export data button
+            $('#btn-export-data').addClass('hidden');
           } else {
             // this means there is at least 1 feature selected
             var selected_feature = e.target.item(0); // 1st feature in Collection
             loadHydrographFromFeature(selected_feature);
-
+            //make the export data button visible
+            $('#btn-export-data').removeClass('hidden');
           }
         });
 
