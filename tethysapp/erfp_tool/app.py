@@ -138,7 +138,10 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
                            controller='erfp_tool.controllers_ajax.watershed_group_delete'),
                     UrlMap(name='getting-started',
                            url='erfp-tool/getting-started',
-                           controller='erfp_tool.controllers.getting_started')
+                           controller='erfp_tool.controllers.getting_started'),
+                    UrlMap(name='export-data-ajax',
+                           url='erfp-tool/map/export-data',
+                           controller='erfp_tool.controllers_ajax.export_data')
         )
         return url_maps
         
