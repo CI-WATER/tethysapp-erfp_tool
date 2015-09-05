@@ -79,11 +79,6 @@ def home(request):
                                        'serverType': 'geoserver'},
                               legend_title= '',
                               )
-        print '{0}/wms'.format(item[2])
-        print 'spt-{0}:{1}-{2}-outline'\
-                                            .format(item[3],
-                                              item[0],
-                                              item[1])
         outline_layers.append(geoserver_layer)
 
     view_options = MVView(
