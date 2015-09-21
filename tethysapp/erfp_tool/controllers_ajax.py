@@ -32,7 +32,8 @@ from functions import (check_shapefile_input_files,
                        get_cron_command,
                        get_reach_index,
                        handle_uploaded_file, 
-                       user_permission_test)
+                       user_permission_test,
+                       get_watershed_info)
 
 from model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
@@ -609,6 +610,27 @@ def era_interim_get_hydrograph(request):
                 "twenty_five" : str(sorted_values[num_years-25]),
                 "ten" : str(sorted_values[num_years-10]),
                 "two" : str(sorted_values[num_years-2]),
+        })
+
+def outline_get_list_info(request):
+    """"
+    Returns the info for the map select on the front page
+    """""
+    if request.method == 'GET':
+        watershed_group_id = request.GET['group_id']
+        session = SettingsSessionMaker()
+        main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+        app_instance_id = main_settings.app_instance_id
+        if watershed_group_id != '-1':
+            group = session.query(WatershedGroup).filter(WatershedGroup.id==watershed_group_id).all()[0]
+            watersheds_group = group.watersheds
+        else:
+            watersheds_group = session.query(Watershed).all()
+        outline_watersheds_list, dropdown_watershed_list = get_watershed_info(app_instance_id, session, watersheds_group)
+        return JsonResponse({
+            "success" : "Info snatching complete!",
+            "outline_list" : outline_watersheds_list,
+            "dropdown_list" : dropdown_watershed_list,
         })
 
 def wrf_hydro_get_hydrograph(request):

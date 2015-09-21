@@ -9,7 +9,7 @@ from sqlalchemy import and_
 #tethys imports
 from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 #local import
-from model import SettingsSessionMaker, MainSettings, Watershed
+from model import SettingsSessionMaker, MainSettings, Watershed, Geoserver
 from sfpt_dataset_manager.dataset_manager import CKANDatasetManager
 
 def check_shapefile_input_files(shp_files):
@@ -345,6 +345,24 @@ def get_subbasin_list(file_path):
             subbasin_list.append(subbasin_name)
     subbasin_list.sort()
     return subbasin_list
+
+
+def get_watershed_info(app_instance_id, session, watersheds_group):
+    # maybe make this one list?
+    #list of names and ids in group for dropdown list
+    dropdown_watershed_list = []
+    for watershed in watersheds_group:
+        dropdown_watershed_list.append(("%s (%s)" % (watershed.watershed_name, watershed.subbasin_name),
+                               watershed.id))
+    outline_watersheds_list = []
+    #list of names, geoservers, app_id, ids for loading outlines
+    for watershed in watersheds_group:
+        geoserver = session.query(Geoserver).filter(Geoserver.id == watershed.geoserver_id).all()[0]
+        geoserver_url = geoserver.url
+        outline_watersheds_list.append(
+            [watershed.folder_name, watershed.file_name, geoserver_url, app_instance_id, watershed.id])
+
+    return outline_watersheds_list, dropdown_watershed_list
    
 def handle_uploaded_file(f, file_path, file_name):
     """

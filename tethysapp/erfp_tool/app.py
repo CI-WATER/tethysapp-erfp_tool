@@ -6,7 +6,7 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
     Tethys app class for ECMWF-RAPID Flood Prediction Tool.
     """
 
-    name = 'Streamflow Prediction Tool'
+    name = 'NFIE Hydro Explorer'
     index = 'erfp_tool:home'
     icon = 'erfp_tool/images/logo.png'
     package = 'erfp_tool'
@@ -22,6 +22,9 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
         url_maps = (UrlMap(name='home',
                            url='erfp-tool',
                            controller='erfp_tool.controllers.home'),
+                    UrlMap(name='get_outline_data',
+                           url='erfp-tool/outline-get-list-info',
+                           controller='erfp_tool.controllers_ajax.outline_get_list_info'),
                     UrlMap(name='map',
                            url='erfp-tool/map',
                            controller='erfp_tool.controllers.map'),

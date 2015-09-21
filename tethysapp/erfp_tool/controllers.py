@@ -14,8 +14,8 @@ from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
                     SettingsSessionMaker, Watershed, WatershedGroup)
 from .functions import (format_name, format_watershed_title, 
-                        user_permission_test)
-from tethys_apps.sdk.gizmos import MapView, MVView, MVLayer
+                        user_permission_test, get_watershed_info)
+from tethys_apps.sdk.gizmos import MapView, MVView, MVLayer, MVLegendClass
 from tethys_apps.sdk import get_spatial_dataset_engine
 
 def home(request):
@@ -42,30 +42,21 @@ def home(request):
     #get the base layer information
     session = SettingsSessionMaker()
     #Query DB for settings
-    watersheds  = session.query(Watershed) \
-                            .order_by(Watershed.watershed_name,
-                                      Watershed.subbasin_name) \
-                             .all()
-    watershed_list = []
-    for watershed in watersheds:
-        watershed_list.append(("%s (%s)" % (watershed.watershed_name, watershed.subbasin_name),
-                               watershed.id))
-    watershed_groups = []
-    groups  = session.query(WatershedGroup).order_by(WatershedGroup.name).all()
-    session.close()
-    for group in groups:
-        watershed_groups.append((group.name,group.id))
-
     main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
     default_group_id = main_settings.default_group_id
     app_instance_id = main_settings.app_instance_id
     default_group = session.query(WatershedGroup).filter(WatershedGroup.id==default_group_id).all()[0]
     watersheds_default_group = default_group.watersheds
-    default_watersheds_list = []
-    for watershed in watersheds_default_group:
-        geoserver = session.query(Geoserver).filter(Geoserver.id == watershed.geoserver_id).all()[0]
-        geoserver_url = geoserver.url
-        default_watersheds_list.append([watershed.folder_name, watershed.file_name, geoserver_url, app_instance_id, watershed.id])
+
+    watershed_groups = []
+    groups  = session.query(WatershedGroup).order_by(WatershedGroup.name).all()
+    session.close()
+
+    for group in groups:
+        watershed_groups.append((group.name,group.id))
+    watershed_groups.append(('(ALL)',-1))
+
+    default_watersheds_list, watershed_list = get_watershed_info(app_instance_id, session, watersheds_default_group)
 
     outline_layers = []
 
@@ -77,7 +68,11 @@ def home(request):
                                               item[0],
                                               item[1])},
                                        'serverType': 'geoserver'},
-                              legend_title= '',
+                              legend_title= 'Outline Layers',
+                              legend_extent= [-46.7,-48.5,74,59],
+                              legend_classes= [
+                                  MVLegendClass('polygon', 'Polygons', fill='rgba(255,2555,255,0.8)',stroke='#3d9dcd')
+                                ]
                               )
         outline_layers.append(geoserver_layer)
 
@@ -94,7 +89,7 @@ def home(request):
         controls=['ZoomSlider', 'Rotate', 'FullScreen',
                   {'ZoomToExtent': {'projection': 'EPSG:4326', 'extent': [-130, 22, -65, 54]}}],
         view=view_options,
-        layers= [], #outline_layers,
+        layers= [],
         basemap='OpenStreetMap',
         )
     
@@ -110,10 +105,11 @@ def home(request):
                 'name': 'watershed_group_select',
                 'options': watershed_groups,
                 'placeholder': 'Select a Watershed Group',
-                }          
+                'initial':default_group.name
+                }
     context = {
                 'watershed_select' : watershed_select,
-                'watersheds_length': len(watersheds),
+                'watersheds_length': len(watersheds_default_group),
                 'watershed_group_select' : watershed_group_select,
                 'watershed_group_length': len(groups),
                 "redirect": redirect_getting_started,
@@ -145,13 +141,20 @@ def map(request):
                             .all()
         elif group_id:
             #Query DB for settings
-            watersheds  = session.query(Watershed) \
+            if group_id == "-1":
+                watersheds = session.query(Watershed) \
+                            .order_by(Watershed.watershed_name,
+                                      Watershed.subbasin_name)\
+                            .filter(Watershed.watershed_groups.any()) \
+                            .all()
+            else:
+                watersheds  = session.query(Watershed) \
                             .order_by(Watershed.watershed_name,
                                       Watershed.subbasin_name) \
                             .filter(Watershed.watershed_groups.any( \
                                     WatershedGroup.id == group_id)) \
                             .all()
-            
+
         ##find all kml files to add to page    
         kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          'public','kml')

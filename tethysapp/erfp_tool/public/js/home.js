@@ -8,18 +8,17 @@
 
 var loadFeatures;
 var map = TETHYS_MAP_VIEW.getMap();
-
 //add the vector layers to the map
-var addLayerToMap = function(map_layers){
+var addLayerToMap = function(layer_features){
     var map = TETHYS_MAP_VIEW.getMap();
     var geojson_format = new ol.format.GeoJSON();
     var preview_vector_source = new ol.source.Vector({
         loader: function (extent, resolution, projection) {
-        for(var i = 0; i < map_layers.length; i++) {
-            var watershed = map_layers[i][0];
-            var subbasin = map_layers[i][1];
-            var geoserver_url = map_layers[i][2];
-            var app_instance_id = map_layers[i][3];
+        for(var i = 0; i < layer_features.length; i++) {
+            var watershed = layer_features[i][0];
+            var subbasin = layer_features[i][1];
+            var geoserver_url = layer_features[i][2];
+            var app_instance_id = layer_features[i][3];
             var url = geoserver_url + '/wfs?service=WFS&' +
                 'version=1.1.0&request=GetFeature&typename=spt-' + app_instance_id + ':' +
                 watershed + '-' + subbasin + '-outline' + '&' +
@@ -38,9 +37,29 @@ var addLayerToMap = function(map_layers){
             maxZoom: 19
         })),
     });
-    // TODO Add as a group for quicker response
+    var timeout;
+    map.getView().setZoom(0);
     loadFeatures = function (response) {
-        preview_vector_source.addFeatures(geojson_format.readFeatures(response));
+        if(response.features.length > 0) {
+            if (typeof response.features[0].properties.watershed != 'undefined') {
+                var watershed_name = response.features[0].properties.watershed.toLowerCase();
+            }
+            for(var i= 0, len=layer_features.length; i < len; i++){
+                feature = layer_features[i];
+                if(watershed_name == feature[0]){
+                    preview_vector_source.addFeatures(geojson_format.readFeatures(response));
+                }
+            }
+        }
+        var map_extent = ol.extent.createEmpty();
+        //get extent to zoom to layer
+        ol.extent.extend(map_extent, preview_vector_source.getExtent());
+        clearTimeout(timeout);
+        timeout = setTimeout(function(){
+            zoomToAll(map_extent);
+        },150);
+
+
     };
 
     var preview_vector = new ol.layer.Vector({
@@ -50,21 +69,26 @@ var addLayerToMap = function(map_layers){
     return preview_vector;
 };
 
+//FUNCTION: zooms to all kml files
+var zoomToAll = function(map_extent) {
+    TETHYS_MAP_VIEW.getMap().getView().fitExtent(map_extent, TETHYS_MAP_VIEW.getMap().getSize());
+};
+
 $(document).ready(function(){
     /************************************************************************
     *                      MODULE LEVEL / GLOBAL VARIABLES
     *************************************************************************/
-    var map_layers;
+    var layer_features;
 
     /************************************************************************
     *                  INITIALIZATION / CONSTRUCTOR
     *************************************************************************/
     var map = TETHYS_MAP_VIEW.getMap();
     var selected_feature = null;
-    map_layers = $('#map-select').attr('data-resources');
-    map_layers = JSON.parse(map_layers);
+    layer_features = $('#map-select').attr('data-resources');
+    layer_features = JSON.parse(layer_features);
 
-    addLayerToMap(map_layers);
+    addLayerToMap(layer_features);
 
     //make layers selectable
     var  selectionInteraction = new ol.interaction.Select();
@@ -72,7 +96,7 @@ $(document).ready(function(){
 
     map.addInteraction(selectionInteraction);
 
-    //based on where the user clicks, populate the select2
+    //based on where the user clicks, populate the dropdown
     selectionInteractionFeatures.on('change:length', function(e){
         if (e.target.getArray().length === 0) {
             // this means it's changed to no features selected
@@ -83,9 +107,9 @@ $(document).ready(function(){
             for (var j = 0; j < array_length; j++) {
                 selected_feature = e.target.item(j);
                 var watershed = selected_feature.getProperties()['watershed'].toLowerCase();
-                for (var i = 0; i < map_layers.length; i++) {
-                    if (watershed == map_layers[i][0]) {
-                        layer_id_list.push(map_layers[i][4]);
+                for (var i = 0; i < layer_features.length; i++) {
+                    if (watershed == layer_features[i][0]) {
+                        layer_id_list.push(layer_features[i][4]);
                     }
                 }
             }
@@ -99,10 +123,9 @@ $(document).ready(function(){
         }
     });
 
-    //from the select2 make the map mirror it
+    //from the dropdown make the map mirror it
 
     $('#watershed_select').on('change', function(e){
-        //selectionInteractionFeatures.push(layers_loaded[0]);
         var selectionInteractionFeaturesArray = selectionInteractionFeatures.getArray();
         var layer_properties = map.getLayers().getArray()[1].getSource().getFeatures();
         var dropdown_values = $('#watershed_select').select2('val');
@@ -110,29 +133,29 @@ $(document).ready(function(){
         //get ids of layers selected on map
         for (var i=0; i < selectionInteractionFeaturesArray.length; i++){
             var watershed = selectionInteractionFeaturesArray[i].getProperties()['watershed'].toLowerCase();
-            for (var j = 0; j < map_layers.length; j++) {
-                if (watershed == map_layers[j][0]) {
-                    map_values.push(map_layers[j][4].toString());
+            for (var j = 0; j < layer_features.length; j++) {
+                if (watershed == layer_features[j][0]) {
+                    map_values.push(layer_features[j][4].toString());
                 }
             }
         }
-        console.log("map ", map_values, 'dropdown ',dropdown_values);
         var num_selected = $('#watershed_select option:selected').length;
         //if the user deselected something in the dropdown box
         if (selectionInteractionFeaturesArray.length >= num_selected) {
             selectionInteractionFeatures.clear();
             var layers_selected = [];
             for (var i = 0; i < dropdown_values.length; i++) {
-                for (var l = 0; l < map_layers.length; l++) {
-                    if (dropdown_values[i] == map_layers[l][4]) {
-                        layers_selected.push(map_layers[l][0]);
-                        console.log('I went here', layers_selected);
+                for (var l = 0; l < layer_features.length; l++) {
+                    if (dropdown_values[i] == layer_features[l][4]) {
+                        layers_selected.push(layer_features[l][0]);
                     }
                 }
             }
             for (var i = 0; i < layers_selected.length; i++) {
                 for (var k = 0; k < layer_properties.length; k++) {
-                    if (layers_selected[i] == layer_properties[k].getProperties()['watershed'].toLowerCase()) {
+                    if(layer_properties[k].getProperties()['watershed'] == null ||
+                            typeof layer_properties[k].getProperties()['watershed'] == 'undefined'){}
+                    else if (layers_selected[i] == layer_properties[k].getProperties()['watershed'].toLowerCase()){
                         selectionInteractionFeatures.push(layer_properties[k]);
                     }
                 }
@@ -143,16 +166,56 @@ $(document).ready(function(){
             var missing_val =$(dropdown_values).not(map_values).get();
             //find the name that corresponds to the missing id
             var missing_name = '';
-            for (var j = 0; j < map_layers.length; j++) {
-                if (missing_val == map_layers[j][4]) {
-                    missing_name = map_layers[j][0].toLowerCase();
+            for (var j = 0; j < layer_features.length; j++) {
+                if (missing_val == layer_features[j][4]) {
+                    missing_name = layer_features[j][0].toLowerCase();
                 }
             }
             for (var k=0; k < layer_properties.length; k++){
-                if (missing_name == layer_properties[k].getProperties()['watershed'].toLowerCase()){
+                if(layer_properties[k].getProperties()['watershed'] == null ||
+                    typeof layer_properties[k].getProperties()['watershed'] == 'undefined'){}
+                else if (missing_name == layer_properties[k].getProperties()['watershed'].toLowerCase()){
                     selectionInteractionFeatures.push(layer_properties[k]);
                 }
             }
         }
+    });
+    var get_list_info;
+    $('#watershed_group_select').on('change',function(e){
+        //$("#watershed_group_select").append('<option selected="Love" value="6"> LOVE</option> ');
+        var layers_removed = map.getLayers().getArray();
+        for (var i = 1; i < layers_removed.length; i++){
+            map.removeLayer(layers_removed[i]);
+        }
+        selectionInteractionFeatures.clear();
+        var group_id = $('#watershed_group_select').val();
+        if (get_list_info) {
+            get_list_info.abort();
+        }
+        get_list_info = jQuery.ajax({
+            type: "GET",
+            url: "outline-get-list-info",
+            dataType: "json",
+            data: {
+                group_id: group_id
+            }
+        });
+        get_list_info.done(function(data){
+            if ("success" in data) {
+                if ("dropdown_list" in data) {
+                   var dropdown_menu = $('#watershed_select')
+                   dropdown_menu.empty();
+                   var dropdown_options = data.dropdown_list;
+                   for (var i = 0; i < dropdown_options.length; i++){
+                        dropdown_menu.append(new Option(dropdown_options[i][0], dropdown_options[i][1]));
+                   }
+                }
+                if ("outline_list" in data){
+                    var outline_list = data.outline_list;
+                    addLayerToMap(outline_list);
+                    layer_features = outline_list;
+                }
+            }
+        });
     });
 });
