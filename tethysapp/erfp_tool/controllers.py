@@ -14,7 +14,9 @@ from tethys_dataset_services.engines import GeoServerSpatialDatasetEngine
 from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings,
                     SettingsSessionMaker, Watershed, WatershedGroup)
 from .functions import (format_name, format_watershed_title, 
-                        user_permission_test)
+                        user_permission_test, get_watershed_info)
+from tethys_apps.sdk.gizmos import MapView, MVView, MVLayer, MVLegendClass
+from tethys_apps.sdk import get_spatial_dataset_engine
 
 def home(request):
     """
@@ -40,19 +42,56 @@ def home(request):
     #get the base layer information
     session = SettingsSessionMaker()
     #Query DB for settings
-    watersheds  = session.query(Watershed) \
-                            .order_by(Watershed.watershed_name,
-                                      Watershed.subbasin_name) \
-                             .all()
-    watershed_list = []
-    for watershed in watersheds:
-        watershed_list.append(("%s (%s)" % (watershed.watershed_name, watershed.subbasin_name),
-                               watershed.id))
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    default_group_id = main_settings.default_group_id
+    app_instance_id = main_settings.app_instance_id
+    default_group = session.query(WatershedGroup).filter(WatershedGroup.id==default_group_id).all()[0]
+    watersheds_default_group = default_group.watersheds
+
     watershed_groups = []
     groups  = session.query(WatershedGroup).order_by(WatershedGroup.name).all()
     session.close()
+
     for group in groups:
         watershed_groups.append((group.name,group.id))
+    watershed_groups.append(('(ALL)',-1))
+
+    default_watersheds_list, watershed_list = get_watershed_info(app_instance_id, session, watersheds_default_group)
+
+    outline_layers = []
+
+    for item in default_watersheds_list:
+        geoserver_layer = MVLayer(source='ImageWMS',
+                              options={'url': '{0}/wms'.format(item[2]),
+                                       'params': {'LAYERS': 'spt-{0}:{1}-{2}-outline'\
+                                            .format(item[3],
+                                              item[0],
+                                              item[1])},
+                                       'serverType': 'geoserver'},
+                              legend_title= 'Outline Layers',
+                              legend_extent= [-46.7,-48.5,74,59],
+                              legend_classes= [
+                                  MVLegendClass('polygon', 'Polygons', fill='rgba(255,2555,255,0.8)',stroke='#3d9dcd')
+                                ]
+                              )
+        outline_layers.append(geoserver_layer)
+
+    view_options = MVView(
+            projection='EPSG:4326',
+            center=[-100, 40],
+            zoom=3.5,
+            maxZoom=18,
+            minZoom=2
+            )
+    select_area_map = MapView(
+        height='600px',
+        width='100%',
+        controls=['ZoomSlider', 'Rotate', 'FullScreen',
+                  {'ZoomToExtent': {'projection': 'EPSG:4326', 'extent': [-130, 22, -65, 54]}}],
+        view=view_options,
+        layers= [],
+        basemap='OpenStreetMap',
+        )
     
     watershed_select = {
                 'display_text': 'Select Watershed(s)',
@@ -66,13 +105,16 @@ def home(request):
                 'name': 'watershed_group_select',
                 'options': watershed_groups,
                 'placeholder': 'Select a Watershed Group',
-                }          
+                'initial':default_group.name
+                }
     context = {
                 'watershed_select' : watershed_select,
-                'watersheds_length': len(watersheds),
+                'watersheds_length': len(watersheds_default_group),
                 'watershed_group_select' : watershed_group_select,
                 'watershed_group_length': len(groups),
-                "redirect": redirect_getting_started
+                "redirect": redirect_getting_started,
+                'select_area_map': select_area_map,
+                'default_watersheds_list': json.dumps(default_watersheds_list)
               }
 
     return render(request, 'erfp_tool/home.html', context)
@@ -99,13 +141,20 @@ def map(request):
                             .all()
         elif group_id:
             #Query DB for settings
-            watersheds  = session.query(Watershed) \
+            if group_id == "-1":
+                watersheds = session.query(Watershed) \
+                            .order_by(Watershed.watershed_name,
+                                      Watershed.subbasin_name)\
+                            .filter(Watershed.watershed_groups.any()) \
+                            .all()
+            else:
+                watersheds  = session.query(Watershed) \
                             .order_by(Watershed.watershed_name,
                                       Watershed.subbasin_name) \
                             .filter(Watershed.watershed_groups.any( \
                                     WatershedGroup.id == group_id)) \
                             .all()
-            
+
         ##find all kml files to add to page    
         kml_file_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          'public','kml')
@@ -361,8 +410,17 @@ def settings(request):
         base_layer_list.append((base_layer.name, base_layer.id))
         base_layer_api_keys[base_layer.id] = base_layer.api_key
 
+    # Query DB for groups
+    watershed_groups = session.query(WatershedGroup).all()
+    watershed_groups_list = []
+    for watershed_group in watershed_groups:
+        watershed_groups_list.append((watershed_group.name, watershed_group.id))
+
+
+
     #Query DB for settings
     main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    default_group_index = main_settings.default_group_id
 
     base_layer_select_input = {
                 'display_text': 'Select a Base Layer',
@@ -379,7 +437,15 @@ def settings(request):
                 'icon_append':'glyphicon glyphicon-lock',
                 'initial': main_settings.base_layer.api_key
               }
-              
+
+    default_group_select_input = {
+                'display_text': 'Select a Default Watershed Group to Display on Home Page',
+                'name': 'default-group-select-input',
+                'multiple': False,
+                'options': watershed_groups_list,
+                'initial': watershed_groups_list[default_group_index-1][0],
+                }
+
     ecmwf_rapid_directory_input = {
                 'display_text': 'Server Folder Location of ECMWF-RAPID files',
                 'name': 'ecmwf-rapid-location-input',
@@ -412,10 +478,11 @@ def settings(request):
                                   }
                                 ],
                  }
-              
+
     context = {
                 'base_layer_select_input': base_layer_select_input,
                 'base_layer_api_key_input': base_layer_api_key_input,
+                'default_group_select_input': default_group_select_input,
                 'ecmwf_rapid_input': ecmwf_rapid_directory_input,
                 'era_interim_rapid_input': era_interim_rapid_directory_input,
                 'wrf_hydro_rapid_input':wrf_hydro_rapid_directory_input,
@@ -534,7 +601,13 @@ def add_watershed(request):
                 'placeholder': 'e.g.: erfp:ahps-station',
                 'icon_append':'glyphicon glyphicon-link',
               }
-              
+    geoserver_outline_input = {
+                'display_text': 'Geoserver Outline Layer',
+                'name': 'geoserver-outline-input',
+                'placeholder': 'e.g.: erfp:outline',
+                'icon_append':'glyphicon glyphicon-link',
+              }
+
     shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
                 'name': 'shp-upload-toggle',
                 'on_label': 'Yes',
@@ -568,6 +641,7 @@ def add_watershed(request):
                 'geoserver_catchment_input': geoserver_catchment_input,
                 'geoserver_gage_input': geoserver_gage_input,
                 'geoserver_ahps_station_input': geoserver_ahps_station_input,
+                'geoserver_outline_input':geoserver_outline_input,
                 'shp_upload_toggle_switch': shp_upload_toggle_switch,
                 'add_button': add_button,
               }
@@ -607,7 +681,7 @@ def manage_watersheds_table(request):
     session = SettingsSessionMaker()
 
     # Query DB for watersheds
-    RESULTS_PER_PAGE = 5
+    RESULTS_PER_PAGE = 10
     page = int(request.GET.get('page'))
 
     watersheds = session.query(Watershed) \
@@ -773,6 +847,13 @@ def edit_watershed(request):
                     'icon_append':'glyphicon glyphicon-link',
                     'initial' : watershed.geoserver_ahps_station_layer
                   }
+        geoserver_outline_input = {
+                    'display_text': 'Geoserver Outline Layer',
+                    'name': 'geoserver-outline-input',
+                    'placeholder': 'e.g.: erfp:outline',
+                    'icon_append':'glyphicon glyphicon-link',
+                    'initial' : watershed.geoserver_outline_layer
+                  }
         shp_upload_toggle_switch = {'display_text': 'Upload Shapefile?',
                     'name': 'shp-upload-toggle',
                     'on_label': 'Yes',
@@ -806,6 +887,7 @@ def edit_watershed(request):
                     'geoserver_catchment_input': geoserver_catchment_input,
                     'geoserver_gage_input': geoserver_gage_input,
                     'geoserver_ahps_station_input': geoserver_ahps_station_input,
+                    'geoserver_outline_input': geoserver_outline_input,
                     'shp_upload_toggle_switch': shp_upload_toggle_switch,
                     'add_button': add_button,
                     'watershed' : watershed,

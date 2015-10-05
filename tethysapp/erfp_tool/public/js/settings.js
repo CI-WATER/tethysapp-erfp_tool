@@ -21,9 +21,10 @@ $('#submit-changes-settings').click(function(){
     var safe_to_submit = {val: true};
 
     var base_layer_id = checkInputWithError($('#base-layer-select'),safe_to_submit, true, true);
-
     //check API Key Input
     var api_key = checkInputWithError($('#api-key-input'),safe_to_submit);
+    //TODO what happens if there are no groups to select?
+    var default_group_id =  checkInputWithError($('#default-group-select-input'),safe_to_submit,true, true);
     //check output rapid-ecmwf files location
     var ecmwf_rapid_location = checkInputWithError($('#ecmwf-rapid-location-input'),safe_to_submit);
     var wrf_hydro_rapid_location = checkInputWithError($('#wrf-hydro-rapid-location-input'),safe_to_submit);
@@ -41,6 +42,7 @@ $('#submit-changes-settings').click(function(){
         var data = {
                 base_layer_id: base_layer_id,
                 api_key: api_key,
+                default_group_id: default_group_id,
                 ecmwf_rapid_location: ecmwf_rapid_location,
                 era_interim_rapid_location: era_interim_rapid_location,
                 wrf_hydro_rapid_location: wrf_hydro_rapid_location
@@ -59,11 +61,10 @@ $(document).ready(function() { //once the document is loaded
 });
 $('#base-layer-select').change(function() {
     var base_layer_id = $(this).select2('data').id;
-    console.log(base_layer_id);
     if(base_layer_id == 3) { //if BingMaps is selected   
         $('#api-key-input').parent().parent().removeClass('hidden'); //show the API key field
     }
-    else { //if something other than BingMpas is selected
+    else { //if something other than BingMaps is selected
         $('#api-key-input').attr('initial', 'none'); //set the initial API key field attribute to "none"
         $('#api-key-input').parent().parent().addClass('hidden'); //hide the API key field
     }
