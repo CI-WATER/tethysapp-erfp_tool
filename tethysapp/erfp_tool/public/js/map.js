@@ -1282,9 +1282,20 @@ var ERFP_MAP = (function() {
         layers_info.forEach(function(layer_info, group_index) {
             var layers = [];
             if('geoserver_url' in layer_info) {
+                //add outline if exists
+                if('outline' in layer_info) {
+                    var outline_layer_id = 'layer' + group_index + 'g' + '00';
+                    if ("error" in layer_info.outline) {
+                        appendErrorMessage("Outline Layer: " + layer_info.title +
+                                            ": " + layer_info.outline.error,
+                                           "error_" + outline_layer_id, "message-error");
+                    } else {
+                        layers.push(getTileLayer(layer_info['outline'], layer_info['geoserver_url'], outline_layer_id));
+                    }
+                }
                 //add catchment if exists
                 if('catchment' in layer_info) {
-                    var catchment_layer_id = 'layer' + group_index + 'g' + 1
+                    var catchment_layer_id = 'layer' + group_index + 'g' + 1;
                     if ("error" in layer_info.catchment) {
                         appendErrorMessage("Catchment Layer: " + layer_info.title + 
                                             ": " + layer_info.catchment.error, 
