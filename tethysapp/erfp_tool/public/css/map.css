@@ -20,6 +20,10 @@
     width:100%;
 }
 
+#btn-export-data {
+    float: right;
+}
+
 .no-padding {
     padding-left: 10px;
 }

@@ -9,7 +9,7 @@ from shutil import move
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import ObjectDeletedError
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 #django imports
 from django.contrib.auth.decorators import user_passes_test
@@ -39,6 +39,7 @@ from model import (DataStore, Geoserver, MainSettings, SettingsSessionMaker,
                     Watershed, WatershedGroup)
 
 from sfpt_dataset_manager.dataset_manager import RAPIDInputDatasetManager
+from export_data import export_data_to_csv
                         
 @user_passes_test(user_permission_test)
 def data_store_add(request):
@@ -602,14 +603,18 @@ def era_interim_get_hydrograph(request):
         
         num_years = int(len(data_values)/365)
         sorted_values = np.sort(data_values)[:num_years:-1]
-
+        
+        rp_index_20 = round((num_years + 1)/20.0, 0)
+        rp_index_10 = round((num_years + 1)/10.0, 0)
+        rp_index_2 = round((num_years + 1)/2.0, 0)
+        
         return JsonResponse({
                 "success" : "ERA-Interim data analysis complete!",
                 "era_interim" : zip(time, data_values.tolist()),
                 "max" : str(sorted_values[0]),
-                "twenty_five" : str(sorted_values[num_years-25]),
-                "ten" : str(sorted_values[num_years-10]),
-                "two" : str(sorted_values[num_years-2]),
+                "twenty" : str(sorted_values[rp_index_20]),
+                "ten" : str(sorted_values[rp_index_10]),
+                "two" : str(sorted_values[rp_index_2]),
         })
 
 def outline_get_list_info(request):
@@ -725,9 +730,9 @@ def generate_warning_points(request):
         else:
             return JsonResponse({'error' : 'No files found for watershed.'})
                              
-        if return_period == 25:
+        if return_period == 20:
             #get warning points to load in
-            warning_points_file = os.path.join(path_to_output_files,recent_directory, "return_25_points.txt")
+            warning_points_file = os.path.join(path_to_output_files,recent_directory, "return_20_points.txt")
         elif return_period == 10:
             warning_points_file = os.path.join(path_to_output_files,recent_directory, "return_10_points.txt")
         elif return_period == 2:
@@ -1582,3 +1587,24 @@ def watershed_group_update(request):
             return JsonResponse({ 'success': "Watershed group successfully updated." })
         return JsonResponse({ 'error': "Data missing for this watershed group." })
     return JsonResponse({ 'error': "A problem with your request exists." })
+
+def export_data(request):
+    """
+    Controller to export csv file
+    """
+
+    session = SettingsSessionMaker()
+    main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+    wrf_hydro_files_location = main_settings.wrf_hydro_rapid_prediction_directory
+    ecmwf_files_location = main_settings.ecmwf_rapid_prediction_directory
+    #get/check information from AJAX request
+    get_info = request.GET
+    watershed_name = format_name(get_info['watershed_name']) if 'watershed_name' in get_info else None
+    subbasin_name = format_name(get_info['subbasin_name']) if 'subbasin_name' in get_info else None
+    reach_id = get_info.get('reach_id')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="erfp_data_%s.csv"' % reach_id
+    export_data_to_csv(int(reach_id), wrf_hydro_files_location, ecmwf_files_location, watershed_name, subbasin_name, response)
+
+    return response
