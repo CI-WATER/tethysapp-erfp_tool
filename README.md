@@ -96,4 +96,4 @@ To the WATERSHED table add:
     2) geoserver_outline_uploaded   (type bool)
 
 To the MAIN_SETTINGS table add:
-    3) default_group   (type int)
+    3) default_group_id   (type int)
