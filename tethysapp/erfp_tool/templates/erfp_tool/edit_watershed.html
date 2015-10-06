@@ -37,6 +37,11 @@
 <p class="help-block shapefile upload hidden">Need .shp, .shx, .prj, .dbf files.</p>
 <!-- Outlines !-->
 {% gizmo text_input geoserver_outline_input %}
+<div class="form-group kml">
+    <label class="control-label" for="outline-kml-upload-input">Outline KML File (Optional)</label>
+    <input id="outline-kml-upload-input" name="catchment-kml-upload-input" data-kml_catchment_layer="{{watershed.kml_outline_layer}}" type="file" accept=".kml">
+</div>
+<p class="help-block kml">Current: {{watershed.kml_outline_layer}}</p>
 <div class="form-group shapefile upload hidden">
     <label class="control-label" for="outline-shp-upload-input">Outline Shapefile (Optional)</label>
     <input id="outline-shp-upload-input" name="outline-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>

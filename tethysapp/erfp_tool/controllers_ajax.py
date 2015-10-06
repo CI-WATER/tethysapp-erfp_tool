@@ -9,10 +9,12 @@ from shutil import move
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import ObjectDeletedError
-from django.http import JsonResponse, HttpResponse
 
 #django imports
 from django.contrib.auth.decorators import user_passes_test
+from django.http import JsonResponse, HttpResponse
+from django.core.urlresolvers import reverse
+from django.utils.http import urlencode
 
 #tethys imports
 from tethys_dataset_services.engines import (GeoServerSpatialDatasetEngine, 
@@ -1608,3 +1610,31 @@ def export_data(request):
     export_data_to_csv(int(reach_id), wrf_hydro_files_location, ecmwf_files_location, watershed_name, subbasin_name, response)
 
     return response
+
+
+def watersheds_with_outlines(request):
+    """
+    A REST endpoint that returns a JSON list of watersheds with outlines to display in third party applications
+    (i.e. GloFAS)
+    """
+    session = SettingsSessionMaker()
+
+    watersheds = session.query(Watershed).filter(Watershed.geoserver_outline_layer != '')
+    json_response = []
+    for watershed in watersheds:
+        geoserver_url = watershed.geoserver.url
+        outline_name = watershed.geoserver_outline_layer
+        outline_url = '%s/wfs?service=WFS&version=1.3.0&request=GetFeature&typename=' \
+                      '%s&outputFormat=text/javascript&srsname=EPSG:3857' \
+                      % (geoserver_url, outline_name )
+        json_obj = {'watershed_name': watershed.watershed_name,
+                    'outline_location_url': geoserver_url,
+                    'outline_resource_name': outline_name,
+                    'outline_url': outline_url,
+                    'forecast_url': '%s%s?%s' % (request.get_host(), reverse('erfp_tool:map'), urlencode({'watershed_select': watershed.id})),
+                    }
+        json_response.append(json_obj)
+
+    session.close()
+
+    return JsonResponse({'watersheds': json_response})
