@@ -84,3 +84,16 @@ Restart your terminal
 ```
 $ pip install requests --upgrade
 ```
+
+#App Update 10/6/15
+As of 10/6/15 the app has undergone some updates. As part of these updates the database on current apps needs to be updated. (If installing new app instance ignore this.)
+YOU NEED TO UPDATE THE DATABASE. 
+
+Add these three columns to the database
+
+To the WATERSHED table add:
+    1) geoserver_outline_layer   (type character varying)
+    2) geoserver_outline_uploaded   (type bool)
+
+To the MAIN_SETTINGS table add:
+    3) default_group   (type int)
