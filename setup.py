@@ -13,7 +13,7 @@ dependencies = ['netCDF4', 'numpy', 'python-crontab', 'requests','sqlalchemy']
 
 setup(
     name=release_package,
-    version='0.0.1',
+    version='0.1.0',
     description='ECMWF-RAPID Flood Prediction Tool',
     long_description='',
     keywords='',
