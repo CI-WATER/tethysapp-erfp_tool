@@ -15,8 +15,7 @@ from .model import (BaseLayer, DataStore, DataStoreType, Geoserver, MainSettings
                     SettingsSessionMaker, Watershed, WatershedGroup)
 from .functions import (format_name, format_watershed_title, 
                         user_permission_test, get_watershed_info)
-from tethys_apps.sdk.gizmos import MapView, MVView, MVLayer, MVLegendClass
-from tethys_apps.sdk import get_spatial_dataset_engine
+from tethys_sdk.gizmos import MapView, MVView, MVLayer, MVLegendClass
 
 def home(request):
     """
@@ -45,8 +44,13 @@ def home(request):
     main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
     default_group_id = main_settings.default_group_id
     app_instance_id = main_settings.app_instance_id
-    default_group = session.query(WatershedGroup).filter(WatershedGroup.id==default_group_id).all()[0]
-    watersheds_default_group = default_group.watersheds
+    if default_group_id:
+        default_group = session.query(WatershedGroup).filter(WatershedGroup.id==default_group_id).all()[0]
+        watersheds_default_group = default_group.watersheds
+        default_group_name = default_group.name
+    else:
+        watersheds_default_group = session.query(Watershed).all()
+        default_group_name = '(ALL)'
 
     watershed_groups = []
     groups  = session.query(WatershedGroup).order_by(WatershedGroup.name).all()
@@ -57,24 +61,6 @@ def home(request):
     watershed_groups.append(('(ALL)',-1))
 
     default_watersheds_list, watershed_list = get_watershed_info(app_instance_id, session, watersheds_default_group)
-
-    outline_layers = []
-
-    for item in default_watersheds_list:
-        geoserver_layer = MVLayer(source='ImageWMS',
-                              options={'url': '{0}/wms'.format(item[2]),
-                                       'params': {'LAYERS': 'spt-{0}:{1}-{2}-outline'\
-                                            .format(item[3],
-                                              item[0],
-                                              item[1])},
-                                       'serverType': 'geoserver'},
-                              legend_title= 'Outline Layers',
-                              legend_extent= [-46.7,-48.5,74,59],
-                              legend_classes= [
-                                  MVLegendClass('polygon', 'Polygons', fill='rgba(255,2555,255,0.8)',stroke='#3d9dcd')
-                                ]
-                              )
-        outline_layers.append(geoserver_layer)
 
     view_options = MVView(
             projection='EPSG:4326',
@@ -99,13 +85,14 @@ def home(request):
                 'options': watershed_list,
                 'multiple': True,
                 'placeholder': 'Select Watershed(s)',
-                }          
+                }
+
     watershed_group_select = {
                 'display_text': 'Select a Watershed Group',
                 'name': 'watershed_group_select',
                 'options': watershed_groups,
                 'placeholder': 'Select a Watershed Group',
-                'initial':default_group.name
+                'initial': default_group_name
                 }
     context = {
                 'watershed_select' : watershed_select,
@@ -275,7 +262,25 @@ def map(request):
                 except Exception:
                     geoserver_info['drainage_line'] = {'error': "Invalid layer or GeoServer error. Recommended projection for layers is GCS_WGS_1984."}
                     pass
-                
+
+                if watershed.geoserver_outline_layer:
+                        #LOAD OUTLINE
+                    try:
+                        #load outline layer if exists
+                        outline_info = engine.get_resource(resource_id=watershed.geoserver_outline_layer.strip())
+                        if outline_info['success']:
+                            latlon_bbox = outline_info['result']['latlon_bbox'][:4]
+                            geoserver_info['outline'] = {'name': watershed.geoserver_outline_layer,
+                                                           'latlon_bbox': [latlon_bbox[0],latlon_bbox[2],latlon_bbox[1],latlon_bbox[3]],
+                                                           'projection': outline_info['result']['projection'],
+                                                      }
+                        else:
+                            geoserver_info['outline'] = {'error': outline_info['error']}
+
+                    except Exception, e:
+                        geoserver_info['outline'] = {'error': "Invalid layer or GeoServer error. Recommended projection for layers is GCS_WGS_1984."}
+                        pass
+
                 if watershed.geoserver_catchment_layer:
                     #LOAD CATCHMENT
                     try:
@@ -438,12 +443,13 @@ def settings(request):
                 'initial': main_settings.base_layer.api_key
               }
 
+    default_group_init = watershed_groups_list[default_group_index-1][0] if default_group_index else None
     default_group_select_input = {
                 'display_text': 'Select a Default Watershed Group to Display on Home Page',
                 'name': 'default-group-select-input',
                 'multiple': False,
                 'options': watershed_groups_list,
-                'initial': watershed_groups_list[default_group_index-1][0],
+                'initial': default_group_init,
                 }
 
     ecmwf_rapid_directory_input = {
@@ -848,7 +854,7 @@ def edit_watershed(request):
                     'initial' : watershed.geoserver_ahps_station_layer
                   }
         geoserver_outline_input = {
-                    'display_text': 'Geoserver Outline Layer',
+                    'display_text': 'Geoserver Outline Layer (Optional)',
                     'name': 'geoserver-outline-input',
                     'placeholder': 'e.g.: erfp:outline',
                     'icon_append':'glyphicon glyphicon-link',

@@ -360,7 +360,7 @@ def get_watershed_info(app_instance_id, session, watersheds_group):
         geoserver = session.query(Geoserver).filter(Geoserver.id == watershed.geoserver_id).all()[0]
         geoserver_url = geoserver.url
         outline_watersheds_list.append(
-            [watershed.folder_name, watershed.file_name, geoserver_url, app_instance_id, watershed.id])
+            [watershed.ecmwf_data_store_watershed_name, geoserver_url, watershed.id, watershed.geoserver_outline_layer])
 
     return outline_watersheds_list, dropdown_watershed_list
    

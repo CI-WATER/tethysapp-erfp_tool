@@ -15,13 +15,10 @@ var addLayerToMap = function(layer_features){
     var preview_vector_source = new ol.source.Vector({
         loader: function (extent, resolution, projection) {
         for(var i = 0; i < layer_features.length; i++) {
-            var watershed = layer_features[i][0];
-            var subbasin = layer_features[i][1];
-            var geoserver_url = layer_features[i][2];
-            var app_instance_id = layer_features[i][3];
+            var geoserver_url = layer_features[i][1];
+            var layer_name = layer_features[i][3]
             var url = geoserver_url + '/wfs?service=WFS&' +
-                'version=1.1.0&request=GetFeature&typename=spt-' + app_instance_id + ':' +
-                watershed + '-' + subbasin + '-outline' + '&' +
+                'version=1.1.0&request=GetFeature&typename=' + layer_name + '&' +
                 'outputFormat=text/javascript&format_options=callback:loadFeatures' +
                 '&srsname=EPSG:3857&bbox=' + extent.join(',') + ',EPSG:3857';
             // use jsonp: false to prevent jQuery from adding the "callback"
@@ -109,7 +106,7 @@ $(document).ready(function(){
                 var watershed = selected_feature.getProperties()['watershed'].toLowerCase();
                 for (var i = 0; i < layer_features.length; i++) {
                     if (watershed == layer_features[i][0]) {
-                        layer_id_list.push(layer_features[i][4]);
+                        layer_id_list.push(layer_features[i][2]);
                     }
                 }
             }
@@ -135,7 +132,7 @@ $(document).ready(function(){
             var watershed = selectionInteractionFeaturesArray[i].getProperties()['watershed'].toLowerCase();
             for (var j = 0; j < layer_features.length; j++) {
                 if (watershed == layer_features[j][0]) {
-                    map_values.push(layer_features[j][4].toString());
+                    map_values.push(layer_features[j][2].toString());
                 }
             }
         }
@@ -146,7 +143,7 @@ $(document).ready(function(){
             var layers_selected = [];
             for (var i = 0; i < dropdown_values.length; i++) {
                 for (var l = 0; l < layer_features.length; l++) {
-                    if (dropdown_values[i] == layer_features[l][4]) {
+                    if (dropdown_values[i] == layer_features[l][2]) {
                         layers_selected.push(layer_features[l][0]);
                     }
                 }
@@ -167,7 +164,7 @@ $(document).ready(function(){
             //find the name that corresponds to the missing id
             var missing_name = '';
             for (var j = 0; j < layer_features.length; j++) {
-                if (missing_val == layer_features[j][4]) {
+                if (missing_val == layer_features[j][2]) {
                     missing_name = layer_features[j][0].toLowerCase();
                 }
             }

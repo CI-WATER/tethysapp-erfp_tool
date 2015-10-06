@@ -13,7 +13,6 @@
     {% endif %}
     {% if watersheds_length > 0 %}
         <h1>Select a Watershed Group</h1>
-        {% if watershed_group_length > 0 %}
             <form action="{% url 'erfp_tool:map' %}" method="get">
                 {% gizmo select_input watershed_group_select %}
                 <div class="btn-group ">
@@ -22,9 +21,6 @@
                   </a>
                 </div>
             </form>
-        {% else %}
-            <h4> No watershed groups found ...</h4>
-        {% endif %}
         {% if user.is_superuser or user.is_staff %}
             <p class="help-block">Don't see the watershed group you want? Add one
             <a href="{% url 'erfp_tool:add-watershed-group' %}">here</a>.</p>

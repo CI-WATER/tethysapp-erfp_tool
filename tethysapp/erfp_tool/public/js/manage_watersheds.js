@@ -256,7 +256,7 @@ var ERFP_MANAGE_WATERSHEDS = (function() {
                 geoserver_catchment_layer = $('#geoserver-catchment-input').val(); //optional
                 geoserver_gage_layer = $('#geoserver-gage-input').val(); //optional
                 geoserver_ahps_station_layer = $('#geoserver-ahps-station-input').val(); //optional
-                geoserver_outline_layer = $('#geoserver-outline-input').val();
+                geoserver_outline_layer = $('#geoserver-outline-input').val();//optional
                 //geoserver upload
                 drainage_line_shp_files = $('#drainage-line-shp-upload-input')[0].files;
                 if (drainage_line_shp_files.length > 0) {

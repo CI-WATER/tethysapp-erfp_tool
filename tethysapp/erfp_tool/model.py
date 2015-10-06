@@ -4,9 +4,10 @@ from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker
 from uuid import uuid5, NAMESPACE_DNS
 from datetime import datetime
-from .utilities import get_persistent_store_engine
+# from .utilities import get_persistent_store_engine
+from app import ECMWFRAPIDFloodPredictionTool as app
 # DB Engine, sessionmaker and base
-settingsEngine = get_persistent_store_engine('settings_db')
+settingsEngine = app.get_persistent_store_engine('settings_db')
 SettingsSessionMaker = sessionmaker(bind=settingsEngine)
 Base = declarative_base()
 
