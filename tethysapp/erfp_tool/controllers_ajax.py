@@ -6,7 +6,7 @@ import netCDF4 as NET
 import numpy as np
 import os
 from shutil import move
-from sqlalchemy import or_
+from sqlalchemy import or_, null
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import ObjectDeletedError
 from django.http import JsonResponse
@@ -1527,7 +1527,12 @@ def watershed_group_delete(request):
             session = SettingsSessionMaker()
             #get watershed group to delete
             watershed_group  = session.query(WatershedGroup).get(watershed_group_id)
-            
+
+
+            # main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
+            # print main_settings.default_group_id
+            # if watershed_group == main_settings.default_group_id:
+            #     main_settings.default_group_id = -1
             #delete watershed group from database
             session.delete(watershed_group)
             session.commit()

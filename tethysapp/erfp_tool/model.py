@@ -1,7 +1,7 @@
 # Put your persistent store models in this file
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship, sessionmaker, backref
 from uuid import uuid5, NAMESPACE_DNS
 from datetime import datetime
 # from .utilities import get_persistent_store_engine
@@ -21,7 +21,8 @@ class MainSettings(Base):
     id = Column(Integer, primary_key=True)
     base_layer_id = Column(Integer,ForeignKey('base_layer.id'))
     base_layer = relationship("BaseLayer")
-    default_group_id = Column(Integer)
+    default_group_id = Column(Integer,ForeignKey('watershed_group.id'))
+    default_group = relationship('WatershedGroup', backref=backref('main_settings', cascade='save-update, merge, refresh-expire, expunge'))
     ecmwf_rapid_prediction_directory = Column(String)
     era_interim_rapid_directory = Column(String)
     wrf_hydro_rapid_prediction_directory = Column(String)

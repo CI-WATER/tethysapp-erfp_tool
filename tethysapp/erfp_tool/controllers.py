@@ -60,8 +60,7 @@ def home(request):
         watershed_groups.append((group.name,group.id))
     watershed_groups.append(('(ALL)',-1))
 
-    default_watersheds_list, watershed_list = get_watershed_info(app_instance_id, session, watersheds_default_group)
-    print default_watersheds_list, watershed_list
+    default_watersheds_list, dropdown_watershed_list = get_watershed_info(app_instance_id, session, watersheds_default_group)
 
     view_options = MVView(
             projection='EPSG:4326',
@@ -83,7 +82,7 @@ def home(request):
     watershed_select = {
                 'display_text': 'Select Watershed(s)',
                 'name': 'watershed_select',
-                'options': watershed_list,
+                'options': dropdown_watershed_list,
                 'multiple': True,
                 'placeholder': 'Select Watershed(s)',
                 }
@@ -96,6 +95,7 @@ def home(request):
                 'initial': default_group_name
                 }
     context = {
+                'select_area_map' : select_area_map,
                 'watershed_select' : watershed_select,
                 'watersheds_length': len(watersheds_default_group),
                 'watershed_group_select' : watershed_group_select,
