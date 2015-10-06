@@ -57,18 +57,30 @@
         <p class="help-block hidden">Must select file to submit!</p>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the river network. Need .shp, .shx, .prj, .dbf files.</p>
+    <!-- Outlines !-->
+    {% gizmo text_input geoserver_outline_input %}
+    <div class="form-group kml">
+        <label class="control-label" for="outline-kml-upload-input">Outline KML File (Optional)</label>
+        <input id="outline-kml-upload-input" name="outline-kml-upload-input" type="file" accept=".kml">
+    </div>
+    <p class="help-block kml">This is the KML file representing the watershed basin outline.</p>
+    <div class="form-group shapefile upload hidden">
+        <label class="control-label" for="outline-shp-upload-input">Outline Shapefile (Optional)</label>
+        <input id="outline-shp-upload-input" name="outline-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
+    </div>
+    <p class="help-block shapefile upload hidden">This is the shapefile representing the watershed basin outline. Need .shp, .shx, .prj, .dbf files.</p>
     <!-- Catchments !-->
     {% gizmo text_input geoserver_catchment_input %}
     <div class="form-group kml">
         <label class="control-label" for="catchment-kml-upload-input">Catchment KML File (Optional)</label>
         <input id="catchment-kml-upload-input" name="catchment-kml-upload-input" type="file" accept=".kml">
     </div>
-    <p class="help-block kml">This is the KML file representing the watershed basin.</p>
+    <p class="help-block kml">This is the KML file representing the watershed basin catchments.</p>
     <div class="form-group shapefile upload hidden">
         <label class="control-label" for="catchment-shp-upload-input">Catchment Shapefile (Optional)</label>
         <input id="catchment-shp-upload-input" name="catchment-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
-    <p class="help-block shapefile upload hidden">This is the shapefile file representing the watershed basin. Need .shp, .shx, .prj, .dbf files.</p>
+    <p class="help-block shapefile upload hidden">This is the shapefile file representing the watershed basin catchments. Need .shp, .shx, .prj, .dbf files.</p>
     <!-- Gages !-->
     {% gizmo text_input geoserver_gage_input %}
     <div class="form-group kml">
@@ -88,12 +100,6 @@
         <input id="ahps-station-shp-upload-input" name="ahps-station-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
     </div>
     <p class="help-block shapefile upload hidden">This is the shapefile file representing the AHPS stations. Need .shp, .shx, .prj, .dbf files.</p>
-    {% gizmo text_input geoserver_outline_input %}
-    <div class="form-group shapefile upload hidden">
-        <label class="control-label" for="outline-shp-upload-input">Outline Shapefile</label>
-        <input id="outline-shp-upload-input" name="outline-shp-upload-input" type="file" accept=".shp,.shx,.prj,.dbf" multiple>
-    </div>
-    <p class="help-block shapefile upload hidden">This is the shapefile file for easy navigation on the select watershed page. Need .shp, .shx, .prj, .dbf files.</p>
 {% gizmo button_group add_button %}
 {% endblock %}
 

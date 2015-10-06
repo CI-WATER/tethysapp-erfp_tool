@@ -61,7 +61,6 @@ def home(request):
     watershed_groups.append(('(ALL)',-1))
 
     default_watersheds_list, watershed_list = get_watershed_info(app_instance_id, session, watersheds_default_group)
-    print default_watersheds_list, watershed_list
 
     view_options = MVView(
             projection='EPSG:4326',
