@@ -50,7 +50,7 @@ var ERFP_MAP = (function() {
         m_units,
         m_ecmwf_show,
         m_wrf_show,
-        m_return_25_features_source,
+        m_return_20_features_source,
         m_return_10_features_source,
         m_return_2_features_source;
 
@@ -662,18 +662,18 @@ var ERFP_MAP = (function() {
                                 var extremes = long_term_chart.yAxis[0].getExtremes();
                                 var maxY = Math.max(extremes.max, convertValueMetricToEnglish(parseFloat(data.max)));
                                 long_term_chart.yAxis[0].addPlotBand({
-                                    from: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
+                                    from: convertValueMetricToEnglish(parseFloat(data.twenty)),
                                     to: convertValueMetricToEnglish(maxY),
                                     color: 'rgba(128,0,128,0.4)',
-                                    id: '25-yr',
+                                    id: '20-yr',
                                     label: {
-                                        text: '25-yr',
+                                        text: '20-yr',
                                         align: 'right',
                                     }
                                 });
                                 long_term_chart.yAxis[0].addPlotBand({
                                     from: convertValueMetricToEnglish(parseFloat(data.ten)),
-                                    to: convertValueMetricToEnglish(parseFloat(data.twenty_five)),
+                                    to: convertValueMetricToEnglish(parseFloat(data.twenty)),
                                     color: 'rgba(255,0,0,0.3)',
                                     id: '10-yr',
                                     label: {
@@ -1132,7 +1132,11 @@ var ERFP_MAP = (function() {
                 m_selected_nws_id = nws_id;
                 m_selected_hydroserver_url = hydroserver_url;
 
-                displayHydrograph(); 
+                displayHydrograph();
+                var url = "export-data?reach_id=" + encodeURIComponent(m_selected_reach_id)
+                                        + "&watershed_name=" + encodeURIComponent(m_selected_ecmwf_watershed)
+                                        + "&subbasin_name=" + encodeURIComponent(m_selected_ecmwf_subbasin);
+                $('#btn-export-data').attr('href', url);
             } else {
                 appendErrorMessage('The attributes in the file are faulty. Please fix and upload again.',
                                     "file_attr_error",
@@ -1201,7 +1205,7 @@ var ERFP_MAP = (function() {
         m_ecmwf_show = $('#ecmwf-toggle').bootstrapSwitch('state');
 
         //create symbols for warnings
-        var twenty_five_symbols = [new ol.style.RegularShape({
+        var twenty_symbols = [new ol.style.RegularShape({
                                               points: 3,
                                               radius: 5,
                                               fill: new ol.style.Fill({
@@ -1558,7 +1562,7 @@ var ERFP_MAP = (function() {
                 }
             }
             //create empty layers to add data to later
-            var return_25_layer = new ol.layer.Vector({
+            var return_20_layer = new ol.layer.Vector({
                 source: new ol.source.Cluster({
                                                 source: new ol.source.Vector({ source: []}),
                                                 distance: 20
@@ -1595,18 +1599,18 @@ var ERFP_MAP = (function() {
                         style = [];
                         for (var i=0; i<size; i++) {
                             style.push(new ol.style.Style({
-                                image: twenty_five_symbols[features[i].get('point_size')],
+                                image: twenty_symbols[features[i].get('point_size')],
                               }));
                         }
                     }
                     return style;
                 }
             });
-            return_25_layer.set('layer_id', 'layer' + group_index + 'g' + 4);
-            return_25_layer.set('layer_type', 'warning_points');
-            return_25_layer.set('return_period', 25);
-            return_25_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
-            return_25_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
+            return_20_layer.set('layer_id', 'layer' + group_index + 'g' + 4);
+            return_20_layer.set('layer_type', 'warning_points');
+            return_20_layer.set('return_period', 20);
+            return_20_layer.set('ecmwf_watershed_name', layer_info['ecmwf_watershed']);
+            return_20_layer.set('ecmwf_subbasin_name', layer_info['ecmwf_subbasin']);
     
             var return_10_layer = new ol.layer.Vector({
                 source: new ol.source.Cluster({
@@ -1711,7 +1715,7 @@ var ERFP_MAP = (function() {
 
             layers.push(return_2_layer);
             layers.push(return_10_layer);
-            layers.push(return_25_layer);
+            layers.push(return_20_layer);
             //make sure there are layers to add
             if (layers.length > 0) {
                 var group_layer = new ol.layer.Group({ 
@@ -1823,11 +1827,14 @@ var ERFP_MAP = (function() {
         m_select_interaction.getFeatures().on('change:length', function(e) {
           if (e.target.getArray().length === 0) {
             // this means it's changed to no features selected
+            //hide export data button
+            $('#btn-export-data').addClass('hidden');
           } else {
             // this means there is at least 1 feature selected
             var selected_feature = e.target.item(0); // 1st feature in Collection
             loadHydrographFromFeature(selected_feature);
-
+            //make the export data button visible
+            $('#btn-export-data').removeClass('hidden');
           }
         });
 
@@ -1897,4 +1904,4 @@ var ERFP_MAP = (function() {
 
 }()); // End of package wrapper 
 // NOTE: that the call operator (open-closed parenthesis) is used to invoke the library wrapper 
-// function immediately after being parsed.                                                                                                                                                                                 
+// function immediately after being parsed.
