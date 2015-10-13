@@ -16,18 +16,20 @@ var addLayerToMap = function(layer_features){
         loader: function (extent, resolution, projection) {
         for(var i = 0; i < layer_features.length; i++) {
             var geoserver_url = layer_features[i][1];
-            var layer_name = layer_features[i][3]
-            var url = geoserver_url + '/wfs?service=WFS&' +
-                'version=1.1.0&request=GetFeature&typename=' + layer_name + '&' +
-                'outputFormat=text/javascript&format_options=callback:loadFeatures' +
-                '&srsname=EPSG:3857&bbox=' + extent.join(',') + ',EPSG:3857';
-            // use jsonp: false to prevent jQuery from adding the "callback"
-            // parameter to the URL
-            $.ajax({
-                url: encodeURI(url),
-                dataType: 'jsonp',
-                jsonp: false
-            });
+            var layer_name = layer_features[i][3];
+            if(geoserver_url && layer_name){
+                var url = geoserver_url + '/wfs?service=WFS&' +
+                    'version=1.1.0&request=GetFeature&typename=' + layer_name + '&' +
+                    'outputFormat=text/javascript&format_options=callback:loadFeatures' +
+                    '&srsname=EPSG:3857&bbox=' + extent.join(',') + ',EPSG:3857';
+                // use jsonp: false to prevent jQuery from adding the "callback"
+                // parameter to the URL
+                $.ajax({
+                    url: encodeURI(url),
+                    dataType: 'jsonp',
+                    jsonp: false
+                });
+            }
         }
         },
         strategy: ol.loadingstrategy.tile(new ol.tilegrid.XYZ({

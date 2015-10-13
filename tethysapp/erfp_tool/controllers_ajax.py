@@ -792,6 +792,8 @@ def settings_update(request):
         #update main settings
         main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
         main_settings.base_layer_id = base_layer_id
+        if default_group_id == '-1':
+            default_group_id = None
         main_settings.default_group_id = default_group_id
         main_settings.ecmwf_rapid_prediction_directory = ecmwf_rapid_prediction_directory    
         main_settings.era_interim_rapid_directory = era_interim_rapid_directory    

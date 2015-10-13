@@ -418,7 +418,7 @@ def settings(request):
 
     # Query DB for groups
     watershed_groups = session.query(WatershedGroup).all()
-    watershed_groups_list = []
+    watershed_groups_list = [('(ALL)',-1)]
     for watershed_group in watershed_groups:
         watershed_groups_list.append((watershed_group.name, watershed_group.id))
 
@@ -444,7 +444,7 @@ def settings(request):
                 'initial': main_settings.base_layer.api_key
               }
 
-    default_group_init = watershed_groups_list[default_group_index-1][0] if default_group_index else None
+    default_group_init = watershed_groups_list[default_group_index][0] if default_group_index else None
     default_group_select_input = {
                 'display_text': 'Select a Default Watershed Group to Display on Home Page',
                 'name': 'default-group-select-input',

@@ -424,7 +424,8 @@ var ERFP_MAP = (function() {
     };
 
     //FUNCTION: gets tile layer for geoserver
-    getTileLayer = function(layer_info, geoserver_url, layer_id) {
+    getTileLayer = function(layer_info, geoserver_url, layer_id, opacity) {
+        if (typeof(opacity)==='undefined') opacity = 1;
         var layer = new ol.layer.Tile({
             source: new ol.source.TileWMS({
                 url: geoserver_url,
@@ -432,6 +433,7 @@ var ERFP_MAP = (function() {
                          'TILED': true},
                 serverType: 'geoserver',
             }),
+            opacity: opacity,
         });
         layer.set('extent', ol.proj.transformExtent(layer_info['latlon_bbox'].map(Number), 
                                                 'EPSG:4326',
@@ -1294,7 +1296,7 @@ var ERFP_MAP = (function() {
                                             ": " + layer_info.outline.error,
                                            "error_" + outline_layer_id, "message-error");
                     } else {
-                        layers.push(getTileLayer(layer_info['outline'], layer_info['geoserver_url'], outline_layer_id));
+                        layers.push(getTileLayer(layer_info['outline'], layer_info['geoserver_url'], outline_layer_id, 0.5));
                     }
                 }
                 //add catchment if exists
@@ -1305,7 +1307,7 @@ var ERFP_MAP = (function() {
                                             ": " + layer_info.catchment.error, 
                                            "error_" + catchment_layer_id, "message-error");
                     } else {
-                        layers.push(getTileLayer(layer_info['catchment'], layer_info['geoserver_url'], catchment_layer_id));
+                        layers.push(getTileLayer(layer_info['catchment'], layer_info['geoserver_url'], catchment_layer_id, 0.5));
                     }
                 }
                 //add gage if exists
