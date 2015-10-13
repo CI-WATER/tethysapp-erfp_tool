@@ -6,7 +6,7 @@ class ECMWFRAPIDFloodPredictionTool(TethysAppBase):
     Tethys app class for ECMWF-RAPID Flood Prediction Tool.
     """
 
-    name = 'NFIE Hydro Explorer'
+    name = 'Streamflow Prediction Tool'
     index = 'erfp_tool:home'
     icon = 'erfp_tool/images/logo.png'
     package = 'erfp_tool'
