@@ -426,7 +426,8 @@ def settings(request):
 
     #Query DB for settings
     main_settings  = session.query(MainSettings).order_by(MainSettings.id).first()
-    default_group_index = main_settings.default_group_id
+    default_group_id = main_settings.default_group_id
+    default_group = session.query(WatershedGroup).filter(WatershedGroup.id == default_group_id).first()
 
     base_layer_select_input = {
                 'display_text': 'Select a Base Layer',
@@ -444,7 +445,7 @@ def settings(request):
                 'initial': main_settings.base_layer.api_key
               }
 
-    default_group_init = watershed_groups_list[default_group_index][0] if default_group_index else None
+    default_group_init = default_group.name if default_group else None
     default_group_select_input = {
                 'display_text': 'Select a Default Watershed Group to Display on Home Page',
                 'name': 'default-group-select-input',
