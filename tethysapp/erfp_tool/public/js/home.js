@@ -179,9 +179,12 @@ $(document).ready(function(){
             }
         }
     });
+
     var get_list_info;
     $('#watershed_group_select').on('change',function(e){
-        //$("#watershed_group_select").append('<option selected="Love" value="6"> LOVE</option> ');
+        $('html, body').animate({
+            scrollTop: $("#map-select").offset().top
+        }, 500);
         var layers_removed = map.getLayers().getArray();
         for (var i = 1; i < layers_removed.length; i++){
             map.removeLayer(layers_removed[i]);
@@ -216,5 +219,13 @@ $(document).ready(function(){
                 }
             }
         });
+    });
+
+    $('#select-all').on('click',function(){
+        var dropdown_options =[];
+        $('#watershed_select option').each(function(){
+           dropdown_options.push($(this).val());
+        });
+        $('#watershed_select').select2('val',dropdown_options);
     });
 });
