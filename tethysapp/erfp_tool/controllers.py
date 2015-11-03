@@ -61,7 +61,6 @@ def home(request):
     watershed_groups.append(('(ALL)',-1))
 
     default_watersheds_list, dropdown_watershed_list = get_watershed_info(app_instance_id, session, watersheds_default_group)
-    
     view_options = MVView(
             projection='EPSG:4326',
             center=[-100, 40],
@@ -69,24 +68,28 @@ def home(request):
             maxZoom=18,
             minZoom=2
             )
-
-    outline_wms_layer =  MVLayer(source='ImageWMS',
-                          options={'url': 'http://ciwmap.chpc.utah.edu:8080/geoserver/wms',
-                                   'params': {'LAYERS': 'spt-1qa2ws3ed:mississippi-nfie_region-outline'},
-                                   'serverType': 'geoserver'},
-                          legend_title='Outline',
-                          feature_selection=True,
-                        )
+    layers_to_load = []
+    for watershed in default_watersheds_list:
+        watershed_name = watershed[0]
+        geoserver_location = watershed[1]
+        outline_name = watershed[3]
+        outline_layer =  MVLayer(source='ImageWMS',
+                              options={'url': geoserver_location + '/wms',
+                                       'params': {'LAYERS': outline_name},
+                                       'serverType': 'geoserver'},
+                              legend_title=watershed_name,
+                              feature_selection=True,
+                            )
+        layers_to_load.append(outline_layer)
 
     select_area_map = MapView(
         height='600px',
         width='100%',
-        controls=['ZoomSlider', 'Rotate', 'FullScreen',
-                  {'ZoomToExtent': {'projection': 'EPSG:4326', 'extent': [-130, 22, -65, 54]}}],
+        controls=['ZoomSlider', 'Rotate', 'FullScreen'],
         view=view_options,
-        layers= [outline_wms_layer],
+        layers= layers_to_load,
         basemap='OpenStreetMap',
-        legend=True,
+        legend=False,
         feature_selection={'multiselect':True,
                             'sensitivity':2},
         )
