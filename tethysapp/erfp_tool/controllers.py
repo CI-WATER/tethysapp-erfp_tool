@@ -69,14 +69,26 @@ def home(request):
             maxZoom=18,
             minZoom=2
             )
+
+    outline_wms_layer =  MVLayer(source='ImageWMS',
+                          options={'url': 'http://ciwmap.chpc.utah.edu:8080/geoserver/wms',
+                                   'params': {'LAYERS': 'spt-1qa2ws3ed:mississippi-nfie_region-outline'},
+                                   'serverType': 'geoserver'},
+                          legend_title='Outline',
+                          feature_selection=True,
+                        )
+
     select_area_map = MapView(
         height='600px',
         width='100%',
         controls=['ZoomSlider', 'Rotate', 'FullScreen',
                   {'ZoomToExtent': {'projection': 'EPSG:4326', 'extent': [-130, 22, -65, 54]}}],
         view=view_options,
-        layers= [],
+        layers= [outline_wms_layer],
         basemap='OpenStreetMap',
+        legend=True,
+        feature_selection={'multiselect':True,
+                            'sensitivity':2},
         )
     
     watershed_select = {
@@ -100,7 +112,7 @@ def home(request):
                 'watersheds_length': len(watersheds_default_group),
                 'watershed_group_select' : watershed_group_select,
                 'watershed_group_length': len(groups),
-                "redirect": redirect_getting_started,
+                '.redirect': redirect_getting_started,
                 'select_area_map': select_area_map,
                 'default_watersheds_list': json.dumps(default_watersheds_list)
               }

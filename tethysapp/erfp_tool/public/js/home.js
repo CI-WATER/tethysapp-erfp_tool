@@ -74,6 +74,7 @@ var zoomToAll = function(map_extent) {
 };
 
 $(document).ready(function(){
+
     /************************************************************************
     *                      MODULE LEVEL / GLOBAL VARIABLES
     *************************************************************************/
@@ -87,7 +88,7 @@ $(document).ready(function(){
     layer_features = $('#map-select').attr('data-resources');
     layer_features = JSON.parse(layer_features);
 
-    addLayerToMap(layer_features);
+    //addLayerToMap(layer_features);
 
     //make layers selectable
     var  selectionInteraction = new ol.interaction.Select();
