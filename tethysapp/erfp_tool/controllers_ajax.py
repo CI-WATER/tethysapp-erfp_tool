@@ -695,8 +695,7 @@ def wrf_hydro_get_hydrograph(request):
                 "success" : "WRF-Hydro data analysis complete!",
                 "wrf_hydro" : zip(time, data_values.tolist()),
         })
-        
-@user_passes_test(user_permission_test)
+
 def generate_warning_points(request):
     """
     Controller for getting warning points for user on map

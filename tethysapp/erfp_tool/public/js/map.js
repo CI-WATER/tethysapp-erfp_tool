@@ -557,6 +557,10 @@ var ERFP_MAP = (function() {
                     },
                     min: 0
                 },
+                tooltip: {
+                    shared: true,
+                    crosshairs: true
+                }
             };
             //handle subtitles - ECMWF first priority
             var subtitle = null;

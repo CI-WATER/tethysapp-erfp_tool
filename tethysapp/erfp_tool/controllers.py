@@ -373,7 +373,7 @@ def map(request):
                                 'display_text' : "WRF-Hydro",
                                 'name': 'wrf-toggle',
                                 'on_style': 'warning',
-                                'initial': True,
+                                'initial': False,
                               }
 
         #Query DB for settings
