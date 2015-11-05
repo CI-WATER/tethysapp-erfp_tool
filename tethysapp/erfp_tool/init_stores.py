@@ -5,7 +5,7 @@ from .model import (Base, BaseLayer, DataStore, DataStoreType, Geoserver, MainSe
 def init_erfp_settings_db(first_time):
     # Create tables
     Base.metadata.create_all(settingsEngine)
-    
+
     # Initial data
     if first_time:
         #make session
@@ -28,7 +28,7 @@ def init_erfp_settings_db(first_time):
         session.add(Geoserver("Local Server", "media", "", ""))
 
         #add main settings
-        session.add(MainSettings(1, "", "", "", ""))
+        session.add(MainSettings(1, None, None, None, None))
         
         session.commit()
         session.close()
