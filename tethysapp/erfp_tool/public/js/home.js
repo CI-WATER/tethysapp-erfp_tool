@@ -91,37 +91,37 @@ $(document).ready(function(){
     //addLayerToMap(layer_features);
 
     //make layers selectable
-    var  selectionInteraction = new ol.interaction.Select();
-    var selectionInteractionFeatures = selectionInteraction.getFeatures();
+    //var  selectionInteraction = new ol.interaction.Select();
+    //var selectionInteractionFeatures = selectionInteraction.getFeatures();
 
-    map.addInteraction(selectionInteraction);
+    //map.addInteraction(selectionInteraction);
 
     //based on where the user clicks, populate the dropdown
-    selectionInteractionFeatures.on('change:length', function(e){
-        if (e.target.getArray().length === 0) {
-            // this means it's changed to no features selected
-            $('#watershed_select').select2('val', '');
-        }else{
-            var layer_id_list = [];
-            array_length = (e.target.getArray().length);
-            for (var j = 0; j < array_length; j++) {
-                selected_feature = e.target.item(j);
-                var watershed = selected_feature.getProperties()['watershed'].toLowerCase();
-                for (var i = 0; i < layer_features.length; i++) {
-                    if (watershed == layer_features[i][0]) {
-                        layer_id_list.push(layer_features[i][2]);
-                    }
-                }
-            }
-            $('#watershed_select').select2('val', layer_id_list);
-            if (layer_id_list.length > 1) {
-                $('#too-many-watersheds-alert').removeClass('hidden');
-            }
-            else{
-                $('#too-many-watersheds-alert').addClass('hidden');
-            }
-        }
-    });
+    //selectionInteractionFeatures.on('change:length', function(e){
+    //    if (e.target.getArray().length === 0) {
+    //        // this means it's changed to no features selected
+    //        $('#watershed_select').select2('val', '');
+    //    }else{
+    //        var layer_id_list = [];
+    //        array_length = (e.target.getArray().length);
+    //        for (var j = 0; j < array_length; j++) {
+    //            selected_feature = e.target.item(j);
+    //            var watershed = selected_feature.getProperties()['watershed'].toLowerCase();
+    //            for (var i = 0; i < layer_features.length; i++) {
+    //                if (watershed == layer_features[i][0]) {
+    //                    layer_id_list.push(layer_features[i][2]);
+    //                }
+    //            }
+    //        }
+    //        $('#watershed_select').select2('val', layer_id_list);
+    //        if (layer_id_list.length > 1) {
+    //            $('#too-many-watersheds-alert').removeClass('hidden');
+    //        }
+    //        else{
+    //            $('#too-many-watersheds-alert').addClass('hidden');
+    //        }
+    //    }
+    //});
 
     //from the dropdown make the map mirror it
 
@@ -228,5 +228,8 @@ $(document).ready(function(){
            dropdown_options.push($(this).val());
         });
         $('#watershed_select').select2('val',dropdown_options);
+        if (dropdown_options.length > 1){
+            $('#too-many-watersheds-alert').removeClass('hidden');
+        }
     });
 });

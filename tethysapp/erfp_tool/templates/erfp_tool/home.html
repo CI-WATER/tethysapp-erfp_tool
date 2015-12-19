@@ -22,7 +22,6 @@
         {% endif %}
         <h1>Select a Watershed</h1>
         <form action="{% url 'erfp_tool:map' %}" method="get">
-            <p id="too-many-watersheds-alert" class="alert alert-warning hidden" role="alert"><em>Warning: Selecting too many watersheds can make the operation of the app slow.</em></p>
             <div id="map-select" data-resources="{{default_watersheds_list}}">
                 <p><em>Hold SHIFT to select multiple watersheds on map</em></p>
                 {% gizmo map_view select_area_map %}
@@ -36,6 +35,8 @@
                     <span class="glyphicon glyphicon-play"></span>Select All
                 </a>
             </div>
+            <p></p>
+            <p id="too-many-watersheds-alert" class="alert alert-warning hidden" role="alert" style="margin-right:10px;"><em>Warning: Selecting too many watersheds can make the operation of the app slow.</em></p>
         </form>
 
         {% if user.is_superuser or user.is_staff %}

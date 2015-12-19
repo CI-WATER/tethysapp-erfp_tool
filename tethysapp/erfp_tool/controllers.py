@@ -69,6 +69,7 @@ def home(request):
             minZoom=2
             )
     layers_to_load = []
+
     for watershed in default_watersheds_list:
         watershed_name = watershed[0]
         geoserver_location = watershed[1]
@@ -79,6 +80,7 @@ def home(request):
                                        'serverType': 'geoserver'},
                               legend_title=watershed_name,
                               feature_selection=True,
+                              geometry_attribute='the_geom'
                             )
         layers_to_load.append(outline_layer)
 
